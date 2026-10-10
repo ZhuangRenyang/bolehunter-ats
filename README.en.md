@@ -5,6 +5,8 @@
 **"There are always thoroughbreds; what's rare is a Bole who can spot them."**
 A lightweight **recruitment ATS & CRM for small headhunting teams** (5–20 people).
 
+🗂️ **Repositories**: [GitHub](https://github.com/ZhuangRenyang/bolehunter-ats) ｜ [Gitee](https://gitee.com/ZhuangRenyang/bolehunter-ats) ｜ Author: [ZhuangRenyang](https://github.com/ZhuangRenyang)
+
 </div>
 
 > Recruiting software, headhunter CRM, candidate tracking (ATS) — open-source, self-hosted, zero external dependencies (2C4G is enough), up and running in 10 minutes with Docker Compose.

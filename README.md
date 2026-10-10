@@ -6,6 +6,8 @@
 
 轻量级猎头 **ATS + CRM** · 开源版
 
+🖥️ **仓库地址**：[GitHub](https://github.com/ZhuangRenyang/bolehunter-ats) ｜ [Gitee](https://gitee.com/ZhuangRenyang/bolehunter-ats) ｜ 作者：[ZhuangRenyang](https://github.com/ZhuangRenyang)
+
 </div>
 
 > 为 5–20 人小型猎头团队打造的轻量级 **候选人追踪系统（ATS）+ 客户关系管理（CRM）**。
