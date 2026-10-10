@@ -77,7 +77,7 @@ recruit-web/        旧版前端（Vue 2，已冻结，仅存量兼容）
 
 ## 开源协议与版权
 
-本项目以 **GNU AGPL-3.0** 协议开源（全文见 [LICENSE](LICENSE)，署名信息见 [NOTICE.txt](NOTICE.txt)）。
+本项目以 **GNU AGPL-3.0-or-later**（v3 或更高版本）协议开源（全文见 [LICENSE](LICENSE)，署名信息见 [NOTICE.txt](NOTICE.txt)）。
 
 这意味着：
 
