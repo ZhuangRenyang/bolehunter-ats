@@ -24,5 +24,11 @@
     "@vitejs/plugin-vue": "^5.1.4",
     "sass": "^1.79.5",
     "vite": "^5.4.9"
-  }
+  },
+  "description": "BoleHunter 伯乐猎 —— 开源猎头 ATS + CRM 前端",
+  "author": {
+    "name": "ZhuangRenyang",
+    "url": "https://github.com/ZhuangRenyang"
+  },
+  "license": "AGPL-3.0-only"
 }

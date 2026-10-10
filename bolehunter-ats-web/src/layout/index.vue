@@ -1,3 +1,13 @@
+<!--
+ * BoleHunter 伯乐猎 —— 开源猎头 ATS + CRM
+ * Copyright (C) 2026 ZhuangRenyang
+ * GitHub: https://github.com/ZhuangRenyang/bolehunter-ats
+ * Gitee:  https://gitee.com/ZhuangRenyang/bolehunter-ats
+ *
+ * 本程序是自由软件：你可以在 AGPL-3.0 许可下重新发布或修改它。
+ * 依据 AGPL-3.0 发布；详见仓库根目录 LICENSE 文件。本程序不提供任何担保。
+ * 以任何网络服务形式提供本程序（含 SaaS 托管）同样必须遵守 AGPL-3.0 开源。
+ -->
 <template>
   <div class="app-layout">
     <aside class="sidebar">
@@ -15,7 +25,13 @@
               <template #title>
                 <el-icon><component :is="item.icon || 'Menu'" /></el-icon>
                 <span>{{ item.title }}</span>
-              </template>
+                    <div class="copyright-footer">
+        © 2026 <a href="https://github.com/ZhuangRenyang/bolehunter-ats" target="_blank">BoleHunter 伯乐猎</a>
+        · ZhuangRenyang · AGPL-3.0 ·
+        <a href="https://gitee.com/ZhuangRenyang/bolehunter-ats" target="_blank">Gitee</a> /
+        <a href="https://github.com/ZhuangRenyang/bolehunter-ats" target="_blank">GitHub</a>
+      </div>
+</template>
               <el-menu-item v-for="child in item.children" :key="child.route" :index="child.route">
                 {{ child.title }}
               </el-menu-item>
@@ -159,4 +175,15 @@ function handleCommand(command) {
     padding: 16px;
   }
 }
+  .copyright-footer {
+    padding: 10px 16px;
+    font-size: 12px;
+    color: #909399;
+    text-align: center;
+    border-top: 1px solid #ebeef5;
+  }
+  .copyright-footer a {
+    color: #409eff;
+    text-decoration: none;
+  }
 </style>

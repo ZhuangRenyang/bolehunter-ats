@@ -75,6 +75,17 @@ recruit-web/        旧版前端（Vue 2，已冻结，仅存量兼容）
 - [ ] 简历 AI 解析（`resume_parse` 功能开关已预留）
 - [ ] 客户 HR 门户（商业版）
 
-## License
+## 开源协议与版权
 
-本项目基于开源协议发布，具体以 LICENSE 文件为准。禁止移除版权声明用于闭源分发。
+本项目以 **GNU AGPL-3.0** 协议开源（全文见 [LICENSE](LICENSE)，署名信息见 [NOTICE.txt](NOTICE.txt)）。
+
+这意味着：
+
+- ✅ 你可以自由使用、学习、修改、分发本项目，包括内部商用
+- ⚠️ **以网络服务形式（含 SaaS 托管）向第三方提供本产品或其修改版，必须依据 AGPL-3.0 第 13 条向你的服务使用者开源全部修改代码** —— 简单说：拿本项目做 SaaS 卖钱，你的代码也必须开源
+- ⚠️ 复制/分发时**必须保留** LICENSE、NOTICE.txt 及源文件头部的版权与来源声明（含作者 GitHub / Gitee 双仓库链接）
+- ⚠️ "BoleHunter"、"伯乐猎" 名称与视觉标识为本项目保留标识，未经作者书面许可，派生项目不得使用相同或近似名称推广
+
+**商业授权**：如需**闭源商业化 / SaaS 部署 / 解除 AGPL 传染义务**，可通过作者 GitHub 或 Gitee 账号（[ZhuangRenyang](https://github.com/ZhuangRenyang)）私信获取商业许可。
+
+© 2026 ZhuangRenyang · BoleHunter 伯乐猎 · 保留所有权利

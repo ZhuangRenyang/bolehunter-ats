@@ -1,0 +1,21 @@
+BoleHunter 伯乐猎 —— 开源猎头 ATS + CRM
+Copyright (C) 2026 ZhuangRenyang
+
+GitHub: https://github.com/ZhuangRenyang/bolehunter-ats
+Gitee:  https://gitee.com/ZhuangRenyang/bolehunter-ats
+
+本产品依据 GNU Affero 通用公共许可证 v3.0（AGPL-3.0）发布。
+完整许可文本见仓库根目录 LICENSE 文件。
+
+重要提示：
+1. 任何个人或组织复制、修改、分发本产品，必须保留本 NOTICE 文件、
+   LICENSE 文件，以及全部源文件中的版权与来源声明（含上述双仓库链接）。
+2. 以网络服务形式（含 SaaS 托管）向用户提供本产品或其修改版的，
+   依据 AGPL-3.0 第 13 条，必须向该服务的使用者提供对应源代码。
+3. "BoleHunter"、"伯乐猎" 名称及视觉标识为本项目保留标识，
+   未经作者书面许可，派生项目不得以相同或近似名称进行宣传推广。
+4. 商业授权（含闭源 SaaS 部署授权、解除 AGPL 传染义务）请联系作者：
+   通过 GitHub / Gitee 上述账号私信联系。
+
+本产品包含的部分基础数据（公司观察者示例、字典初始数据）来源于
+原校企招聘毕业设计项目，其版权同样归属本仓库作者所有。
