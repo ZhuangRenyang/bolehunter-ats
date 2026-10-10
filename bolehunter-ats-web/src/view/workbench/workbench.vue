@@ -1,0 +1,270 @@
+<template>
+  <div>
+    <el-row :gutter="16">
+      <el-col :span="6">
+        <el-card shadow="hover">
+          <div class="metric">{{ summary.clientTotal }}</div>
+          <div class="metric-label">客户公司</div>
+        </el-card>
+      </el-col>
+      <el-col :span="6">
+        <el-card shadow="hover">
+          <div class="metric">{{ summary.candidateTotal }}</div>
+          <div class="metric-label">候选人库</div>
+        </el-card>
+      </el-col>
+      <el-col :span="6">
+        <el-card shadow="hover">
+          <div class="metric">{{ summary.recommendationTotal }}</div>
+          <div class="metric-label">推荐记录</div>
+        </el-card>
+      </el-col>
+      <el-col :span="6">
+        <el-card shadow="hover">
+          <div class="metric warn">{{ overdueCount }}</div>
+          <div class="metric-label">已逾期任务</div>
+        </el-card>
+      </el-col>
+    </el-row>
+
+    <el-row :gutter="16" class="row-gap">
+      <!-- 今日/逾期任务 -->
+      <el-col :span="13">
+        <el-card shadow="hover">
+          <template #header>
+            <div class="card-head">
+              <span>我的任务（今日到期 / 已逾期）</span>
+              <el-button type="primary" size="small" plain icon="Plus" @click="taskDialogVisible = true">新建任务</el-button>
+            </div>
+          </template>
+          <el-empty v-if="tasks.length === 0" description="太棒了，没有待办任务" :image-size="60" />
+          <div v-for="task in tasks" :key="task.id" class="task-row">
+            <div class="task-main">
+              <div class="task-title" :class="{ overdue: isOverdue(task) }">{{ task.title }}</div>
+              <div class="task-sub">
+                {{ formatTime(task.due_time) }} 前完成
+                <el-tag v-if="isOverdue(task)" size="small" type="danger">已逾期</el-tag>
+                <el-tag v-else size="small" type="warning">今日</el-tag>
+              </div>
+            </div>
+            <div class="task-ops">
+              <el-button size="small" type="success" plain @click="handleDone(task)">完成</el-button>
+              <el-button size="small" type="danger" plain @click="handleDeleteTask(task)">删除</el-button>
+            </div>
+          </div>
+        </el-card>
+      </el-col>
+      <!-- 阶段分布漏斗 -->
+      <el-col :span="11">
+        <el-card shadow="hover">
+          <template #header>推荐漏斗（按流程阶段）</template>
+          <div ref="funnelRef" class="funnel-chart"></div>
+        </el-card>
+      </el-col>
+    </el-row>
+
+    <!-- 新建任务 -->
+    <el-dialog v-model="taskDialogVisible" title="新建任务" width="440px">
+      <el-form ref="taskFormRef" :model="taskForm" :rules="taskRules" label-width="90px">
+        <el-form-item label="标题" prop="title">
+          <el-input v-model="taskForm.title" maxlength="100" placeholder="如：给客户A打电话跟进张三推荐" />
+        </el-form-item>
+        <el-form-item label="说明">
+          <el-input v-model="taskForm.content" type="textarea" :rows="2" maxlength="500" />
+        </el-form-item>
+        <el-form-item label="到期时间" prop="dueTime">
+          <el-date-picker v-model="taskForm.dueTime" type="datetime" placeholder="选择到期时间"
+            value-format="YYYY-MM-DD HH:mm:ss" style="width: 100%" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button type="primary" @click="confirmCreateTask">确 定</el-button>
+        <el-button @click="taskDialogVisible = false">取 消</el-button>
+      </template>
+    </el-dialog>
+  </div>
+</template>
+
+<script setup>
+import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import * as echarts from 'echarts'
+import { getWorkbenchSummary, getMyTasks, createTask, doneTask, deleteTask } from '@/api/workbench'
+
+const STAGE_LABELS = {
+  PENDING: '待推荐', RECOMMENDED: '已推荐', CLIENT_READ: '客户已读', INTERVIEW_PENDING: '待面试',
+  INTERVIEWING: '面试中', OFFER_PENDING: '待Offer', OFFERED: 'Offer', ONBOARDED: '入职',
+  PAID: '回款', ARCHIVED: '归档',
+}
+// 漏斗按业务流程顺序展示（归档不计入漏斗）
+const FUNNEL_STAGES = [
+  'PENDING', 'RECOMMENDED', 'CLIENT_READ', 'INTERVIEW_PENDING', 'INTERVIEWING',
+  'OFFER_PENDING', 'OFFERED', 'ONBOARDED', 'PAID',
+]
+
+const summary = reactive({})
+const tasks = ref([])
+const taskDialogVisible = ref(false)
+const taskFormRef = ref()
+const taskForm = reactive({ title: '', content: '', dueTime: '' })
+const taskRules = {
+  title: [{ required: true, message: '请输入任务标题', trigger: 'blur' }],
+  dueTime: [{ required: true, message: '请选择到期时间', trigger: 'change' }],
+}
+
+const overdueCount = computed(() => (summary.overdueTasks || []).length)
+
+function stageLabel(stage) {
+  return STAGE_LABELS[stage] || stage
+}
+
+function stagePercent(count) {
+  const total = (summary.stageStats || []).reduce((sum, item) => sum + item.count, 0)
+  if (!total) return 0
+  return Math.round((count / total) * 100)
+}
+
+function isOverdue(task) {
+  return task.due_time && new Date(task.due_time).getTime() < Date.now()
+}
+
+function formatTime(val) {
+  if (!val) return '—'
+  return String(val).replace('T', ' ').slice(0, 16)
+}
+
+async function getAll() {
+  const res = await getWorkbenchSummary()
+  Object.assign(summary, res)
+  const today = res.todayTasks || []
+  const overdue = res.overdueTasks || []
+  tasks.value = [...overdue, ...today]
+  await nextTick()
+  renderFunnel()
+}
+
+// ---------- 漏斗图 ----------
+const funnelRef = ref()
+let chart = null
+
+function renderFunnel() {
+  if (!funnelRef.value) return
+  if (!chart) {
+    chart = echarts.init(funnelRef.value)
+    window.addEventListener('resize', () => chart && chart.resize())
+  }
+  const stats = summary.stageStats || []
+  const data = FUNNEL_STAGES.map(stage => {
+    const item = stats.find(x => x.stage === stage)
+    return { name: STAGE_LABELS[stage], value: item ? item.count : 0 }
+  })
+  chart.setOption({
+    tooltip: { trigger: 'item', formatter: '{b}: {c}' },
+    series: [{
+      type: 'funnel',
+      left: '8%',
+      width: '84%',
+      top: 10,
+      bottom: 10,
+      minSize: '18%',
+      sort: 'none',
+      gap: 2,
+      label: { show: true, position: 'inside', formatter: '{b}: {c}' },
+      itemStyle: { borderColor: '#fff', borderWidth: 1 },
+      data,
+    }],
+  })
+}
+
+onBeforeUnmount(() => {
+  if (chart) {
+    chart.dispose()
+    chart = null
+  }
+})
+
+function handleDone(task) {
+  ElMessageBox.confirm(`确认完成任务「${task.title}」？`, '提示').then(async () => {
+    const res = await doneTask(task.id)
+    ElMessage.success(res.message || '任务已完成')
+    await getAll()
+  }).catch(() => {})
+}
+
+function handleDeleteTask(task) {
+  ElMessageBox.confirm('是否删除该任务？', '提示', { type: 'warning' }).then(async () => {
+    const res = await deleteTask(task.id)
+    ElMessage.success(res.message || '删除成功')
+    await getAll()
+  }).catch(() => {})
+}
+
+function confirmCreateTask() {
+  taskFormRef.value.validate(async valid => {
+    if (!valid) return
+    const res = await createTask(taskForm)
+    ElMessage.success(res.message || '新增成功')
+    taskDialogVisible.value = false
+    Object.assign(taskForm, { title: '', content: '', dueTime: '' })
+    await getAll()
+  })
+}
+
+onMounted(getAll)
+</script>
+
+<style scoped>
+.metric {
+  font-size: 30px;
+  font-weight: 600;
+  color: #303133;
+}
+.metric.warn {
+  color: #f56c6c;
+}
+.metric-label {
+  font-size: 12px;
+  color: #909399;
+  margin-top: 4px;
+}
+.row-gap {
+  margin-top: 16px;
+}
+.card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.task-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 4px;
+  border-bottom: 1px solid #f0f2f5;
+}
+.task-row:last-child {
+  border-bottom: none;
+}
+.task-title {
+  font-size: 13px;
+  color: #303133;
+}
+.task-title.overdue {
+  color: #f56c6c;
+}
+.task-sub {
+  font-size: 12px;
+  color: #909399;
+  margin-top: 2px;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.task-ops {
+  display: flex;
+}
+.funnel-chart {
+  height: 300px;
+  width: 100%;
+}
+</style>

@@ -1,0 +1,86 @@
+#主配置文件
+
+spring:
+  # 激活环境配置
+  profiles:
+    active: dev
+  # 文件编码 UTF8
+  mandatory-file-encoding: UTF-8
+  # 简历导入上传限制（迭代2）
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 20MB
+  web:
+    resources:
+      # 关闭静态资源的映射
+      add-mappings: false
+  freemarker:
+    cache: false
+
+  mail:
+    #服务主机  qq邮箱为smtp.qq.com
+    host: smtp.qq.com
+    #发送邮件的账户
+    username: "996491835@qq.com"
+    #授权码
+    password: "rbszdvttluzabeba" # 授权码
+    #服务协议
+    protocol: smtp
+    # 编码集
+    default-encoding: UTF-8
+
+  # 配置 redis数据库索引(默认为0)（Spring Boot 3 配置前缀为 spring.data.redis）
+  data:
+    redis:
+      database: 0
+      # redis服务器地址
+      host: 127.0.0.1
+      port: 6379
+      # redis 密码
+      password:
+      # 连接池最大连接数 (使用负数表示没有限制)
+      jedis:
+        pool:
+          # 最大连接数
+          max-active: 8
+          # 最大阻塞等待时间
+          max-wait: -1
+          # 最带空闲连接
+          max-idle: 8
+          # 最小空闲连接
+          min-idle: 3
+      # 连接超时时间(毫秒)
+      timeout: 100
+
+
+mybatis-plus:
+  configuration:
+    # 开启下划线转驼峰
+    map-underscore-to-camel-case: true
+    # 指定默认枚举类型的类型转换器（MP 3.5 起位于 core 包）
+    default-enum-type-handler: com.baomidou.mybatisplus.core.handlers.MybatisEnumTypeHandler
+  global-config:
+    # 开启/关闭 banner 打印
+    banner: false
+    db-config:
+      # 逻辑删除（软删除）
+      logic-delete-value: NOW()
+      logic-not-delete-value: 'NULL'
+  # mapper路径位置
+  mapper-locations: classpath:mapper/*.xml
+
+
+# 自研轻量认证层配置（原 lin.cms 块平移）
+app:
+  jwt:
+    # access token 过期时间，3600s 一个小时
+    token-access-expire: 3600
+    # refresh token 过期时间，2592000s 一个月
+    token-refresh-expire: 2592000
+    # 令牌 secret
+    token-secret: x88Wf0991079889x8796a0Ac68f9ecJJU17c5Vbe8beod7d8d3e695*4
+
+# 多租户开关：开源版默认关闭（单团队），开启后业务表查询自动追加 tenant_id 条件
+tenant:
+  enable: false

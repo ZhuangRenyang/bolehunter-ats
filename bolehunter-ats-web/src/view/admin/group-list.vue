@@ -1,0 +1,166 @@
+<template>
+  <el-card shadow="never">
+    <div class="toolbar">
+      <span class="page-title">角色管理</span>
+      <el-button type="primary" plain size="small" icon="Plus" @click="handleCreate">新建角色</el-button>
+    </div>
+    <el-table :data="tableData" border v-loading="loading">
+      <el-table-column prop="id" label="ID" width="70" />
+      <el-table-column prop="name" label="角色名" min-width="180" />
+      <el-table-column prop="info" label="描述" min-width="240" show-overflow-tooltip />
+      <el-table-column label="操作" width="220" align="center">
+        <template #default="scope">
+          <el-button size="small" type="primary" plain @click="handlePermission(scope.row)">分配权限</el-button>
+          <el-button size="small" type="primary" plain @click="handleEdit(scope.row)">编辑</el-button>
+          <el-button size="small" type="danger" plain @click="handleDelete(scope.row)">删除</el-button>
+        </template>
+      </el-table-column>
+    </el-table>
+
+    <!-- 新建/编辑角色 -->
+    <el-dialog v-model="groupDialogVisible" :title="form.id ? '编辑角色' : '新建角色'" width="440px">
+      <el-form label-width="90px">
+        <el-form-item label="角色名">
+          <el-input v-model="form.name" maxlength="30" />
+        </el-form-item>
+        <el-form-item label="描述">
+          <el-input v-model="form.info" type="textarea" maxlength="100" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button type="primary" @click="confirmGroup">确 定</el-button>
+        <el-button @click="groupDialogVisible = false">取 消</el-button>
+      </template>
+    </el-dialog>
+
+    <!-- 分配权限 -->
+    <el-dialog v-model="permDialogVisible" title="分配权限" width="560px">
+      <div v-for="(perms, module) in allPermissions" :key="module" class="perm-module">
+        <div class="perm-module-title">{{ module }}</div>
+        <el-checkbox-group v-model="selectedPermissionIds">
+          <el-checkbox v-for="p in perms" :key="p.id" :value="p.id">{{ p.name }}</el-checkbox>
+        </el-checkbox-group>
+      </div>
+      <template #footer>
+        <el-button type="primary" @click="confirmPermissions">保 存</el-button>
+        <el-button @click="permDialogVisible = false">取 消</el-button>
+      </template>
+    </el-dialog>
+  </el-card>
+</template>
+
+<script setup>
+import { onMounted, reactive, ref } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import {
+  createGroup,
+  deleteGroup,
+  dispatchPermissions,
+  getAllGroups,
+  getAllPermissions,
+  getGroupDetail,
+  getGroupPage,
+  removePermissions,
+  updateGroup,
+} from '@/api/user'
+
+const loading = ref(false)
+const tableData = ref([])
+const groupDialogVisible = ref(false)
+const permDialogVisible = ref(false)
+const allPermissions = ref({})
+const selectedPermissionIds = ref([])
+const currentGroup = ref(null)
+const form = reactive({ id: null, name: '', info: '' })
+
+async function getAll() {
+  loading.value = true
+  try {
+    const res = await getGroupPage({ page: 0, count: 30 })
+    tableData.value = res.items
+  } finally {
+    loading.value = false
+  }
+}
+
+function handleCreate() {
+  form.id = null
+  form.name = ''
+  form.info = ''
+  groupDialogVisible.value = true
+}
+
+function handleEdit(row) {
+  form.id = row.id
+  form.name = row.name
+  form.info = row.info
+  groupDialogVisible.value = true
+}
+
+async function confirmGroup() {
+  if (form.id) {
+    await updateGroup(form.id, { name: form.name, info: form.info })
+  } else {
+    await createGroup({ name: form.name, info: form.info, permission_ids: [] })
+  }
+  ElMessage.success('保存成功')
+  groupDialogVisible.value = false
+  await getAll()
+}
+
+async function handleDelete(row) {
+  await ElMessageBox.confirm('是否删除该角色？', '提示', { type: 'warning' })
+  const res = await deleteGroup(row.id)
+  ElMessage.success(res.message || '删除成功')
+  await getAll()
+}
+
+async function handlePermission(row) {
+  currentGroup.value = row
+  const detail = await getGroupDetail(row.id)
+  const owned = (detail.permissions || []).map(p => p.id)
+  const all = await getAllPermissions()
+  allPermissions.value = all
+  selectedPermissionIds.value = owned
+  permDialogVisible.value = true
+}
+
+async function confirmPermissions() {
+  const detail = await getGroupDetail(currentGroup.value.id)
+  const ownedIds = (detail.permissions || []).map(p => p.id)
+  const toAdd = selectedPermissionIds.value.filter(id => !ownedIds.includes(id))
+  const toRemove = ownedIds.filter(id => !selectedPermissionIds.value.includes(id))
+  if (toAdd.length) {
+    await dispatchPermissions({ group_id: currentGroup.value.id, permission_ids: toAdd })
+  }
+  if (toRemove.length) {
+    await removePermissions({ group_id: currentGroup.value.id, permission_ids: toRemove })
+  }
+  ElMessage.success('权限已更新')
+  permDialogVisible.value = false
+}
+
+onMounted(getAll)
+</script>
+
+<style scoped>
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+.page-title {
+  font-size: 15px;
+  font-weight: 500;
+}
+.perm-module {
+  margin-bottom: 12px;
+}
+.perm-module-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: #606266;
+  margin-bottom: 6px;
+}
+</style>
