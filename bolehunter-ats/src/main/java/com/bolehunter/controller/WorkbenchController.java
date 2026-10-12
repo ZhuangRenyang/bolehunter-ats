@@ -13,13 +13,16 @@ package com.bolehunter.controller;
 import com.bolehunter.common.LocalUser;
 import com.bolehunter.model.UserDO;
 import com.bolehunter.service.WorkbenchService;
+import com.bolehunter.core.annotation.Logger;
 import com.bolehunter.core.annotation.LoginRequired;
 import com.bolehunter.core.annotation.PermissionModule;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.io.IOException;
 import java.util.Map;
 
 /**
@@ -41,5 +44,26 @@ public class WorkbenchController {
     public Map<String, Object> summary() {
         UserDO user = LocalUser.getLocalUser();
         return workbenchService.summary(user == null ? null : user.getId());
+    }
+
+    /**
+     * 数据看板增强：漏斗时间对比 / 顾问业绩排行 / 客户转化率
+     */
+    @GetMapping("/dashboard")
+    @LoginRequired
+    public Map<String, Object> dashboard() {
+        return workbenchService.dashboard();
+    }
+
+    /**
+     * 客户转化率报表 CSV 导出（UTF-8 BOM 兼容 Excel）
+     */
+    @Logger(template = "导出客户转化率报表")
+    @GetMapping("/client-conversion/export")
+    @LoginRequired
+    public void exportClientConversion(HttpServletResponse response) throws IOException {
+        response.setContentType("text/csv;charset=UTF-8");
+        response.setHeader("Content-Disposition", "attachment; filename=client-conversion.csv");
+        response.getWriter().write(workbenchService.clientConversionCsv());
     }
 }

@@ -22,4 +22,17 @@ public interface WorkbenchService {
      * 工作台聚合：统计计数 + 阶段分布 + 今日到期/已逾期任务
      */
     Map<String, Object> summary(Integer userId);
+
+    /**
+     * 数据看板增强（迭代14）：
+     * - funnelTrend：近 30 天 vs 前 30 天各阶段新增推荐数（时间维度对比）
+     * - consultantRanking：本自然月顾问业绩排行（推荐/客户已读/面试/Offer/回款）
+     * - clientConversion：客户转化率（按公司：推荐→面试→Offer→回款）
+     */
+    Map<String, Object> dashboard();
+
+    /**
+     * 客户转化率报表 CSV（UTF-8 BOM 兼容 Excel）
+     */
+    String clientConversionCsv();
 }

@@ -73,6 +73,59 @@
       </el-col>
     </el-row>
 
+    <!-- 数据看板增强：漏斗时间对比 / 顾问业绩 / 客户转化 -->
+    <el-row :gutter="16" class="row-gap">
+      <el-col :span="11">
+        <el-card shadow="hover">
+          <template #header>漏斗时间对比（近 30 天 vs 前 30 天各阶段新增）</template>
+          <div ref="trendRef" class="funnel-chart"></div>
+        </el-card>
+      </el-col>
+      <el-col :span="13">
+        <el-card shadow="hover">
+          <template #header>顾问业绩排行（本自然月）</template>
+          <el-table :data="ranking" size="small" :empty-text="'本月暂无推荐记录'">
+            <el-table-column type="index" label="#" width="44" />
+            <el-table-column prop="nickname" label="顾问" min-width="90" show-overflow-tooltip />
+            <el-table-column prop="total" label="新增推荐" width="84" sortable />
+            <el-table-column prop="read_cnt" label="客户已读" width="84" sortable />
+            <el-table-column prop="interview_cnt" label="面试" width="68" sortable />
+            <el-table-column prop="offer_cnt" label="Offer" width="72" sortable />
+            <el-table-column prop="paid_cnt" label="回款" width="68" sortable />
+          </el-table>
+        </el-card>
+      </el-col>
+    </el-row>
+
+    <el-row class="row-gap">
+      <el-col :span="24">
+        <el-card shadow="hover">
+          <template #header>
+            <div class="card-head">
+              <span>客户转化率（按公司，取推荐量 Top 20）</span>
+              <el-button type="primary" size="small" plain icon="Download" @click="handleExportConversion">导出 CSV</el-button>
+            </div>
+          </template>
+          <el-table :data="conversion" size="small" empty-text="暂无客户推荐数据">
+            <el-table-column prop="client_name" label="客户公司" min-width="140" show-overflow-tooltip />
+            <el-table-column prop="total" label="推荐数" width="76" sortable />
+            <el-table-column prop="read_cnt" label="客户已读" width="84" sortable />
+            <el-table-column prop="interview_cnt" label="面试及之后" width="96" sortable />
+            <el-table-column prop="offer_cnt" label="Offer及之后" width="100" sortable />
+            <el-table-column prop="paid_cnt" label="回款" width="72" sortable />
+            <el-table-column label="回款转化率" width="180">
+              <template #default="{ row }">
+                <div class="rate-cell">
+                  <el-progress :percentage="Number(row.paid_rate) || 0" :stroke-width="10"
+                    :color="Number(row.paid_rate) >= 30 ? '#67c23a' : Number(row.paid_rate) >= 10 ? '#e6a23c' : '#f56c6c'" />
+                </div>
+              </template>
+            </el-table-column>
+          </el-table>
+        </el-card>
+      </el-col>
+    </el-row>
+
     <!-- 新建任务 -->
     <el-dialog v-model="taskDialogVisible" title="新建任务" width="440px">
       <el-form ref="taskFormRef" :model="taskForm" :rules="taskRules" label-width="90px">
@@ -99,7 +152,8 @@
 import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import * as echarts from 'echarts'
-import { getWorkbenchSummary, getMyTasks, createTask, doneTask, deleteTask } from '@/api/workbench'
+import { getWorkbenchSummary, getWorkbenchDashboard, exportClientConversionCsv,
+  getMyTasks, createTask, doneTask, deleteTask } from '@/api/workbench'
 
 const STAGE_LABELS = {
   PENDING: '待推荐', RECOMMENDED: '已推荐', CLIENT_READ: '客户已读', INTERVIEW_PENDING: '待面试',
@@ -151,6 +205,60 @@ async function getAll() {
   tasks.value = [...overdue, ...today]
   await nextTick()
   renderFunnel()
+  await loadDashboard()
+}
+
+// ---------- 数据看板增强（迭代14） ----------
+const trendRef = ref()
+const ranking = ref([])
+const conversion = ref([])
+let trendChart = null
+
+async function loadDashboard() {
+  try {
+    const res = await getWorkbenchDashboard()
+    ranking.value = res.consultantRanking || []
+    conversion.value = res.clientConversion || []
+    await nextTick()
+    renderTrend(res.funnelTrend || [])
+  } catch (e) {
+    ranking.value = []
+    conversion.value = []
+  }
+}
+
+function renderTrend(trend) {
+  if (!trendRef.value) return
+  if (!trendChart) {
+    trendChart = echarts.init(trendRef.value)
+    window.addEventListener('resize', () => trendChart && trendChart.resize())
+  }
+  const stages = trend.filter(x => x.stage !== 'ARCHIVED')
+  trendChart.setOption({
+    tooltip: { trigger: 'axis' },
+    legend: { data: ['近 30 天', '前 30 天'], bottom: 0 },
+    grid: { left: 8, right: 12, top: 24, bottom: 34, containLabel: true },
+    xAxis: {
+      type: 'category',
+      data: stages.map(x => STAGE_LABELS[x.stage] || x.stage),
+      axisLabel: { fontSize: 10, interval: 0, rotate: 30 },
+    },
+    yAxis: { type: 'value', minInterval: 1 },
+    series: [
+      { name: '近 30 天', type: 'bar', barMaxWidth: 18, itemStyle: { color: '#409eff' }, data: stages.map(x => x.recent) },
+      { name: '前 30 天', type: 'bar', barMaxWidth: 18, itemStyle: { color: '#c0c4cc' }, data: stages.map(x => x.prev) },
+    ],
+  })
+}
+
+async function handleExportConversion() {
+  const blob = await exportClientConversionCsv()
+  const url = window.URL.createObjectURL(new Blob([blob], { type: 'text/csv;charset=utf-8' }))
+  const a = document.createElement('a')
+  a.href = url
+  a.download = 'client-conversion.csv'
+  a.click()
+  window.URL.revokeObjectURL(url)
 }
 
 // ---------- 漏斗图 ----------
@@ -190,6 +298,10 @@ onBeforeUnmount(() => {
   if (chart) {
     chart.dispose()
     chart = null
+  }
+  if (trendChart) {
+    trendChart.dispose()
+    trendChart = null
   }
 })
 
@@ -276,5 +388,8 @@ onMounted(getAll)
 .funnel-chart {
   height: 300px;
   width: 100%;
+}
+.rate-cell {
+  width: 90%;
 }
 </style>

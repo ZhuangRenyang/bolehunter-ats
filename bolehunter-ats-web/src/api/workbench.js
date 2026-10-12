@@ -9,12 +9,27 @@
  * 以任何网络服务形式提供本程序（含 SaaS 托管）同样必须遵守 AGPL-3.0 开源。
  */
 import { get, post, put, _delete } from './request'
+import defaultAxios from './request'
 
 /**
  * 工作台聚合
  */
 export function getWorkbenchSummary() {
   return get('recruit/workbench/summary')
+}
+
+/**
+ * 数据看板增强：漏斗时间对比 / 顾问业绩排行 / 客户转化率
+ */
+export function getWorkbenchDashboard() {
+  return get('recruit/workbench/dashboard')
+}
+
+/**
+ * 客户转化率报表 CSV 下载
+ */
+export function exportClientConversionCsv() {
+  return defaultAxios.get('recruit/workbench/client-conversion/export', { responseType: 'blob' })
 }
 
 /**
