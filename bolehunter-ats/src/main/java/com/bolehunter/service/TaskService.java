@@ -15,6 +15,7 @@ import com.bolehunter.dto.task.CreateTaskDTO;
 import com.bolehunter.model.TaskDO;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 任务服务
@@ -41,4 +42,11 @@ public interface TaskService extends IService<TaskDO> {
      * 按关联对象查询任务（recommendation/client/candidate + id）
      */
     List<TaskDO> getByRelated(String relatedType, Integer relatedId);
+
+    /**
+     * 批量统计关联对象的紧急任务数（今日到期 + 已逾期，仅待办）
+     *
+     * @return key = relatedId, value = 紧急任务数（无任务的不在 map 中）
+     */
+    Map<Integer, Long> getUrgentCounts(String relatedType, List<Integer> relatedIds);
 }

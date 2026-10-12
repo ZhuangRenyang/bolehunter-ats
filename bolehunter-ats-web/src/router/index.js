@@ -20,6 +20,13 @@ const routes = [
     meta: { public: true },
   },
   {
+    // 免登录推荐确认页（客户 HR 用，public 放行）
+    path: '/confirm/:token',
+    name: 'confirmPage',
+    component: () => import('@/view/confirm/confirm-page.vue'),
+    meta: { public: true, title: '推荐确认' },
+  },
+  {
     path: '/',
     component: Layout,
     redirect: '/workbench',

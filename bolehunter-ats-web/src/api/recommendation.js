@@ -36,6 +36,15 @@ export const updateRecommendationFeedback = (id, feedback) =>
 export const deleteRecommendation = id => _delete(`recruit/recommendation/${id}`)
 export const getJobOptions = () => get('recruit/recommendation/job-options')
 
+/** 生成/刷新免登录确认链接（返回 confirm_token + url） */
+export const generateConfirmToken = id => post(`recruit/recommendation/${id}/confirm-token`, {})
+
+/** ===== 免登录确认（匿名，不需要 token 的 request 实例见 open.js） ===== */
+
+/** 批量统计关联对象紧急任务数（看板角标） */
+export const getUrgentTaskCounts = ids =>
+  get('recruit/task/urgent-counts', { related_type: 'recommendation', ids: ids.join(',') })
+
 export function exportCsv(params) {
   return defaultAxios.get('recruit/recommendation/export', { params, responseType: 'blob' })
 }

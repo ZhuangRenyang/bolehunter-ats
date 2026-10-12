@@ -24,16 +24,19 @@ import com.bolehunter.mapper.RecommendationStageHistoryMapper;
 import com.bolehunter.mapper.UserMapper;
 import com.bolehunter.model.CandidateDO;
 import com.bolehunter.model.CompanyDO;
+import com.bolehunter.model.NotifyDO;
 import com.bolehunter.model.PositionDO;
 import com.bolehunter.model.RecommendationDO;
 import com.bolehunter.model.RecommendationStageHistoryDO;
 import com.bolehunter.model.UserDO;
+import com.bolehunter.service.NotifyService;
 import com.bolehunter.service.RecommendationService;
 import com.bolehunter.core.exception.ForbiddenException;
 import com.bolehunter.core.exception.NotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -339,5 +342,124 @@ public class RecommendationServiceImpl extends ServiceImpl<RecommendationMapper,
                 .distinct()
                 .collect(Collectors.toList());
         return ids.isEmpty() ? Collections.emptyList() : ids;
+    }
+
+    // ==================== 免登录确认链接（v1.1） ====================
+
+    private static final long CONFIRM_EXPIRE_MILLIS = 7L * 24 * 3600 * 1000;
+
+    @Autowired
+    private NotifyService notifyService;
+
+    @Override
+    public String generateConfirmToken(Integer id) {
+        RecommendationDO recommendation = this.getById(id);
+        if (recommendation == null) {
+            throw new NotFoundException(80230);
+        }
+        // SecureRandom 生成 32 位十六进制 token
+        SecureRandom random = new SecureRandom();
+        StringBuilder token = new StringBuilder(32);
+        for (int i = 0; i < 32; i++) {
+            token.append(Integer.toHexString(random.nextInt(16)));
+        }
+        RecommendationDO patch = new RecommendationDO();
+        patch.setId(id);
+        patch.setConfirmToken(token.toString());
+        patch.setConfirmExpire(new Date(System.currentTimeMillis() + CONFIRM_EXPIRE_MILLIS));
+        this.updateById(patch);
+        return token.toString();
+    }
+
+    /**
+     * 校验 token：存在对应推荐 + 未过期；返回推荐记录
+     */
+    private RecommendationDO requireValidByToken(String token) {
+        if (token == null || token.length() != 32) {
+            throw new NotFoundException(80230);
+        }
+        QueryWrapper<RecommendationDO> wrapper = new QueryWrapper<>();
+        wrapper.lambda().eq(RecommendationDO::getConfirmToken, token).last("LIMIT 1");
+        RecommendationDO recommendation = this.getOne(wrapper);
+        if (recommendation == null) {
+            throw new NotFoundException(80230);
+        }
+        if (recommendation.getConfirmExpire() == null
+                || recommendation.getConfirmExpire().before(new Date())) {
+            throw new ForbiddenException(80250);
+        }
+        return recommendation;
+    }
+
+    @Override
+    public Map<String, Object> getConfirmInfo(String token) {
+        RecommendationDO recommendation = requireValidByToken(token);
+        fillDisplayFields(List.of(recommendation));
+        Map<String, Object> info = new LinkedHashMap<>();
+        info.put("candidate_name", recommendation.getCandidateName());
+        info.put("candidate_position", recommendation.getCandidatePosition());
+        info.put("job_title", recommendation.getJobTitle());
+        info.put("client_name", recommendation.getClientName());
+        info.put("current_stage", recommendation.getCurrentStage());
+        info.put("stage_time", recommendation.getStageTime());
+        info.put("feedback", recommendation.getFeedback());
+        info.put("expire", recommendation.getConfirmExpire());
+        return info;
+    }
+
+    @Override
+    public Map<String, Object> handleConfirmAction(String token, String action, String feedback) {
+        RecommendationDO recommendation = requireValidByToken(token);
+        String fromStage = recommendation.getCurrentStage();
+        // 动作 → 目标阶段（状态机前进，不回退）
+        String toStage;
+        String actionText;
+        switch (action == null ? "" : action) {
+            case "read" -> {
+                toStage = "CLIENT_READ";
+                actionText = "客户已读";
+            }
+            case "interview" -> {
+                toStage = "INTERVIEW_PENDING";
+                actionText = "客户约面";
+            }
+            case "reject" -> {
+                toStage = "ARCHIVED";
+                actionText = "客户婉拒";
+            }
+            default -> throw new ForbiddenException(80260);
+        };
+        // 客户反馈（可选）
+        String fb = feedback == null ? null : feedback.trim();
+        if (fb != null && !fb.isEmpty()) {
+            RecommendationDO fbPatch = new RecommendationDO();
+            fbPatch.setId(recommendation.getId());
+            fbPatch.setFeedback(fb);
+            fbPatch.setFeedbackTime(new Date());
+            this.updateById(fbPatch);
+        }
+        RecommendationDO stagePatch = new RecommendationDO();
+        stagePatch.setId(recommendation.getId());
+        stagePatch.setCurrentStage(toStage);
+        stagePatch.setStageTime(new Date());
+        this.updateById(stagePatch);
+        recordHistory(recommendation.getId(), fromStage, toStage, fb == null || fb.isEmpty() ? "[客户确认链接] " + actionText : fb, null);
+        // 站内通知负责顾问（按用户名投递）
+        if (recommendation.getOwnerId() != null) {
+            UserDO owner = userMapper.selectById(recommendation.getOwnerId());
+            if (owner != null) {
+                NotifyDO notify = new NotifyDO();
+                notify.setContent("[客户确认] 推荐记录#" + recommendation.getId() + " 客户执行了「" + actionText + "」"
+                        + (fb == null || fb.isEmpty() ? "" : "，反馈：" + fb));
+                notify.setUserName(owner.getUsername());
+                notify.setIsRead("false");
+                notify.setTime(new Date());
+                notifyService.save(notify);
+            }
+        }
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("stage", toStage);
+        result.put("message", actionText + "成功");
+        return result;
     }
 }

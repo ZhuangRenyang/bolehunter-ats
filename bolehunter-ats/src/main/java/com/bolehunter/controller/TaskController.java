@@ -73,6 +73,17 @@ public class TaskController {
     }
 
     /**
+     * 批量统计关联对象的紧急任务数（今日到期/已逾期，看板卡片角标用）
+     */
+    @GetMapping("/urgent-counts")
+    @LoginRequired
+    public java.util.Map<Integer, Long> urgentCounts(
+            @RequestParam("related_type") @NotBlank(message = "{candidate.name.not-blank}") String relatedType,
+            @RequestParam("ids") List<Integer> ids) {
+        return taskService.getUrgentCounts(relatedType, ids);
+    }
+
+    /**
      * 新增任务
      */
     @Logger(template = "新增任务")

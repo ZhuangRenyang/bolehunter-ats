@@ -38,7 +38,12 @@
             <div class="card-sub">{{ item.job_title || '—' }}</div>
             <div class="card-footer">
               <span>{{ formatDate(item.stage_time) }}</span>
-              <span v-if="item.feedback" class="feedback-dot">反馈</span>
+              <span class="footer-badges">
+                <el-tooltip content="关联任务今日到期或已逾期" placement="top">
+                  <span v-if="urgentCounts[item.id]" class="task-dot">⏰ {{ urgentCounts[item.id] }}</span>
+                </el-tooltip>
+                <span v-if="item.feedback" class="feedback-dot">反馈</span>
+              </span>
             </div>
           </div>
           <div v-if="groupItems(stage.value).length === 0" class="empty-column">拖拽卡片到此</div>
@@ -138,6 +143,7 @@
         </el-tab-pane>
       </el-tabs>
       <template #footer>
+        <el-button type="warning" plain @click="handleGenConfirmLink">客户确认链接</el-button>
         <el-button type="primary" @click="confirmDetailSave">保 存</el-button>
         <el-button @click="detailDialogVisible = false">取 消</el-button>
       </template>
@@ -149,8 +155,8 @@
 import { onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
-  STAGES, createRecommendation, getJobOptions, getKanban, updateRecommendationFeedback,
-  updateRecommendationStage,
+  STAGES, createRecommendation, generateConfirmToken, getJobOptions, getKanban, getUrgentTaskCounts,
+  updateRecommendationFeedback, updateRecommendationStage,
 } from '@/api/recommendation'
 import { getCandidateOptions } from '@/api/candidate'
 import { getClientOwners } from '@/api/client'
@@ -183,6 +189,7 @@ const communications = ref([])
 const stageHistory = ref([])
 const commForm = reactive({ type: 'phone', content: '' })
 const relatedTasks = ref([])
+const urgentCounts = ref({})
 
 const COMM_TYPE_LABELS = {
   phone: '电话', wechat: '微信', email: '邮件', meeting: '面谈', note: '备注', other: '其他',
@@ -216,6 +223,39 @@ async function getAll() {
     items.value = await getKanban(params)
   } finally {
     loading.value = false
+  }
+  await loadUrgentCounts()
+}
+
+/** 批量加载看板卡片的紧急任务数（今日到期/已逾期） */
+async function loadUrgentCounts() {
+  const ids = items.value.map(item => item.id)
+  if (!ids.length) {
+    urgentCounts.value = {}
+    return
+  }
+  try {
+    urgentCounts.value = await getUrgentTaskCounts(ids)
+  } catch (e) {
+    urgentCounts.value = {}
+  }
+}
+
+/** 生成/刷新免登录客户确认链接并复制到剪贴板 */
+async function handleGenConfirmLink() {
+  const res = await generateConfirmToken(current.value.id)
+  const link = `${window.location.origin}${res.url}`
+  try {
+    await navigator.clipboard.writeText(link)
+    ElMessageBox.alert(
+      `<p>已复制到剪贴板：</p><code style="word-break:break-all">${link}</code><p style="color:#999">链接 7 天内有效，发给客户 HR 即可免登录查看并确认。</p>`,
+      '客户确认链接',
+      { dangerouslyUseHTMLString: true, confirmButtonText: '好 的' },
+    )
+  } catch (e) {
+    ElMessageBox.prompt('复制以下链接发给客户 HR（7 天内有效）', '客户确认链接', {
+      inputValue: link, readOnly: true, confirmButtonText: '关 闭', showCancelButton: false,
+    })
   }
 }
 
@@ -440,6 +480,15 @@ onMounted(async () => {
 }
 .feedback-dot {
   color: #e6a23c;
+}
+.footer-badges {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+}
+.task-dot {
+  color: #f56c6c;
+  font-weight: 600;
 }
 .empty-column {
   font-size: 12px;

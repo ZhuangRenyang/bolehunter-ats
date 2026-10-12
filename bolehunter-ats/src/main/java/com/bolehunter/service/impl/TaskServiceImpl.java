@@ -20,8 +20,10 @@ import com.bolehunter.model.UserDO;
 import com.bolehunter.service.TaskService;
 import com.bolehunter.core.exception.NotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
@@ -36,6 +38,9 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, TaskDO> implements 
 
     @Autowired
     private UserMapper userMapper;
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     @Override
     public boolean createTask(CreateTaskDTO validator, Integer ownerId) {
@@ -89,6 +94,37 @@ public class TaskServiceImpl extends ServiceImpl<TaskMapper, TaskDO> implements 
             tasks.forEach(task -> task.setOwnerName(nameMap.get(task.getOwnerId())));
         }
         return tasks;
+    }
+
+    @Override
+    public Map<Integer, Long> getUrgentCounts(String relatedType, List<Integer> relatedIds) {
+        Map<Integer, Long> result = new HashMap<>();
+        if (relatedIds == null || relatedIds.isEmpty()) {
+            return result;
+        }
+        // 防御：relatedType 白名单校验（拼入 SQL 前确保安全）
+        if (!"recommendation".equals(relatedType) && !"client".equals(relatedType) && !"candidate".equals(relatedType)) {
+            return result;
+        }
+        List<Integer> ids = relatedIds.stream().filter(id -> id != null && id > 0).distinct().collect(java.util.stream.Collectors.toList());
+        if (ids.isEmpty()) {
+            return result;
+        }
+        StringBuilder in = new StringBuilder();
+        for (int i = 0; i < ids.size(); i++) {
+            in.append(i == 0 ? "" : ",").append(ids.get(i));
+        }
+        // 时间窗口用 MySQL NOW() 计算，避免 JVM 与数据库时区不一致
+        // 紧急 = 已逾期（due < NOW）或今日到期（due < 明天 0 点），二者可合并为 due < 明天 0 点
+        String sql = "SELECT related_id, COUNT(*) AS cnt FROM task "
+                + "WHERE status = 0 AND delete_time IS NULL AND related_type = '" + relatedType + "' "
+                + "AND related_id IN (" + in + ") "
+                + "AND due_time < DATE_ADD(CURDATE(), INTERVAL 1 DAY) "
+                + "GROUP BY related_id";
+        jdbcTemplate.query(sql, rs -> {
+            result.put(rs.getInt("related_id"), rs.getLong("cnt"));
+        });
+        return result;
     }
 
     @Override

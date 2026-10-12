@@ -177,4 +177,18 @@ public class RecommendationController {
     public List<Map<String, Object>> jobOptions() {
         return recommendationService.getJobOptions();
     }
+
+    /**
+     * 生成/刷新免登录确认链接 token（有效期 7 天）
+     */
+    @Logger(template = "生成客户确认链接")
+    @PostMapping("/{id}/confirm-token")
+    @LoginRequired
+    public Map<String, Object> generateConfirmToken(
+            @PathVariable @Positive(message = "{id.positive}") Integer id) {
+        String token = recommendationService.generateConfirmToken(id);
+        return Map.of("confirm_token", token,
+                "url", "/confirm/" + token,
+                "expire_days", 7);
+    }
 }

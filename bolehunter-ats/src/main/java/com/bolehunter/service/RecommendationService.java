@@ -58,4 +58,24 @@ public interface RecommendationService extends IService<RecommendationDO> {
      * 推荐阶段流转历史（时间正序）
      */
     List<RecommendationStageHistoryDO> getStageHistory(Integer recommendationId);
+
+    /**
+     * 生成/刷新免登录确认链接 token（有效期 7 天）
+     */
+    String generateConfirmToken(Integer id);
+
+    /**
+     * 按 token 获取推荐摘要（免登录，仅返回脱敏字段）
+     *
+     * @throws NotFoundException token 无效或已过期
+     */
+    Map<String, Object> getConfirmInfo(String token);
+
+    /**
+     * 客户 HR 通过确认链接执行动作（免登录）
+     *
+     * @param action read=已读 / interview=约面 / reject=婉拒
+     * @param feedback 客户反馈（可选）
+     */
+    Map<String, Object> handleConfirmAction(String token, String action, String feedback);
 }
