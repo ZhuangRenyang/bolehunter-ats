@@ -8,7 +8,7 @@
  * 依据 AGPL-3.0 发布；详见仓库根目录 LICENSE 文件。本程序不提供任何担保。
  * 以任何网络服务形式提供本程序（含 SaaS 托管）同样必须遵守 AGPL-3.0 开源。
  */
-import { get, post, put, _delete } from './request'
+import defaultAxios, { get, post, put, _delete } from './request'
 
 /**
  * 部门
@@ -41,3 +41,10 @@ export const createFlag = data => post('recruit/flag', data)
 export const updateFlag = (id, data) => put(`recruit/flag/${id}`, data)
 export const toggleFlag = id => put(`recruit/flag/${id}/toggle`)
 export const deleteFlag = id => _delete(`recruit/flag/${id}`)
+
+/**
+ * 代码生成
+ */
+export const getGenTables = () => get('recruit/gen/tables')
+export const previewGenTable = tableName => get('recruit/gen/preview', { table_name: tableName })
+export const downloadGen = data => defaultAxios.post('recruit/gen/download', data, { responseType: 'blob' })

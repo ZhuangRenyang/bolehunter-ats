@@ -67,6 +67,12 @@ const routes = [
         meta: { title: '功能开关' },
       },
       {
+        path: '/setting/gen',
+        name: 'gen',
+        component: () => import('@/view/setting/gen.vue'),
+        meta: { title: '代码生成' },
+      },
+      {
         path: '/client/list',
         name: 'clientList',
         component: () => import('@/view/client/client-list.vue'),

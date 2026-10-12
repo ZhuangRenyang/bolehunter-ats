@@ -48,7 +48,7 @@ export const settingStage = {
   type: 'folder',
   icon: 'Setting',
   inNav: true,
-  permission: ['查询部门树', '查询字典类型', '查询功能开关'],
+  permission: ['查询部门树', '查询字典类型', '查询功能开关', '查询代码生成表列表'],
   children: [
     {
       title: '部门管理',
@@ -79,6 +79,16 @@ export const settingStage = {
       inNav: true,
       icon: 'Open',
       permission: ['查询功能开关'],
+    },
+    {
+      title: '代码生成',
+      type: 'view',
+      name: 'gen',
+      route: '/setting/gen',
+      filePath: 'view/setting/gen.vue',
+      inNav: true,
+      icon: 'MagicStick',
+      permission: ['查询代码生成表列表'],
     },
   ],
 }
