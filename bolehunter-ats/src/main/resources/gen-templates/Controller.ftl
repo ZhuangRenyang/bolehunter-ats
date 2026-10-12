@@ -13,18 +13,22 @@
 package ${packageName}.controller;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.bolehunter.common.annotation.Logger;
-import com.bolehunter.common.annotation.PermissionMeta;
+import com.bolehunter.core.annotation.Logger;
+import com.bolehunter.core.annotation.PermissionMeta;
 import com.bolehunter.common.util.PageUtil;
+import com.bolehunter.dto.${moduleName}.${className}CreateDTO;
+import com.bolehunter.dto.${moduleName}.${className}UpdateDTO;
 import com.bolehunter.model.${className}DO;
 import com.bolehunter.service.${className}Service;
 import com.bolehunter.vo.CreatedVO;
 import com.bolehunter.vo.DeletedVO;
 import com.bolehunter.vo.PageResponseVO;
 import com.bolehunter.vo.UpdatedVO;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Positive;
+import org.springframework.beans.BeanUtils;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -76,29 +80,27 @@ public class ${className}Controller {
 
     /**
      * 创建${businessName}
-     * TODO 将 Map 替换为专用 CreateDTO（含 jakarta.validation 校验注解）
      */
     @Logger(template = "新增${businessName}")
     @PostMapping
     @PermissionMeta(value = "新增${businessName}")
-    public CreatedVO create(@RequestBody Map<String, Object> body) {
+    public CreatedVO create(@RequestBody @Valid ${className}CreateDTO dto) {
         ${className}DO ${classNameCamel} = new ${className}DO();
-        // TODO 按业务字段赋值后调用 create
+        BeanUtils.copyProperties(dto, ${classNameCamel});
         ${classNameCamel}Service.create(${classNameCamel});
         return new CreatedVO();
     }
 
     /**
      * 更新${businessName}
-     * TODO 将 Map 替换为专用 UpdateDTO
      */
     @Logger(template = "更新${businessName}")
     @PutMapping("/{id}")
     @PermissionMeta(value = "更新${businessName}")
     public UpdatedVO update(@PathVariable("id") @Positive(message = "{id.positive}") ${pkJavaType} id,
-                            @RequestBody Map<String, Object> body) {
+                            @RequestBody @Valid ${className}UpdateDTO dto) {
         ${className}DO ${classNameCamel} = new ${className}DO();
-        ${classNameCamel}.set${pkFieldName?cap_first}(id);
+        BeanUtils.copyProperties(dto, ${classNameCamel});
         ${classNameCamel}Service.update(${classNameCamel});
         return new UpdatedVO();
     }

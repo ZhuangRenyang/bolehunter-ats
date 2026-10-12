@@ -29,12 +29,27 @@
         <el-form-item label="作者">
           <el-input v-model="form.author" placeholder="默认 ZhuangRenyang" maxlength="30" />
         </el-form-item>
+        <el-form-item label="软删除模式">
+          <el-switch v-model="form.inheritBase" :disabled="!preview.tableName" />
+          <span class="gen-tip">继承 BaseModel（含 create/update/delete_time 与逻辑删除）；表缺这三列时强制关闭</span>
+        </el-form-item>
         <el-form-item>
+          <el-button type="success" icon="Code" :loading="previewingCode" :disabled="!form.tableName || !form.moduleName || !form.className"
+            @click="handlePreviewCode">预览生成代码</el-button>
           <el-button type="primary" icon="Download" :loading="downloading" :disabled="!form.tableName || !form.moduleName || !form.className"
             @click="handleDownload">生成并下载 zip</el-button>
           <span class="gen-tip">生成 DO / Mapper / Service / Controller / Vue 列表页，自动携带 AGPL 版权头</span>
         </el-form-item>
       </el-form>
+    </el-card>
+
+    <el-card shadow="never" style="margin-bottom: 14px" v-if="codeFiles.length">
+      <template #header>生成代码预览（共 {{ codeFiles.length }} 个文件）</template>
+      <el-tabs v-model="activeFile" type="border-card">
+        <el-tab-pane v-for="f in codeFiles" :key="f.name" :name="f.name" :label="f.name.split('/').pop()">
+          <pre class="code-view">{{ f.content }}</pre>
+        </el-tab-pane>
+      </el-tabs>
     </el-card>
 
     <el-card shadow="never">
@@ -60,18 +75,22 @@
 <script setup>
 import { onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
-import { getGenTables, previewGenTable, downloadGen } from '@/api/setting'
+import { getGenTables, previewGenTable, downloadGen, previewCodeGen } from '@/api/setting'
 
 const tables = ref([])
 const preview = reactive({ tableName: '' })
 const previewing = ref(false)
 const downloading = ref(false)
+const previewingCode = ref(false)
+const codeFiles = ref([])
+const activeFile = ref('')
 const form = reactive({
   tableName: '',
   moduleName: '',
   className: '',
   businessName: '',
   author: '',
+  inheritBase: false,
 })
 
 
@@ -90,6 +109,7 @@ async function loadPreview(tableName) {
     const res = await previewGenTable(tableName)
     preview.tableName = tableName
     previewColumns.value = res.columns || []
+    form.inheritBase = !!res.hasBaseColumns
     // 自动推断模块名与类名
     if (!form.moduleName) form.moduleName = tableName.replace(/_/g, '')
     if (!form.className) {
@@ -108,16 +128,34 @@ async function loadPreview(tableName) {
   }
 }
 
+function genPayload() {
+  return {
+    table_name: form.tableName,
+    module_name: form.moduleName,
+    class_name: form.className,
+    business_name: form.businessName,
+    author: form.author || 'ZhuangRenyang',
+    inherit_base: form.inheritBase,
+  }
+}
+
+async function handlePreviewCode() {
+  previewingCode.value = true
+  try {
+    const res = await previewCodeGen(genPayload())
+    codeFiles.value = Object.entries(res || {}).map(([name, content]) => ({ name, content }))
+    activeFile.value = codeFiles.value.length ? codeFiles.value[0].name : ''
+  } catch (e) {
+    console.log(e)
+  } finally {
+    previewingCode.value = false
+  }
+}
+
 async function handleDownload() {
   downloading.value = true
   try {
-    const blob = await downloadGen({
-      table_name: form.tableName,
-      module_name: form.moduleName,
-      class_name: form.className,
-      business_name: form.businessName,
-      author: form.author || 'ZhuangRenyang',
-    })
+    const blob = await downloadGen(genPayload())
     const url = window.URL.createObjectURL(new Blob([blob]))
     const link = document.createElement('a')
     link.href = url
@@ -140,6 +178,14 @@ onMounted(loadTables)
   font-size: 16px;
   font-weight: 600;
   margin-bottom: 12px;
+}
+.code-view {
+  max-height: 420px;
+  overflow: auto;
+  font-size: 12px;
+  line-height: 1.5;
+  margin: 0;
+  white-space: pre;
 }
 .gen-tip {
   margin-left: 10px;

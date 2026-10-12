@@ -22,8 +22,12 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
-<#list columns as c><#if c.javaType == "Date" || c.javaType == "java.time.LocalDate" || c.javaType == "java.math.BigDecimal">import ${c.javaType};
-</#if></#list>
+<#assign hasUtilDate = false /><#assign hasLocalDate = false /><#assign hasBigDecimal = false />
+<#list columns as c><#if c.javaType == "Date"><#assign hasUtilDate = true /></#if><#if c.javaType == "java.time.LocalDate"><#assign hasLocalDate = true /></#if><#if c.javaType == "java.math.BigDecimal"><#assign hasBigDecimal = true /></#if></#list>
+<#if hasUtilDate>import java.util.Date;
+</#if><#if hasLocalDate>import java.time.LocalDate;
+</#if><#if hasBigDecimal>import java.math.BigDecimal;
+</#if>
 /**
  * ${businessName} 数据对象（表 ${tableName}）
 <#if hasBaseColumns> * 继承 BaseModel：含 id / create_time / update_time / delete_time（逻辑删除）

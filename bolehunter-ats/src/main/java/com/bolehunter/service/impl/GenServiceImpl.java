@@ -59,6 +59,7 @@ public class GenServiceImpl implements GenService {
         freemarker = new Configuration(Configuration.VERSION_2_3_32);
         freemarker.setClassForTemplateLoading(GenServiceImpl.class, "/gen-templates");
         freemarker.setDefaultEncoding("UTF-8");
+        freemarker.setNumberFormat("0");
     }
 
     @Override
@@ -95,26 +96,70 @@ public class GenServiceImpl implements GenService {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
-    public byte[] generate(Map<String, Object> params) throws Exception {
+    public Map<String, String> previewCode(Map<String, Object> params) throws Exception {
+        Map<String, Object> model = prepareModel(params);
+        String[] templates = templateNames();
+        Map<String, String> outputs = new LinkedHashMap<>();
+        for (String t : templates) {
+            Template template = freemarker.getTemplate(t + ".ftl");
+            StringWriter writer = new StringWriter();
+            template.process(model, writer);
+            outputs.put(outputFileName(t, str(model.get("moduleName")), str(model.get("className"))), writer.toString());
+        }
+        return outputs;
+    }
+
+    private String[] templateNames() {
+        return new String[]{"DO", "Mapper.java", "Mapper.xml", "Service", "ServiceImpl", "Controller", "CreateDTO", "UpdateDTO", "vue-list"};
+    }
+
+    private String outputFileName(String t, String moduleName, String className) {
+        switch (t) {
+            case "DO": return "java/com/bolehunter/model/" + className + "DO.java";
+            case "Mapper.java": return "java/com/bolehunter/mapper/" + className + "Mapper.java";
+            case "Mapper.xml": return "resources/mapper/" + className + "Mapper.xml";
+            case "Service": return "java/com/bolehunter/service/" + className + "Service.java";
+            case "ServiceImpl": return "java/com/bolehunter/service/impl/" + className + "ServiceImpl.java";
+            case "Controller": return "java/com/bolehunter/controller/" + className + "Controller.java";
+            case "CreateDTO": return "java/com/bolehunter/dto/" + moduleName + "/" + className + "CreateDTO.java";
+            case "UpdateDTO": return "java/com/bolehunter/dto/" + moduleName + "/" + className + "UpdateDTO.java";
+            case "vue-list": return "web/src/view/" + moduleName + "/" + className + "List.vue";
+            default: return t;
+        }
+    }
+
+    /**
+     * 从请求参数构建模型（含 inheritBase 覆盖逻辑）
+     */
+    private Map<String, Object> prepareModel(Map<String, Object> params) {
         String tableName = str(params.get("table_name"));
         String moduleName = str(params.get("module_name"));
         String className = str(params.get("class_name"));
         String businessName = str(params.get("business_name"));
         String author = str(params.get("author"));
-
         if (tableName.isEmpty() || moduleName.isEmpty() || className.isEmpty()) {
-            throw new IllegalArgumentException("tableName / moduleName / className 不能为空");
+            throw new IllegalArgumentException("table_name / module_name / class_name 不能为空");
         }
         if (!NAME_SAFE.matcher(moduleName).matches()) {
-            throw new IllegalArgumentException("moduleName 仅允许小写字母、数字与下划线，且以字母开头");
+            throw new IllegalArgumentException("module_name 仅允许小写字母、数字与下划线，且以字母开头");
         }
         Map<String, Object> model = buildModel(tableName, moduleName, className, businessName);
+        boolean inheritBase = Boolean.TRUE.equals(params.get("inherit_base"));
+        if (params.containsKey("inherit_base")) {
+            model.put("hasBaseColumns", inheritBase);
+        }
         ((Map<String, Object>) model.get("_meta")).put("author", author.isEmpty() ? "ZhuangRenyang" : author);
+        return model;
+    }
 
-        String[] templates = {"DO", "Mapper.java", "Mapper.xml", "Service", "ServiceImpl", "Controller", "vue-list"};
+    @Override
+    @SuppressWarnings("unchecked")
+    public byte[] generate(Map<String, Object> params) throws Exception {
+        Map<String, Object> model = prepareModel(params);
+        String moduleName = str(model.get("moduleName"));
+        String className = str(model.get("className"));
         Map<String, String> outputs = new LinkedHashMap<>();
-        for (String t : templates) {
+        for (String t : templateNames()) {
             Template template = freemarker.getTemplate(t + ".ftl");
             StringWriter writer = new StringWriter();
             template.process(model, writer);
@@ -132,6 +177,8 @@ public class GenServiceImpl implements GenService {
             put(zos, moduleName + "/java/" + pkgPath + "/service/" + className + "Service.java", outputs.get("Service"));
             put(zos, moduleName + "/java/" + pkgPath + "/service/impl/" + className + "ServiceImpl.java", outputs.get("ServiceImpl"));
             put(zos, moduleName + "/java/" + pkgPath + "/controller/" + className + "Controller.java", outputs.get("Controller"));
+            put(zos, moduleName + "/java/" + pkgPath + "/dto/" + moduleName + "/" + className + "CreateDTO.java", outputs.get("CreateDTO"));
+            put(zos, moduleName + "/java/" + pkgPath + "/dto/" + moduleName + "/" + className + "UpdateDTO.java", outputs.get("UpdateDTO"));
             put(zos, moduleName + "/resources/mapper/" + className + "Mapper.xml", outputs.get("Mapper.xml"));
             put(zos, moduleName + "/web/src/view/" + moduleName + "/" + className + "List.vue", outputs.get("vue-list"));
             put(zos, moduleName + "/README.md", genReadme(meta));
@@ -163,7 +210,7 @@ public class GenServiceImpl implements GenService {
      * 构建模板数据模型：读列元数据并做 Java 类型/驼峰映射
      */
     private Map<String, Object> buildModel(String tableName, String moduleName, String className, String businessName) {
-        String sql = "SELECT column_name, data_type, column_type, column_comment, is_nullable, column_key "
+        String sql = "SELECT column_name, data_type, column_type, column_comment, is_nullable, column_key, character_maximum_length "
                 + "FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = ? "
                 + "ORDER BY ordinal_position";
         List<Map<String, Object>> rows = jdbcTemplate.queryForList(sql, tableName);
@@ -177,6 +224,7 @@ public class GenServiceImpl implements GenService {
         boolean hasDeleteTime = false;
         boolean hasId = false;
         String pkColumnName = "id";
+        String pkDataType = "int";
 
         for (Map<String, Object> row : rows) {
             String col = String.valueOf(row.get("column_name"));
@@ -186,6 +234,7 @@ public class GenServiceImpl implements GenService {
             if ("id".equalsIgnoreCase(col)) {
                 hasId = true;
                 pkColumnName = col;
+                pkDataType = dataType;
             }
             if ("create_time".equals(col)) hasCreateTime = true;
             if ("update_time".equals(col)) hasUpdateTime = true;
@@ -197,9 +246,13 @@ public class GenServiceImpl implements GenService {
             colMap.put("javaType", toJavaType(dataType, String.valueOf(row.get("column_type"))));
             colMap.put("jdbcType", toJdbcType(dataType));
             colMap.put("comment", comment.isEmpty() ? toCamel(col) : comment);
+            Object maxLen = row.get("character_maximum_length");
+            colMap.put("length", maxLen == null ? 0 : ((Number) maxLen).intValue());
             colMap.put("isPk", "PRI".equalsIgnoreCase(String.valueOf(row.get("column_key"))));
             colMap.put("isRequired", "NO".equalsIgnoreCase(String.valueOf(row.get("is_nullable"))) && !"PRI".equalsIgnoreCase(String.valueOf(row.get("column_key"))));
-            colMap.put("isVarchar", "varchar".equalsIgnoreCase(dataType) || "char".equalsIgnoreCase(dataType) || "text".equalsIgnoreCase(dataType));
+            colMap.put("isVarchar", "varchar".equalsIgnoreCase(dataType) || "char".equalsIgnoreCase(dataType));
+            colMap.put("isText", "text".equalsIgnoreCase(dataType));
+            colMap.put("isDateOnly", "date".equalsIgnoreCase(dataType));
             colMap.put("isDate", "datetime".equalsIgnoreCase(dataType) || "date".equalsIgnoreCase(dataType) || "timestamp".equalsIgnoreCase(dataType));
             columns.add(colMap);
         }
@@ -219,6 +272,9 @@ public class GenServiceImpl implements GenService {
             }
         }
 
+        boolean hasDateField = columns.stream().anyMatch(c -> "Date".equals(c.get("javaType")) || "java.time.LocalDate".equals(c.get("javaType")));
+        boolean hasBigDecimalField = columns.stream().anyMatch(c -> "java.math.BigDecimal".equals(c.get("javaType")));
+
         String finalClassName = className.isEmpty() ? toPascal(tableName) : className;
         String finalModuleName = moduleName.isEmpty() ? tableName : moduleName;
 
@@ -233,8 +289,11 @@ public class GenServiceImpl implements GenService {
         model.put("hasBaseColumns", hasBaseColumns);
         model.put("columns", columns);
         model.put("bizColumns", bizColumns);
+        model.put("hasDateField", hasDateField);
+        model.put("hasBigDecimalField", hasBigDecimalField);
         model.put("pkFieldName", toCamel(pkColumnName));
-        model.put("pkJavaType", toJavaType("bigint", "bigint"));
+        // 继承 BaseModel 时主键类型必须与 BaseModel.id(Integer) 一致；独立 DO 才按列类型推断
+        model.put("pkJavaType", hasBaseColumns ? "Integer" : toJavaType(pkDataType, pkDataType));
 
         Map<String, Object> meta = new HashMap<>();
         meta.put("moduleName", finalModuleName);

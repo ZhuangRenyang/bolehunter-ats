@@ -44,7 +44,7 @@
       <el-form :model="form" label-width="110px">
 <#list bizColumns as c>
         <el-form-item label="${c.comment}"<#if c.isRequired> required</#if>>
-<#if c.isVarchar && c.columnType?? && c.columnType?lower_case?contains("text")>
+<#if c.isText>
           <el-input v-model="form.${c.fieldName}" type="textarea" :rows="3" />
 <#elseif c.isDate>
           <el-date-picker v-model="form.${c.fieldName}" type="datetime" value-format="YYYY-MM-DD HH:mm:ss" style="width: 100%" />

@@ -35,8 +35,13 @@ public interface GenService {
     /**
      * 生成代码并打包为 zip 字节流
      *
-     * @param params tableName/moduleName/className/businessName/author
+     * @param params table_name/module_name/class_name/business_name/author/inherit_base
      * @return zip 字节
      */
     byte[] generate(Map<String, Object> params) throws Exception;
+
+    /**
+     * 生成代码预览（不打包，返回 相对路径 -> 文件内容）
+     */
+    Map<String, String> previewCode(Map<String, Object> params) throws Exception;
 }

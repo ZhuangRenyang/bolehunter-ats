@@ -61,6 +61,16 @@ public class GenController {
     }
 
     /**
+     * 生成代码在线预览（不打包，返回 相对路径 -> 文件内容）
+     */
+    @Logger(template = "预览生成代码")
+    @PostMapping("/preview-code")
+    @PermissionMeta(value = "预览生成代码")
+    public Map<String, String> previewCode(@RequestBody Map<String, Object> params) throws Exception {
+        return genService.previewCode(params);
+    }
+
+    /**
      * 生成代码 zip 下载
      */
     @Logger(template = "下载生成代码")
