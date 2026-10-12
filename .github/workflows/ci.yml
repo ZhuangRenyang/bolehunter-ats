@@ -47,8 +47,9 @@ jobs:
           cache: npm
           cache-dependency-path: bolehunter-ats-web/package-lock.json
       - name: 安装依赖
-        working-directory: bolehunter-ats-web
-        run: npm ci --no-audit --no-fund
+        run: |
+          ls bolehunter-ats-web/
+          cd bolehunter-ats-web
+          npm ci --no-audit --no-fund
       - name: 构建前端
-        working-directory: bolehunter-ats-web
-        run: npm run build
+        run: cd bolehunter-ats-web && npm run build
