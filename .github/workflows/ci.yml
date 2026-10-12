@@ -1,0 +1,54 @@
+# BoleHunter 伯乐猎 —— CI
+# push / PR 触发：版权头合规检查 → 后端编译（JDK 17 + Maven）→ 前端构建（Node 22 + Vite）
+# 全绿代表可用；Docker 镜像自动构建（CD）后续接入，见 doc/开发计划与路线图.md 工程优化清单。
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  license:
+    name: License Headers
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: 检查版权头
+        run: python scripts/check_license.py .
+
+  backend:
+    name: Backend Compile (JDK 17)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+      - name: 编译后端
+        working-directory: bolehunter-ats
+        run: mvn -B -q compile
+
+  frontend:
+    name: Frontend Build (Node 22)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: bolehunter-ats-web/package-lock.json
+      - name: 安装依赖
+        working-directory: bolehunter-ats-web
+        run: npm ci
+      - name: 构建前端
+        working-directory: bolehunter-ats-web
+        run: npm run build
