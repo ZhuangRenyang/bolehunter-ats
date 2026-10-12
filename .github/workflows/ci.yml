@@ -48,8 +48,7 @@ jobs:
           cache-dependency-path: bolehunter-ats-web/package-lock.json
       - name: 安装依赖
         working-directory: bolehunter-ats-web
-        # lock 文件由 Windows 生成、含 win32 平台 optional 包，npm ci 在 Linux 会 EBADPLATFORM，故用 install
-        run: npm install --no-audit --no-fund
+        run: npm ci --no-audit --no-fund
       - name: 构建前端
         working-directory: bolehunter-ats-web
         run: npm run build
