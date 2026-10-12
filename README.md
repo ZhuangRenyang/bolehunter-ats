@@ -2,6 +2,9 @@
 
 # BoleHunter · 伯乐猎
 
+[![CI](https://github.com/ZhuangRenyang/bolehunter-ats/actions/workflows/ci.yml/badge.svg)](https://github.com/ZhuangRenyang/bolehunter-ats/actions/workflows/ci.yml)
+![License](https://img.shields.io/badge/License-AGPL--3.0--or--later-blue.svg)
+
 **千里马常有，而伯乐不常有 —— 让小猎头团队，人人都是伯乐。**
 
 轻量级猎头 **ATS + CRM** · 开源版

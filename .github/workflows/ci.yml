@@ -32,9 +32,9 @@ jobs:
           distribution: temurin
           java-version: '17'
           cache: maven
-      - name: 编译后端
+      - name: 编译并测试后端
         working-directory: bolehunter-ats
-        run: mvn -B -q compile
+        run: mvn -B test
 
   frontend:
     name: Frontend Build (Node 22)
