@@ -12,6 +12,11 @@
   <div class="app-layout">
     <aside class="sidebar">
       <div class="logo">猎头 ATS</div>
+      <div class="notice-entry" v-if="userStore.user?.username">
+        <el-badge :value="unreadCount" :hidden="unreadCount === 0" :max="99">
+          <el-button :icon="'Bell'" circle size="small" @click="noticeDrawer = true" />
+        </el-badge>
+      </div>
       <el-scrollbar>
         <el-menu :default-active="activeMenu" router class="sidebar-menu">
           <template v-for="item in navStages" :key="item.title">
@@ -63,17 +68,53 @@
       </main>
     </div>
   </div>
+    <el-drawer v-model="noticeDrawer" title="通知中心" size="380px">
+      <div class="notice-toolbar">
+        <el-button size="small" plain @click="markAll">全部标记已读</el-button>
+      </div>
+      <el-empty v-if="notices.length === 0" description="暂无通知" :image-size="60" />
+      <div v-for="n in notices" :key="n.id" class="notice-row" :class="{ unread: String(n.is_read) === 'false' }">
+        <div class="notice-content">{{ n.content }}</div>
+        <div class="notice-time">{{ (n.time || '').slice(0, 19).replace('T', ' ') }}</div>
+      </div>
+    </el-drawer>
 </template>
 
 <script setup>
-import { computed, onMounted } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { clearTokens, get, TOKEN_ACCESS, TOKEN_REFRESH } from '@/api/request'
+import { getAllMyNotices, markAllRead } from '@/api/notify'
 
 const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
+
+/* ===== 通知中心 ===== */
+const noticeDrawer = ref(false)
+const notices = ref([])
+const unreadCount = ref(0)
+let noticeTimer = null
+
+async function loadNotices() {
+  const username = userStore.user?.username
+  if (!username) return
+  try {
+    const all = await getAllMyNotices(username)
+    notices.value = all || []
+    unreadCount.value = notices.value.filter(n => String(n.is_read) === 'false').length
+  } catch (e) {
+    /* 静默失败，下一轮轮询重试 */
+  }
+}
+
+async function markAll() {
+  const username = userStore.user?.username
+  if (!username) return
+  await markAllRead(username)
+  await loadNotices()
+}
 
 const navStages = computed(() => {
   const { filterStage, stageConfig } = require_stage()
@@ -111,6 +152,7 @@ function handleCommand(command) {
     router.push('/login')
   }
 }
+onBeforeUnmount(() => noticeTimer && clearInterval(noticeTimer))
 </script>
 
 <style lang="scss" scoped>
@@ -125,7 +167,33 @@ function handleCommand(command) {
   display: flex;
   flex-direction: column;
 
-  .logo {
+  .notice-entry {
+  padding: 0 20px 10px;
+  text-align: left;
+}
+.notice-toolbar {
+  margin-bottom: 10px;
+}
+.notice-row {
+  padding: 10px 12px;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  background: #f5f7fa;
+}
+.notice-row.unread {
+  background: #ecf5ff;
+  border-left: 3px solid #409eff;
+}
+.notice-content {
+  font-size: 13px;
+  line-height: 1.6;
+}
+.notice-time {
+  margin-top: 4px;
+  font-size: 12px;
+  color: #909399;
+}
+.logo {
     height: 56px;
     line-height: 56px;
     text-align: center;
