@@ -63,7 +63,22 @@
           and p.delete_time is null
     </select>
 
-    <select id="getPageByKeyword" resultMap="PositionResultMap">
+        <select id="getPageAdmin" resultMap="PositionResultMap">
+        SELECT p.*,c.id as company_id,c.name as company_name,c.description as company_desc,c.logo as logo,ca.id as category_id,ca.name as category_name
+        FROM position p
+                 left join company c on p.company_id = c.id
+                 left join category ca on p.category_id = ca.id
+        where p.delete_time is null
+        <if test="state != null and state != -1">
+          and p.state = #{state}
+        </if>
+        <if test="keyword != null and keyword != ''">
+          and p.title like concat('%',#{keyword},'%')
+        </if>
+        order by p.id desc
+    </select>
+
+<select id="getPageByKeyword" resultMap="PositionResultMap">
         SELECT p.*,c.id as company_id,c.name as company_name,c.description as company_desc,c.logo as logo,ca.id as category_id,ca.name as category_name
         FROM position p
                  left join company c on p.company_id = c.id

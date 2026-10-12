@@ -73,6 +73,18 @@ const routes = [
         meta: { title: '代码生成' },
       },
       {
+        path: '/position/list',
+        name: 'positionList',
+        component: () => import('@/view/position/position-list.vue'),
+        meta: { title: '职位列表' },
+      },
+      {
+        path: '/position/detail/:id',
+        name: 'positionDetail',
+        component: () => import('@/view/position/position-detail.vue'),
+        meta: { title: '职位详情' },
+      },
+      {
         path: '/client/list',
         name: 'clientList',
         component: () => import('@/view/client/client-list.vue'),

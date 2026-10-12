@@ -14,6 +14,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.bolehunter.common.mybatis.Page;
 import com.bolehunter.model.PositionDO;
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import org.apache.ibatis.annotations.Param;
 import com.bolehunter.model.result.PositionResultDO;
 
 import java.util.List;
@@ -39,4 +40,9 @@ public interface PositionMapper extends BaseMapper<PositionDO> {
     IPage<PositionDO> getPage(Page<PositionDO> pager, Integer state);
 
     IPage<PositionResultDO> getPageByKeyword(Page<PositionResultDO> pager, String keyword);
+
+    /**
+     * 管理端职位分页：全状态（state=-1 时不过滤）、可按标题模糊
+     */
+    IPage<PositionResultDO> getPageAdmin(Page<PositionResultDO> pager, @Param("keyword") String keyword, @Param("state") Integer state);
 }

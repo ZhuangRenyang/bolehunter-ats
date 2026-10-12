@@ -277,6 +277,25 @@ public class PositionController {
      * @param keyword
      * @return
      */
+    /**
+     * 管理端职位分页：全状态、支持标题关键词与状态过滤（state=-1 表示全部）
+     */
+    @GetMapping("/page/admin")
+    @PermissionMeta(value = "管理职位分页")
+    public PageResponseVO<PositionResultDO> pageAdmin(
+            @RequestParam(name = "count", required = false, defaultValue = "10")
+            @Min(value = 1, message = "{page.count.min}")
+            @Max(value = 30, message = "{page.count.max}") Integer count,
+            @RequestParam(name = "page", required = false, defaultValue = "0")
+            @Min(value = 0, message = "{page.number.min}") Integer page,
+            @RequestParam(name = "keyword", required = false) String keyword,
+            @RequestParam(name = "state", required = false, defaultValue = "-1") Integer state
+    ) {
+        Page<PositionResultDO> pager = new Page<>(page, count);
+        IPage<PositionResultDO> paging = positionService.getPageAdmin(pager, keyword, state);
+        return PageUtil.build(paging);
+    }
+
     @GetMapping("/page/keyword")
     public PageResponseVO<PositionResultDO> pageKeyword(
             @RequestParam(name = "count", required = false, defaultValue = "10")

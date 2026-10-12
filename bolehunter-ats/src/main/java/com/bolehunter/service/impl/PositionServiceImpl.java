@@ -105,4 +105,9 @@ public class PositionServiceImpl extends ServiceImpl<PositionMapper, PositionDO>
     public IPage<PositionResultDO> getPageByKeyword(Page<PositionResultDO> pager, String keyword) {
         return positionMapper.getPageByKeyword(pager,keyword);
     }
+
+    @Override
+    public IPage<PositionResultDO> getPageAdmin(Page<PositionResultDO> pager, String keyword, Integer state) {
+        return positionMapper.getPageAdmin(pager, keyword, state);
+    }
 }

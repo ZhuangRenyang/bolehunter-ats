@@ -43,6 +43,26 @@ export const adminStage = {
   ],
 }
 
+export const positionStage = {
+  title: '职位管理',
+  type: 'folder',
+  icon: 'Briefcase',
+  inNav: true,
+  permission: ['管理职位分页'],
+  children: [
+    {
+      title: '职位列表',
+      type: 'view',
+      name: 'positionList',
+      route: '/position/list',
+      filePath: 'view/position/position-list.vue',
+      inNav: true,
+      icon: 'Suitcase',
+      permission: ['管理职位分页'],
+    },
+  ],
+}
+
 export const settingStage = {
   title: '系统设置',
   type: 'folder',
@@ -213,6 +233,7 @@ export const stageConfig = [
   candidateStage,
   recommendationStage,
   adminStage,
+  positionStage,
   settingStage,
   logStage,
   clientDetailStage,

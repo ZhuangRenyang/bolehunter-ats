@@ -46,4 +46,9 @@ public interface PositionService extends IService<PositionDO> {
     IPage<PositionDO> getPage(Page<PositionDO> pager, Integer state);
 
     IPage<PositionResultDO> getPageByKeyword(Page<PositionResultDO> pager, String keyword);
+
+    /**
+     * 管理端职位分页（全状态、含公司/分类信息）
+     */
+    IPage<PositionResultDO> getPageAdmin(Page<PositionResultDO> pager, String keyword, Integer state);
 }
