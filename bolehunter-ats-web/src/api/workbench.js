@@ -33,6 +33,13 @@ export function exportClientConversionCsv() {
 }
 
 /**
+ * AI 找人问答（RAG，受功能开关 ai_ask 控制）
+ */
+export function aiAskCandidate(question) {
+  return post('recruit/ai/ask', { question })
+}
+
+/**
  * 任务
  */
 export function getMyTasks(scope) {

@@ -21,6 +21,7 @@ public interface AppSettingService {
     String KEY_AI_BASE_URL = "ai_base_url";
     String KEY_AI_MODEL = "ai_model";
     String KEY_AI_API_KEY = "ai_api_key";
+    String KEY_AI_EMBEDDING_MODEL = "ai_embedding_model";
 
     /**
      * 读取配置：数据库值优先，未配置时回落环境变量默认值

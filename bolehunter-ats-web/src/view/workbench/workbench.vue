@@ -126,6 +126,35 @@
       </el-col>
     </el-row>
 
+    <!-- AI 找人（迭代20 RAG） -->
+    <el-row class="row-gap">
+      <el-col :span="24">
+        <el-card shadow="hover">
+          <template #header>AI 找人 —— 用自然语言搜索候选人</template>
+          <div class="ai-ask-bar">
+            <el-input v-model="aiQuestion" maxlength="200" placeholder="例如：找一位在杭州有 5 年 Java 经验的候选人"
+              @keyup.enter="handleAiAsk" />
+            <el-button type="primary" :loading="aiAsking" @click="handleAiAsk">搜 索</el-button>
+          </div>
+          <template v-if="aiResult">
+            <el-alert v-if="aiResult.answer" type="success" :closable="false" style="margin: 12px 0">
+              <div style="white-space: pre-wrap">{{ aiResult.answer }}</div>
+            </el-alert>
+            <el-alert v-else-if="!aiResult.llm" type="warning" :closable="false" style="margin: 12px 0"
+              title="大模型未配置或不可用，以下为关键词检索命中结果" />
+            <el-empty v-if="(aiResult.candidates || []).length === 0 && !aiAsking" description="知识库中未找到相关候选人" :image-size="50" />
+            <el-table v-else :data="aiResult.candidates || []" size="small">
+              <el-table-column prop="name" label="姓名" width="110" />
+              <el-table-column prop="current_company" label="当前公司" min-width="140" show-overflow-tooltip />
+              <el-table-column prop="current_position" label="当前职位" min-width="120" show-overflow-tooltip />
+              <el-table-column prop="city" label="城市" width="90" />
+              <el-table-column prop="phone" label="电话" width="130" />
+            </el-table>
+          </template>
+        </el-card>
+      </el-col>
+    </el-row>
+
     <!-- 新建任务 -->
     <el-dialog v-model="taskDialogVisible" title="新建任务" width="440px">
       <el-form ref="taskFormRef" :model="taskForm" :rules="taskRules" label-width="90px">
@@ -160,7 +189,7 @@ import {
 import { CanvasRenderer } from 'echarts/renderers'
 
 echarts.use([BarChart, FunnelChart, GridComponent, LegendComponent, TooltipComponent, CanvasRenderer])
-import { getWorkbenchSummary, getWorkbenchDashboard, exportClientConversionCsv,
+import { getWorkbenchSummary, getWorkbenchDashboard, exportClientConversionCsv, aiAskCandidate,
   getMyTasks, createTask, doneTask, deleteTask } from '@/api/workbench'
 
 const STAGE_LABELS = {
@@ -267,6 +296,23 @@ async function handleExportConversion() {
   a.download = 'client-conversion.csv'
   a.click()
   window.URL.revokeObjectURL(url)
+}
+
+// ---------- AI 找人（迭代20 RAG） ----------
+const aiQuestion = ref('')
+const aiAsking = ref(false)
+const aiResult = ref(null)
+
+async function handleAiAsk() {
+  if (!aiQuestion.value.trim()) return
+  aiAsking.value = true
+  try {
+    aiResult.value = await aiAskCandidate(aiQuestion.value.trim())
+  } catch (e) {
+    aiResult.value = null
+  } finally {
+    aiAsking.value = false
+  }
 }
 
 // ---------- 漏斗图 ----------
@@ -399,5 +445,9 @@ onMounted(getAll)
 }
 .rate-cell {
   width: 90%;
+}
+.ai-ask-bar {
+  display: flex;
+  gap: 10px;
 }
 </style>

@@ -83,12 +83,16 @@ public class AppSettingServiceImpl extends ServiceImpl<AppSettingMapper, AppSett
         return v.substring(0, 4) + "****" + v.substring(v.length() - 4);
     }
 
+    @Value("${ai.embedding-model:text-embedding-v3}")
+    private String envEmbeddingModel;
+
     @Override
     public Map<String, Object> getAiConfigMasked() {
         String apiKey = getValue(KEY_AI_API_KEY, envApiKey);
         Map<String, Object> config = new LinkedHashMap<>();
         config.put("base_url", getValue(KEY_AI_BASE_URL, envBaseUrl));
         config.put("model", getValue(KEY_AI_MODEL, envModel));
+        config.put("embedding_model", getValue(KEY_AI_EMBEDDING_MODEL, envEmbeddingModel));
         config.put("api_key_masked", mask(apiKey));
         config.put("ready", !apiKey.isBlank());
         return config;

@@ -25,6 +25,10 @@
         <el-input v-model="form.api_key" type="password" show-password
           :placeholder="keyMasked ? `已配置（${keyMasked}），留空保持不变` : 'sk-...'" />
       </el-form-item>
+      <el-form-item label="向量模型（可选）">
+        <el-input v-model="form.embedding_model" placeholder="text-embedding-v3（需供应商支持 embeddings 接口）" />
+        <div class="field-tip">用于 AI 找人的语义检索；DeepSeek 不提供 embeddings，可留空走关键词检索</div>
+      </el-form-item>
       <el-form-item>
         <el-tag v-if="ready" type="success" size="small">AI 服务已就绪</el-tag>
         <el-tag v-else type="info" size="small">未配置 Key，AI 功能将使用规则解析兜底</el-tag>
@@ -49,7 +53,7 @@ const loading = ref(false)
 const saving = ref(false)
 const keyMasked = ref('')
 const ready = ref(false)
-const form = reactive({ base_url: '', model: '', api_key: '' })
+const form = reactive({ base_url: '', model: '', api_key: '', embedding_model: '' })
 
 async function load() {
   loading.value = true
@@ -57,6 +61,7 @@ async function load() {
     const res = await get('recruit/admin/setting/ai')
     form.base_url = res.base_url || ''
     form.model = res.model || ''
+    form.embedding_model = res.embedding_model || ''
     keyMasked.value = res.api_key_masked || ''
     ready.value = !!res.ready
   } finally {
@@ -68,7 +73,7 @@ async function save() {
   saving.value = true
   try {
     // api_key 输入为空且原已配置 → 不提交该字段，保持不变
-    const body = { base_url: form.base_url, model: form.model }
+    const body = { base_url: form.base_url, model: form.model, embedding_model: form.embedding_model || '' }
     if (form.api_key && form.api_key.trim()) {
       body.api_key = form.api_key.trim()
     }
@@ -94,4 +99,5 @@ onMounted(load)
 .toolbar { margin-bottom: 14px; }
 .page-title { font-size: 15px; font-weight: 500; }
 .tip { color: #909399; font-size: 12px; }
+.field-tip { color: #909399; font-size: 12px; line-height: 1.6; margin-top: 4px; }
 </style>

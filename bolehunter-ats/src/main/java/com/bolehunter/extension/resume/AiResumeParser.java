@@ -10,34 +10,21 @@
  */
 package com.bolehunter.extension.resume;
 
-import com.bolehunter.service.AppSettingService;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
+import com.bolehunter.extension.ai.AiClient;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 /**
- * 简历 AI 解析器（迭代19：resume_parse 开关的 AI 增强通道）
- * <p>调用 OpenAI 兼容 chat/completions 接口（DeepSeek/通义/Kimi 等），对简历全文做结构化抽取。
- * 配置优先级：管理员后台（app_setting 表）> 环境变量（AI_BASE_URL/AI_MODEL/AI_API_KEY）。
- * 两处均未配置 Key 时由上层降级为规则解析。仅将简历文本发送给所配置的大模型服务商，
- * 部署者自行选择可信供应商；API Key 永不写入日志。</p>
+ * 简历 AI 解析器（迭代19）：调用 AiClient 做结构化抽取。
+ * <p>配置优先级与降级策略见 AiClient 与 CandidateServiceImpl 编排；
+ * Key 未配置/调用失败时由上层降级为规则解析。API Key 永不写入日志。</p>
  */
 @Component
 public class AiResumeParser {
-
-    private static final Logger log = LoggerFactory.getLogger(AiResumeParser.class);
 
     private static final String SYSTEM_PROMPT = """
             你是猎头 ATS 的简历解析引擎。从用户提供的简历文本中抽取以下字段，输出严格 JSON（不要输出任何解释或 markdown 代码块）：
@@ -45,43 +32,12 @@ public class AiResumeParser {
             规则：找不到的字段一律输出空串；不得编造；手机号为 11 位大陆手机号。
             """;
 
-    @Value("${ai.base-url:https://api.deepseek.com}")
-    private String envBaseUrl;
-
-    @Value("${ai.model:deepseek-chat}")
-    private String envModel;
-
-    @Value("${ai.api-key:}")
-    private String envApiKey;
-
-    @Value("${ai.timeout-seconds:30}")
-    private int timeoutSeconds;
-
-    private final HttpClient httpClient = HttpClient.newBuilder()
-            .connectTimeout(Duration.ofSeconds(10))
-            .build();
-
-    private final ObjectMapper objectMapper = new ObjectMapper();
-
-    @org.springframework.beans.factory.annotation.Autowired
-    private AppSettingService appSettingService;
-
-    /** 当前生效的 Key：后台填写优先，环境变量兜底 */
-    private String resolveApiKey() {
-        return appSettingService.getValue(AppSettingService.KEY_AI_API_KEY, envApiKey);
-    }
-
-    private String resolveBaseUrl() {
-        return appSettingService.getValue(AppSettingService.KEY_AI_BASE_URL, envBaseUrl);
-    }
-
-    private String resolveModel() {
-        return appSettingService.getValue(AppSettingService.KEY_AI_MODEL, envModel);
-    }
+    @Autowired
+    private AiClient aiClient;
 
     /** 是否具备调用条件（后台或环境变量任一处已配置 Key） */
     public boolean isAvailable() {
-        return !resolveApiKey().isBlank();
+        return aiClient.isChatAvailable();
     }
 
     /**
@@ -90,35 +46,8 @@ public class AiResumeParser {
      * @return 字段 map（name/phone/email/currentCompany/currentPosition/education/city），解析失败抛 RuntimeException
      */
     public Map<String, String> parse(String resumeText) {
-        String apiKey = resolveApiKey();
-        if (apiKey.isBlank()) {
-            throw new IllegalStateException("AI_API_KEY 未配置（后台或环境变量）");
-        }
-        try {
-            String body = objectMapper.writeValueAsString(Map.of(
-                    "model", resolveModel(),
-                    "temperature", 0,
-                    "messages", List.of(
-                            Map.of("role", "system", "content", SYSTEM_PROMPT),
-                            Map.of("role", "user", "content", resumeText))));
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(resolveBaseUrl() + "/chat/completions"))
-                    .timeout(Duration.ofSeconds(timeoutSeconds))
-                    .header("Authorization", "Bearer " + apiKey)
-                    .header("Content-Type", "application/json")
-                    .POST(HttpRequest.BodyPublishers.ofString(body))
-                    .build();
-            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-            if (response.statusCode() != 200) {
-                throw new IllegalStateException("LLM 接口返回 " + response.statusCode());
-            }
-            String content = objectMapper.readTree(response.body())
-                    .path("choices").get(0).path("message").path("content").asText();
-            return extractJson(content);
-        } catch (Exception e) {
-            log.warn("AI 简历解析失败，将由上层降级为规则解析: {}", e.getMessage());
-            throw new RuntimeException("AI 解析失败: " + e.getMessage(), e);
-        }
+        String content = aiClient.chat(SYSTEM_PROMPT, resumeText, 500);
+        return extractJson(content);
     }
 
     /**
@@ -136,7 +65,8 @@ public class AiResumeParser {
             throw new RuntimeException("模型未返回 JSON: " + content);
         }
         try {
-            JsonNode node = objectMapper.readTree(json.substring(start, end + 1));
+            com.fasterxml.jackson.databind.JsonNode node =
+                    new com.fasterxml.jackson.databind.ObjectMapper().readTree(json.substring(start, end + 1));
             Map<String, String> fields = new LinkedHashMap<>();
             for (String key : List.of("name", "phone", "email", "currentCompany", "currentPosition", "education", "city")) {
                 fields.put(key, node.path(key).asText(""));

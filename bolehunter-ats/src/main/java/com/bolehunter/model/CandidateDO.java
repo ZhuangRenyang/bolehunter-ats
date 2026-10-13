@@ -85,6 +85,16 @@ public class CandidateDO extends BaseModel implements Serializable {
     private String resumeFile;
 
     /**
+     * 简历全文文本（AI 检索语料，迭代20）
+     */
+    private String resumeText;
+
+    /**
+     * 候选人文档向量（JSON 数组，AI 检索用，迭代20）
+     */
+    private String aiEmbedding;
+
+    /**
      * 自定义字段扩展数据（JSON 字符串，迭代4接字段定义）
      */
     private String extJson;

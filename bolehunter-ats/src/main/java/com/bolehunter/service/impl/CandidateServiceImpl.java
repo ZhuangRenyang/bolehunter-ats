@@ -254,6 +254,8 @@ public class CandidateServiceImpl extends ServiceImpl<CandidateMapper, Candidate
             log.warn("简历原件保存失败，继续导入: {}", file.getOriginalFilename());
         }
         draft.setOwnerId(currentUserId);
+        // 简历全文入库作为 AI 检索语料（迭代20）
+        draft.setResumeText(text);
         this.save(draft);
         return builder.successCount(1).duplicateCount(0).failCount(0).build();
     }
