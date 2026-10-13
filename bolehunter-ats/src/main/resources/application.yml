@@ -84,3 +84,12 @@ app:
 # 多租户开关：开源版默认关闭（单团队），开启后业务表查询自动追加 tenant_id 条件
 tenant:
   enable: false
+
+# AI 能力（迭代19：简历 AI 解析）
+# 协议：OpenAI 兼容 chat/completions（DeepSeek/通义/Kimi 等均可）
+# 用法：功能开关页启用 resume_parse + 环境变量注入 AI_API_KEY；Key 为空时自动降级为本地规则解析
+ai:
+  base-url: ${AI_BASE_URL:https://api.deepseek.com}
+  model: ${AI_MODEL:deepseek-chat}
+  api-key: ${AI_API_KEY:}
+  timeout-seconds: 30

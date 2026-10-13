@@ -64,6 +64,12 @@ public class CandidateServiceImpl extends ServiceImpl<CandidateMapper, Candidate
     @Autowired
     private CandidateExcelHelper candidateExcelHelper;
 
+    @Autowired
+    private com.bolehunter.extension.resume.AiResumeParser aiResumeParser;
+
+    @Autowired
+    private com.bolehunter.service.FeatureFlagService featureFlagService;
+
     @Override
     public IPage<CandidateDO> getCandidatePage(String keyword, String education, String city,
                                                Integer ownerId, String source, List<Integer> tagIds,
@@ -229,7 +235,7 @@ public class CandidateServiceImpl extends ServiceImpl<CandidateMapper, Candidate
             throw new ForbiddenException(80200);
         }
         String text = resumeParser.extractText(file);
-        CandidateDO draft = resumeParser.parseText(text, file.getOriginalFilename());
+        CandidateDO draft = parseWithAiFallbackToRules(text, file.getOriginalFilename());
         if (draft.getName() == null || draft.getName().isEmpty()) {
             draft.setName("待补录_" + System.currentTimeMillis() % 100000);
         }
@@ -250,6 +256,44 @@ public class CandidateServiceImpl extends ServiceImpl<CandidateMapper, Candidate
         draft.setOwnerId(currentUserId);
         this.save(draft);
         return builder.successCount(1).duplicateCount(0).failCount(0).build();
+    }
+
+    /**
+     * 简历解析编排（迭代19）：
+     * 1. 功能开关 resume_parse 开启且 AI_API_KEY 已配置 → LLM 结构化抽取（AI 优先）
+     * 2. 开关关闭 / Key 缺失 / AI 调用失败 → 降级为本地规则解析（行为与迭代2完全一致）
+     * AI 结果仅覆盖非空字段，规则兜底字段不被空值冲掉。
+     */
+    private CandidateDO parseWithAiFallbackToRules(String text, String filename) {
+        CandidateDO draft = resumeParser.parseText(text, filename);
+        boolean aiEnabled = featureFlagService.isEnabled("resume_parse");
+        if (!aiEnabled || !aiResumeParser.isAvailable()) {
+            return draft;
+        }
+        try {
+            Map<String, String> fields = aiResumeParser.parse(text);
+            mergeNonBlank(draft::setName, fields.get("name"));
+            mergeNonBlank(draft::setPhone, fields.get("phone"));
+            mergeNonBlank(draft::setEmail, fields.get("email"));
+            mergeNonBlank(draft::setCurrentCompany, fields.get("currentCompany"));
+            mergeNonBlank(draft::setCurrentPosition, fields.get("currentPosition"));
+            mergeNonBlank(draft::setCity, fields.get("city"));
+            String education = candidateExcelHelper.educationToKey(fields.get("education"));
+            mergeNonBlank(draft::setEducation, education);
+            draft.setRemark("[AI解析] " + (draft.getRemark() == null ? "" : draft.getRemark()));
+            log.info("简历 AI 解析完成: name={}, phone={}", fields.get("name"),
+                    fields.get("phone") == null || fields.get("phone").isEmpty() ? "未识别" : "已识别");
+        } catch (Exception e) {
+            log.warn("AI 解析降级为规则解析: {}", e.getMessage());
+        }
+        return draft;
+    }
+
+    /** 仅当 AI 抽取值非空时覆盖（规则解析已有的高置信字段不被空值冲掉） */
+    private void mergeNonBlank(java.util.function.Consumer<String> setter, String value) {
+        if (value != null && !value.isBlank()) {
+            setter.accept(value.trim());
+        }
     }
 
     @Override

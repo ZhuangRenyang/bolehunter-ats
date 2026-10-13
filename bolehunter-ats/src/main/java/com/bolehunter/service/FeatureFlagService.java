@@ -33,4 +33,10 @@ public interface FeatureFlagService extends IService<FeatureFlagDO> {
     int toggleFlag(Integer id);
 
     boolean checkKeyExist(String flagKey);
+
+    /**
+     * 按 flagKey 查询开关是否启用（迭代19：业务代码接线用）
+     * <p>key 不存在或查询异常时返回 false，保证调用方"开关即默认关闭"的语义。</p>
+     */
+    boolean isEnabled(String flagKey);
 }

@@ -81,4 +81,16 @@ public class FeatureFlagServiceImpl extends ServiceImpl<FeatureFlagMapper, Featu
         wrapper.lambda().eq(FeatureFlagDO::getFlagKey, flagKey);
         return this.count(wrapper) > 0;
     }
+
+    @Override
+    public boolean isEnabled(String flagKey) {
+        try {
+            QueryWrapper<FeatureFlagDO> wrapper = new QueryWrapper<>();
+            wrapper.lambda().eq(FeatureFlagDO::getFlagKey, flagKey).last("LIMIT 1");
+            FeatureFlagDO flag = this.getOne(wrapper);
+            return flag != null && Integer.valueOf(1).equals(flag.getEnabled());
+        } catch (Exception e) {
+            return false;
+        }
+    }
 }
