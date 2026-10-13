@@ -11,17 +11,22 @@
 package com.bolehunter.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.bolehunter.core.websocket.WsPayload;
+import com.bolehunter.core.websocket.WsSessionManager;
 import com.bolehunter.model.NotifyDO;
 import com.bolehunter.mapper.NotifyMapper;
 import com.bolehunter.model.UserDO;
 import com.bolehunter.service.NotifyService;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.bolehunter.service.UserService;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import jakarta.annotation.Resource;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * <p>
@@ -31,6 +36,7 @@ import java.util.List;
  * @author Eval
  * @since 2022-04-16
  */
+@Slf4j
 @Service
 public class NotifyServiceImpl extends ServiceImpl<NotifyMapper, NotifyDO> implements NotifyService {
 
@@ -40,9 +46,56 @@ public class NotifyServiceImpl extends ServiceImpl<NotifyMapper, NotifyDO> imple
     @Resource
     private UserService userService;
 
+    /**
+     * WebSocket 会话注册表：用于新通知的实时送达（迭代23）。
+     * 推送失败绝不影响通知本身的写入，因此这里用可选注入 + 全异常兜底。
+     */
+    @Resource
+    private WsSessionManager wsSessionManager;
+
     @Override
     public boolean create(NotifyDO notifyDO) {
-        return notifyMapper.insert(notifyDO) > 0;
+        boolean saved = notifyMapper.insert(notifyDO) > 0;
+        if (saved) {
+            pushRealtime(notifyDO);
+        }
+        return saved;
+    }
+
+    /**
+     * 通知入库后实时推送给在线当事人；对方离线则静默跳过（其上线后仍可拉取列表）。
+     */
+    private void pushRealtime(NotifyDO notifyDO) {
+        try {
+            if (notifyDO == null || notifyDO.getUserName() == null) {
+                return;
+            }
+            UserDO target = userService.getUserByUsername(notifyDO.getUserName());
+            if (target == null) {
+                return;
+            }
+            int delivered = wsSessionManager.push(target.getId(),
+                WsPayload.of(WsPayload.Type.NOTICE, toView(notifyDO)));
+            if (delivered > 0) {
+                log.info("[notify] 实时推送 {} 条给 uid={}", delivered, target.getId());
+            }
+        } catch (Exception e) {
+            // 通知已落库，推送是锦上添花；任何异常都不得回吐给调用方
+            log.warn("[notify] 实时推送失败，已入库不影响：{}", e.getMessage());
+        }
+    }
+
+    /**
+     * 构造下行视图：BaseModel 时间字段 @JsonIgnore，故显式输出各字段
+     */
+    private static Map<String, Object> toView(NotifyDO n) {
+        Map<String, Object> view = new LinkedHashMap<>();
+        view.put("id", n.getId());
+        view.put("content", n.getContent());
+        view.put("userName", n.getUserName());
+        view.put("isRead", n.getIsRead());
+        view.put("time", n.getTime() == null ? null : n.getTime().getTime());
+        return view;
     }
 
     @Override

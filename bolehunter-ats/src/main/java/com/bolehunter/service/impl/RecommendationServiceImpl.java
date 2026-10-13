@@ -454,7 +454,8 @@ public class RecommendationServiceImpl extends ServiceImpl<RecommendationMapper,
                 notify.setUserName(owner.getUsername());
                 notify.setIsRead("false");
                 notify.setTime(new Date());
-                notifyService.save(notify);
+                // 走 create 而非 save：create 会在入库后经 WebSocket 实时推送给在线顾问
+                notifyService.create(notify);
             }
         }
         Map<String, Object> result = new LinkedHashMap<>();

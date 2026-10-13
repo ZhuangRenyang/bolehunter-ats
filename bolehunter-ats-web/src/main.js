@@ -27,15 +27,15 @@ import 'element-plus/es/components/loading/style/css'
 // 3. 字符串形式使用的图标（el-button icon="Plus"、菜单 icon: 'HomeFilled'、动态 :is）
 //    全量注册约 300 个图标会显著增大主包，改为项目实际用到的白名单
 import {
-  Avatar, Back, Bell, Briefcase, Collection, Download, Edit, HomeFilled,
-  MagicStick, Menu, OfficeBuilding, Open, Plus, PriceTag, Search, Setting, Share,
-  Suitcase, Tickets, Upload, User, UserFilled,
+  Avatar, Back, Bell, Briefcase, ChatDotSquare, Collection, Download, Edit, HomeFilled,
+  MagicStick, Menu, OfficeBuilding, Open, Plus, Position, PriceTag, Promotion,
+  Search, Setting, Share, Suitcase, Tickets, Upload, User, UserFilled,
 } from '@element-plus/icons-vue'
 
 const ICONS = {
-  Avatar, Back, Bell, Briefcase, Collection, Download, Edit, HomeFilled,
-  MagicStick, Menu, OfficeBuilding, Open, Plus, PriceTag, Search, Setting, Share,
-  Suitcase, Tickets, Upload, User, UserFilled,
+  Avatar, Back, Bell, Briefcase, ChatDotSquare, Collection, Download, Edit, HomeFilled,
+  MagicStick, Menu, OfficeBuilding, Open, Plus, Position, PriceTag, Promotion,
+  Search, Setting, Share, Suitcase, Tickets, Upload, User, UserFilled,
 }
 
 const app = createApp(App)

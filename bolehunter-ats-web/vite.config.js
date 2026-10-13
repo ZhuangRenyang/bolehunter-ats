@@ -37,8 +37,8 @@ export default defineConfig({
   server: {
     port: 8081,
     proxy: {
-      // 后端业务接口
-      '/recruit': { target: backend, changeOrigin: true },
+      // 后端业务接口；ws:true 让 WebSocket（迭代23 的 /recruit/ws）同样走该代理
+      '/recruit': { target: backend, changeOrigin: true, ws: true },
       // 头像/简历等静态资源
       '/assets': { target: backend, changeOrigin: true },
     },

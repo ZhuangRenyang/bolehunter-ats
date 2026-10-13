@@ -14,7 +14,11 @@
       <div class="logo">猎头 ATS</div>
       <div class="notice-entry" v-if="userStore.user?.username">
         <el-badge :value="unreadCount" :hidden="unreadCount === 0" :max="99">
-          <el-button :icon="'Bell'" circle size="small" @click="noticeDrawer = true" />
+          <el-button :icon="'Bell'" circle size="small" title="通知中心" @click="noticeDrawer = true" />
+        </el-badge>
+        <!-- 迭代23：内部消息（未读来自 REST 查询，新消息由 WebSocket 实时驱动刷新） -->
+        <el-badge :value="imUnread" :hidden="imUnread === 0" :max="99">
+          <el-button :icon="'ChatDotSquare'" circle size="small" title="内部消息" @click="imDrawer = true" />
         </el-badge>
       </div>
       <el-scrollbar>
@@ -78,24 +82,39 @@
         <div class="notice-time">{{ (n.time || '').slice(0, 19).replace('T', ' ') }}</div>
       </div>
     </el-drawer>
+    <!-- 内部消息（迭代23） -->
+    <ImDrawer v-model="imDrawer" />
 </template>
 
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
-import { clearTokens, get, TOKEN_ACCESS, TOKEN_REFRESH } from '@/api/request'
+// getToken 此前被使用却未导入，导致 mounted 里抛 ReferenceError —— 通知从未真正加载过
+import { clearTokens, get, getToken, TOKEN_ACCESS, TOKEN_REFRESH } from '@/api/request'
 import { getAllMyNotices, markAllRead } from '@/api/notify'
+import { getImUnreadTotal } from '@/api/im'
+import { useWsStore } from '@/stores/ws'
+import ImDrawer from './im-drawer.vue'
 
 const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
+const ws = useWsStore()
 
 /* ===== 通知中心 ===== */
 const noticeDrawer = ref(false)
 const notices = ref([])
 const unreadCount = ref(0)
-let noticeTimer = null
+
+/* ===== 内部消息（迭代23）===== */
+const imDrawer = ref(false)
+const imUnread = ref(0)
+
+/** WS 不可用时的兜底轮询；同时也承担首次加载 */
+let pollTimer = null
+let offNotice = null
+let offChat = null
 
 async function loadNotices() {
   const username = userStore.user?.username
@@ -107,6 +126,33 @@ async function loadNotices() {
   } catch (e) {
     /* 静默失败，下一轮轮询重试 */
   }
+}
+
+async function loadImUnread() {
+  try {
+    const res = await getImUnreadTotal()
+    imUnread.value = res?.unreadTotal || 0
+  } catch (e) {
+    /* 静默失败：下一轮刷新重试 */
+  }
+}
+
+/**
+ * 建立实时通道（迭代23）。
+ *
+ * 之前这里只有一个从未赋值的 noticeTimer，通知实际上永远不会被加载，
+ * 铃铛角标恒为 0、抽屉恒为空。现在改为：首次主动加载 + WebSocket 实时增量刷新，
+ * 并以 60s 轮询兜底（WebSocket 不可用时功能不倒退）。
+ */
+function connectRealtime() {
+  if (!getToken(TOKEN_ACCESS)) return
+  offNotice = ws.on('notice', () => { loadNotices() })
+  offChat = ws.on('chat', () => { loadImUnread() })
+  ws.connect()
+  pollTimer = setInterval(() => {
+    loadNotices()
+    loadImUnread()
+  }, 60000)
 }
 
 async function markAll() {
@@ -143,6 +189,10 @@ onMounted(async () => {
       }
     }
   }
+  // 登录后补加载通知与未读消息，并接通实时通道
+  await loadNotices()
+  await loadImUnread()
+  connectRealtime()
 })
 
 function handleCommand(command) {
@@ -152,7 +202,12 @@ function handleCommand(command) {
     router.push('/login')
   }
 }
-onBeforeUnmount(() => noticeTimer && clearInterval(noticeTimer))
+onBeforeUnmount(() => {
+  if (pollTimer) clearInterval(pollTimer)
+  if (offNotice) offNotice()
+  if (offChat) offChat()
+  ws.disconnect()
+})
 </script>
 
 <style lang="scss" scoped>
