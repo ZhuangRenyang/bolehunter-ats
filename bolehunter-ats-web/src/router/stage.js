@@ -101,6 +101,16 @@ export const settingStage = {
       permission: ['查询功能开关'],
     },
     {
+      title: 'AI 服务配置',
+      type: 'view',
+      name: 'aiSetting',
+      route: '/setting/ai',
+      filePath: 'view/setting/ai-setting.vue',
+      inNav: true,
+      icon: 'MagicStick',
+      permission: ['查询AI服务配置'],
+    },
+    {
       title: '代码生成',
       type: 'view',
       name: 'gen',

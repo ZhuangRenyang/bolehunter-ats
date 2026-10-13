@@ -74,6 +74,12 @@ const routes = [
         meta: { title: '功能开关' },
       },
       {
+        path: '/setting/ai',
+        name: 'aiSetting',
+        component: () => import('@/view/setting/ai-setting.vue'),
+        meta: { title: 'AI 服务配置' },
+      },
+      {
         path: '/setting/gen',
         name: 'gen',
         component: () => import('@/view/setting/gen.vue'),
