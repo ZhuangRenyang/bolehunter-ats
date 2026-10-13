@@ -27,58 +27,66 @@
 ## 核心功能
 
 - **客户管理**：客户公司建档（行业/等级/合作状态/负责顾问）、联系人（主联系人互斥）、客户维度推荐聚合视图
-- **候选人库**：简历导入（PDF/DOC/DOCX + Excel 批量）、规则解析（姓名/电话/邮箱/学历）、手机号+邮箱查重、标签体系、多条件筛选
-- **职位推荐**：推荐记录状态机（待推荐 → 已推荐 → 客户已读 → 面试 → Offer → 入职 → 回款，可归档）、拖拽看板、阶段流转历史留痕
-- **沟通与任务**：客户沟通逐次代录、跟进任务（今日/逾期提醒）、工作台聚合（统计卡片 + 推荐阶段分布 + 漏斗图）
-- **系统底座**：部门/角色权限（RBAC）、数据字典、功能开关、操作日志、多租户预留（单团队默认关闭）
+- **候选人库**：简历导入（PDF/DOC/DOCX + Excel 批量）、**AI 智能解析 + 规则解析双引擎**（开关控制、静默降级）、手机号+邮箱查重、标签体系、多条件筛选
+- **职位推荐**：推荐记录状态机（待推荐 → 已推荐 → 客户已读 → 面试 → Offer → 入职 → 回款，可归档）、拖拽看板、阶段流转历史留痕、**免登录客户确认链接**（HR 无需账号即可确认已读/约面/婉拒）
+- **AI 能力**（迭代 19-20）：简历结构化抽取（OpenAI 兼容协议，后台可视化配置）、**AI 找人问答**——自然语言搜索候选人，向量语义检索 + 关键词检索双引擎自动降级，LLM 归纳回答
+- **沟通与任务**：客户沟通逐次代录、跟进任务（到期自动站内推送 + 通知中心）、工作台聚合（统计卡片 + 推荐漏斗 + **漏斗时间对比 / 顾问业绩排行 / 客户转化率报表 + CSV 导出**）
+- **系统底座**：部门/角色权限（RBAC）、数据字典、功能开关、操作日志、多租户预留（单团队默认关闭）、登录失败限流、健康检查
 
 ## 技术栈
 
 | 层 | 技术 |
 |---|---|
-| 后端 | Spring Boot 3.5 / JDK 17 / MyBatis-Plus 3.5 / MySQL 8 / Redis（可选） |
-| 前端 | Vue 3.5 / Element Plus / Vite 5 / Pinia / ECharts |
+| 后端 | Spring Boot 3.5 / JDK 17 / MyBatis-Plus 3.5 / MySQL 8 / Redis（登录限流） |
+| 前端 | Vue 3.5 / Element Plus 按需引入 / Vite 5 / Pinia / ECharts 按需引入 |
 | 认证 | JWT 双令牌（access + refresh），自研轻量权限层（RBAC 注解扫描） |
+| AI | OpenAI 兼容协议（DeepSeek/通义/Kimi…），chat + embeddings，后台可视化配置 |
+| 工程 | GitHub Actions CI（版权头检查/单测/构建/镜像发布 GHCR）、Docker Compose、springdoc 接口文档、26 个单测 |
 
 ## 快速开始
 
+**Docker Compose（推荐，一条命令跑起来）：**
+
 ```bash
-# 1. 初始化数据库（基线 + 4 个迁移脚本，见 doc/部署指南.md）
-mysql -uroot -p < bolehunter-ats/sql/bolehunter.sql
-# …按序执行 bolehunter-ats/sql/migration_iter*.sql
-
-# 2. 改数据库密码：bolehunter-ats/src/main/resources/application-dev.yml
-
-# 3. 启动后端
-cd bolehunter-ats && mvn compile spring-boot:run -Dspring-boot.run.arguments="--server.port=5000"
-
-# 4. 启动前端
-cd bolehunter-ats-web && npm install && npm run dev
-
-# 5. 打开 http://localhost:8081，默认账号 root / 123456
+git clone https://github.com/ZhuangRenyang/bolehunter-ats.git && cd bolehunter-ats
+cp .env.example .env      # 按需修改（生产必改 JWT_SECRET / DB_PASSWORD）
+docker compose up -d      # 自动初始化数据库，构建约 5-10 分钟
+# 打开 http://localhost:8080，默认账号 root / 123456（首次登录立即修改）
 ```
 
-完整说明（含 Docker Compose）见 **[doc/部署指南.md](doc/部署指南.md)**；开发过程与踩坑记录见 **[doc/开发记录日志.md](doc/开发记录日志.md)**。
+**本地开发：**
+
+```bash
+# 后端（先按 doc/部署指南.md 初始化数据库）
+cd bolehunter-ats && mvn compile spring-boot:run -Dspring-boot.run.arguments="--server.port=5000"
+# 前端
+cd bolehunter-ats-web && npm install && npm run dev   # http://localhost:8081
+```
+
+**AI 能力启用**（可选）：管理员登录 → 设置 → AI 服务配置 → 填入 OpenAI 兼容服务的 Key（DeepSeek 注册即送额度）→ 功能开关打开 `resume_parse` / `ai_ask`。
+
+完整说明见 **[doc/部署指南.md](doc/部署指南.md)**；开发过程与踩坑记录见 **[doc/开发记录日志.md](doc/开发记录日志.md)**。
 
 ## 目录结构
 
 ```
 bolehunter-ats/        后端（Spring Boot 3）
-  ├─ sql/           基线 SQL + 迭代迁移脚本（按序执行）
-  ├─ src/main/java/com/recruit/core/     自研轻量认证/权限层
-  └─ src/main/java/com/recruit/...       controller / service / model / extension
+  ├─ sql/           基线 SQL + 迭代迁移脚本（按序执行，Compose 自动初始化）
+  ├─ src/main/java/com/bolehunter/core/       自研轻量认证/权限层
+  ├─ src/main/java/com/bolehunter/module/     业务模块（candidate/recommendation/…）
+  └─ src/main/java/com/bolehunter/extension/  扩展能力（简历解析 / AI 客户端）
 bolehunter-ats-web/     前端（Vue 3 + Vite）
-doc/                开发记录日志 / 部署指南
-recruit-web/        旧版前端（Vue 2，已冻结，仅存量兼容）
+.github/workflows/     CI（版权头检查 / 单测 / 构建 / GHCR 镜像发布）
+doc/                部署指南 / 开发记录日志 / 路线图
+scripts/            License 版权头合规检查脚本
 ```
 
 ## 路线图
 
-- [x] 客户 CRM / 候选人库 / 推荐看板 / 沟通与任务 / 工作台
-- [ ] 职位管理独立页、推荐漏斗报表增强
-- [ ] 免登录推荐确认链接（v1.1，confirm_token 已预留）
-- [ ] 简历 AI 解析（`resume_parse` 功能开关已预留）
-- [ ] 客户 HR 门户（商业版）
+- [x] 客户 CRM / 候选人库 / 推荐看板 / 沟通与任务 / 工作台 / 职位管理页
+- [x] 任务到期推送 + 通知中心 + 看板角标；数据看板（漏斗对比 / 业绩排行 / 转化率）
+- [x] 免登录推荐确认链接；AI 简历解析 + AI 找人问答（RAG）；安全加固；Docker Compose；CI/CD（GHCR）
+- [ ] 客户 HR 门户（商业版）；多模态视觉能力（规划中）
 
 ## 开源协议与版权
 
