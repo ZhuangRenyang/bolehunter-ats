@@ -33,3 +33,10 @@ auth:
 # 开启请求日志记录
 request-log:
   enabled: true
+
+# 接口文档（迭代18）：生产默认关闭，需要调试时用环境变量 API_DOCS_ENABLED=true 临时打开
+springdoc:
+  api-docs:
+    enabled: ${API_DOCS_ENABLED:false}
+  swagger-ui:
+    enabled: ${API_DOCS_ENABLED:false}

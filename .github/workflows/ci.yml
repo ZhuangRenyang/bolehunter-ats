@@ -1,6 +1,6 @@
 # BoleHunter 伯乐猎 —— CI
-# push / PR 触发：版权头合规检查 → 后端编译（JDK 17 + Maven）→ 前端构建（Node 22 + Vite）
-# 全绿代表可用；Docker 镜像自动构建（CD）后续接入，见 doc/开发计划与路线图.md 工程优化清单。
+# push / PR 触发：版权头合规检查 → 后端 mvn test（JDK 17）→ 前端构建（Node 22）→ Docker 镜像构建验证
+# main 分支 push 额外自动发布镜像到 GHCR（ghcr.io/zhuangrenyang/*），无需任何手工步骤
 
 name: CI
 
@@ -9,6 +9,10 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+
+permissions:
+  contents: read
+  packages: write
 
 jobs:
   license:
@@ -62,3 +66,33 @@ jobs:
         run: docker build -t bolehunter-frontend ./bolehunter-ats-web
       - name: 校验 compose 配置
         run: docker compose -f docker-compose.yml config -q
+
+  publish:
+    name: Publish to GHCR
+    # 仅 main 分支 push 时发布镜像（PR 不发布）
+    if: github.event_name == 'push'
+    needs: [license, backend, frontend, docker]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: 推送后端镜像
+        uses: docker/build-push-action@v6
+        with:
+          context: ./bolehunter-ats
+          push: true
+          tags: |
+            ghcr.io/zhuangrenyang/bolehunter-backend:latest
+            ghcr.io/zhuangrenyang/bolehunter-backend:${{ github.sha }}
+      - name: 推送前端镜像
+        uses: docker/build-push-action@v6
+        with:
+          context: ./bolehunter-ats-web
+          push: true
+          tags: |
+            ghcr.io/zhuangrenyang/bolehunter-frontend:latest
+            ghcr.io/zhuangrenyang/bolehunter-frontend:${{ github.sha }}

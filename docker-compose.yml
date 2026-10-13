@@ -52,6 +52,7 @@ services:
       JWT_SECRET: ${JWT_SECRET:-please-change-this-to-a-random-64-char-secret-in-production-0123456789abcdef}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8080}
       REDIS_HOST: redis
+      API_DOCS_ENABLED: ${API_DOCS_ENABLED:-false}
     depends_on:
       mysql:
         condition: service_healthy
