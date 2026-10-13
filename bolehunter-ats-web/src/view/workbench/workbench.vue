@@ -151,7 +151,15 @@
 <script setup>
 import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import * as echarts from 'echarts'
+// ECharts 按需引入（迭代17 性能加固）：仅注册项目用到的图表与组件，主包瘦身
+import * as echarts from 'echarts/core'
+import { BarChart, FunnelChart } from 'echarts/charts'
+import {
+  GridComponent, LegendComponent, TooltipComponent,
+} from 'echarts/components'
+import { CanvasRenderer } from 'echarts/renderers'
+
+echarts.use([BarChart, FunnelChart, GridComponent, LegendComponent, TooltipComponent, CanvasRenderer])
 import { getWorkbenchSummary, getWorkbenchDashboard, exportClientConversionCsv,
   getMyTasks, createTask, doneTask, deleteTask } from '@/api/workbench'
 

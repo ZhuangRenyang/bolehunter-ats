@@ -34,7 +34,7 @@
           <span class="gen-tip">继承 BaseModel（含 create/update/delete_time 与逻辑删除）；表缺这三列时强制关闭</span>
         </el-form-item>
         <el-form-item>
-          <el-button type="success" icon="Code" :loading="previewingCode" :disabled="!form.tableName || !form.moduleName || !form.className"
+          <el-button type="success" icon="Tickets" :loading="previewingCode" :disabled="!form.tableName || !form.moduleName || !form.className"
             @click="handlePreviewCode">预览生成代码</el-button>
           <el-button type="primary" icon="Download" :loading="downloading" :disabled="!form.tableName || !form.moduleName || !form.className"
             @click="handleDownload">生成并下载 zip</el-button>
