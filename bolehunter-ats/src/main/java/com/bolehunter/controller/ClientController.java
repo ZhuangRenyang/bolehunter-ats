@@ -127,6 +127,18 @@ public class ClientController {
     }
 
     /**
+     * 删除客户（迭代24 操作审计增强）：名下存在推荐记录时后端拒绝（80290），
+     * 前端另有输入客户名的强确认弹窗，双重防线
+     */
+    @Logger(template = "删除客户")
+    @DeleteMapping("/{id}")
+    @PermissionMeta(value = "删除客户")
+    public DeletedVO delete(@PathVariable @Positive(message = "{id.positive}") Integer id) {
+        clientService.deleteClient(id);
+        return new DeletedVO();
+    }
+
+    /**
      * 分配/变更负责顾问
      */
     @Logger(template = "分配客户负责人")

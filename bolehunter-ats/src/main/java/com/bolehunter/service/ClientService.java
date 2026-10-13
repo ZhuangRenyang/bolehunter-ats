@@ -56,4 +56,11 @@ public interface ClientService {
      * 可分配负责人选项（ADMIN/CONSULTANT 用户）
      */
     List<UserDO> getOwnerOptions();
+
+    /**
+     * 删除客户（迭代24 操作审计增强）。
+     * 敏感操作：客户名下任一职位存在推荐记录时禁止删除（错误码 80290）；
+     * 通过校验后级联逻辑删除该客户的职位与联系人，客户本体软删。
+     */
+    boolean deleteClient(Integer id);
 }

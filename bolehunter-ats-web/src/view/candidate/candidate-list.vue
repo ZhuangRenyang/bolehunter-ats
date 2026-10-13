@@ -59,10 +59,11 @@
       <el-table-column label="负责人" width="100" align="center">
         <template #default="scope">{{ ownerMap[scope.row.owner_id] || '未分配' }}</template>
       </el-table-column>
-      <el-table-column label="操作" width="150" align="center">
+      <el-table-column label="操作" width="210" align="center">
         <template #default="scope">
           <el-button size="small" type="primary" plain @click="handleDetail(scope.row)">详情</el-button>
           <el-button size="small" type="primary" plain @click="handleEdit(scope.row)">编辑</el-button>
+          <el-button size="small" type="danger" plain @click="handleDeleteCandidate(scope.row)">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -383,6 +384,25 @@ function handleDeleteTag(row) {
     tags.value = await getTags()
     await getAll()
   })
+}
+
+/**
+ * 删除候选人（迭代24 操作审计增强）：二次确认后才发起请求。
+ * 该操作会同时移除候选人的标签关联；后端已接 @Logger 审计。
+ */
+function handleDeleteCandidate(row) {
+  ElMessageBox.confirm(
+    `确认删除候选人「${row.name}」？该操作不可恢复，将同时移除其标签关联。`,
+    '删除候选人', { type: 'warning', confirmButtonText: '删除', cancelButtonText: '取消' },
+  ).then(async () => {
+    try {
+      const res = await deleteCandidate(row.id)
+      ElMessage.success(res.message || '删除成功')
+      await getAll()
+    } catch (e) {
+      /* 错误提示由请求层统一处理 */
+    }
+  }).catch(() => {})
 }
 
 onMounted(async () => {

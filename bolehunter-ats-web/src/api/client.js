@@ -28,3 +28,5 @@ export const updateContact = (companyId, contactId, data) =>
   put(`recruit/client/${companyId}/contact/${contactId}`, data)
 export const deleteContact = (companyId, contactId) =>
   _delete(`recruit/client/${companyId}/contact/${contactId}`)
+// 删除客户（迭代24 操作审计增强）：后端在名下存在推荐记录时会拒绝（80290）
+export const deleteClient = id => _delete(`recruit/client/${id}`)

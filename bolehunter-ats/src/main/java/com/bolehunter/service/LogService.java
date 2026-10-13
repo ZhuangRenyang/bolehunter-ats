@@ -28,7 +28,7 @@ public interface LogService extends IService<LogDO> {
      * @param end   日志结束时间
      * @return 日志数据
      */
-    IPage<LogDO> getLogPage(Integer page, Integer count, String name, Date start, Date end);
+    IPage<LogDO> getLogPage(Integer page, Integer count, String name, Integer statusCode, Date start, Date end);
 
     /**
      * 分页搜索日志

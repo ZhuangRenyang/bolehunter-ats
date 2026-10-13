@@ -12,15 +12,18 @@ package com.bolehunter.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.bolehunter.common.mybatis.Page;
 import com.bolehunter.dto.company.CreateOrUpdateCompanyDTO;
 import com.bolehunter.mapper.ClientContactMapper;
 import com.bolehunter.mapper.CompanyMapper;
 import com.bolehunter.mapper.PositionMapper;
+import com.bolehunter.mapper.RecommendationMapper;
 import com.bolehunter.mapper.UserMapper;
 import com.bolehunter.model.ClientContactDO;
 import com.bolehunter.model.CompanyDO;
 import com.bolehunter.model.PositionDO;
+import com.bolehunter.model.RecommendationDO;
 import com.bolehunter.model.UserDO;
 import com.bolehunter.service.ClientContactService;
 import com.bolehunter.service.ClientService;
@@ -28,6 +31,7 @@ import com.bolehunter.core.exception.ForbiddenException;
 import com.bolehunter.core.exception.NotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Arrays;
 import java.util.LinkedHashMap;
@@ -51,6 +55,12 @@ public class ClientServiceImpl implements ClientService {
 
     @Autowired
     private ClientContactService clientContactService;
+
+    @Autowired
+    private RecommendationMapper recommendationMapper;
+
+    @Autowired
+    private ClientContactMapper clientContactMapper;
 
     @Override
     public IPage<CompanyDO> getClientPage(String keyword, String industry, String level,
@@ -167,5 +177,26 @@ public class ClientServiceImpl implements ClientService {
         wrapper.lambda().in(UserDO::getUserType, Arrays.asList("ADMIN", "CONSULTANT"))
                 .orderByAsc(UserDO::getId);
         return userMapper.selectList(wrapper);
+    }
+
+    @Transactional
+    @Override
+    public boolean deleteClient(Integer id) {
+        CompanyDO company = companyMapper.selectById(id);
+        if (company == null) {
+            throw new NotFoundException(80140);
+        }
+        // 关联防护：名下任一职位存在推荐记录（含已归档）时禁止删除，
+        // 避免推荐看板/数据报表出现"幽灵客户"导致统计口径失真
+        Long refCount = recommendationMapper.selectCount(
+                Wrappers.<RecommendationDO>lambdaQuery().eq(RecommendationDO::getClientId, id));
+        if (refCount != null && refCount > 0) {
+            throw new ForbiddenException(80290);
+        }
+        // 通过校验后级联软删：职位 → 联系人 → 客户本体（三者均为 MP 逻辑删除）
+        positionMapper.delete(Wrappers.<PositionDO>lambdaQuery().eq(PositionDO::getCompanyId, id));
+        clientContactMapper.delete(
+                Wrappers.<ClientContactDO>lambdaQuery().eq(ClientContactDO::getCompanyId, id));
+        return companyMapper.deleteById(id) > 0;
     }
 }

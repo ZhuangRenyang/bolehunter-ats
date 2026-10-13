@@ -45,12 +45,13 @@ public class LogController {
             @RequestParam(name = "start", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date start,
             @RequestParam(name = "end", required = false) @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss") Date end,
             @RequestParam(name = "name", required = false) String name,
+            @RequestParam(name = "statusCode", required = false) Integer statusCode,
             @RequestParam(name = "count", required = false, defaultValue = "15")
             @Min(value = 1, message = "{page.count.min}")
             @Max(value = 30, message = "{page.count.max}") Integer count,
             @RequestParam(name = "page", required = false, defaultValue = "0")
             @Min(value = 0, message = "{page.number.min}") Integer page) {
-        IPage<LogDO> iPage = logService.getLogPage(page, count, name, start, end);
+        IPage<LogDO> iPage = logService.getLogPage(page, count, name, statusCode, start, end);
         return PageUtil.build(iPage);
     }
 

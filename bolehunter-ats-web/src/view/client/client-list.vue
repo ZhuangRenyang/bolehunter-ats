@@ -55,10 +55,11 @@
       <el-table-column label="负责人" width="110" align="center">
         <template #default="scope">{{ ownerMap[scope.row.owner_id] || '未分配' }}</template>
       </el-table-column>
-      <el-table-column label="操作" width="160" align="center">
+      <el-table-column label="操作" width="220" align="center">
         <template #default="scope">
           <el-button size="small" type="primary" plain @click="handleDetail(scope.row)">详情</el-button>
           <el-button size="small" type="primary" plain @click="handleEdit(scope.row)">编辑</el-button>
+          <el-button size="small" type="danger" plain @click="handleDelete(scope.row)">删除</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -113,8 +114,8 @@
 <script setup>
 import { onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus'
-import { createClient, getClientOwners, getClientPage, updateClient } from '@/api/client'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { createClient, deleteClient, getClientOwners, getClientPage, updateClient } from '@/api/client'
 import { getDictDataByType } from '@/api/setting'
 
 const router = useRouter()
@@ -189,6 +190,31 @@ async function handlePageChange(val) {
 function handleCreate() {
   Object.assign(form, { id: null, name: '', foreignName: '', city: '', industry: '', level: '', clientStatus: 'potential', ownerId: null, description: '' })
   dialogVisible.value = true
+}
+
+/**
+ * 删除客户（迭代24 操作审计增强）。
+ * 高危操作用强确认：必须手动输入与客户名称完全一致的文字才会发起请求；
+ * 后端还有第二道防线——名下存在推荐记录时直接拒绝（80290）。
+ */
+function handleDelete(row) {
+  ElMessageBox.prompt(
+    `此操作将删除客户「${row.name}」及其名下的职位与联系人，且不可恢复。` +
+    '如确认执行，请在下方输入客户名称：',
+    '删除客户', { type: 'warning', confirmButtonText: '删除', cancelButtonText: '取消' },
+  ).then(async ({ value }) => {
+    if ((value || '').trim() !== row.name) {
+      ElMessage.error('输入的客户名称不一致，已取消删除')
+      return
+    }
+    try {
+      const res = await deleteClient(row.id)
+      ElMessage.success(res.message || '删除成功')
+      await getAll()
+    } catch (e) {
+      /* 错误提示由请求层统一处理（含 80290 有推荐拒绝） */
+    }
+  }).catch(() => {})
 }
 
 function handleEdit(row) {

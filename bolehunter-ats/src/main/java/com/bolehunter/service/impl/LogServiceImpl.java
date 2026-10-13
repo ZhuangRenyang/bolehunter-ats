@@ -27,20 +27,25 @@ import java.util.List;
 public class LogServiceImpl extends ServiceImpl<LogMapper, LogDO> implements LogService {
 
     @Override
-    public IPage<LogDO> getLogPage(Integer page, Integer count, String name, Date start, Date end) {
+    public IPage<LogDO> getLogPage(Integer page, Integer count, String name, Integer statusCode, Date start, Date end) {
         Page<LogDO> pager = new Page<>(page, count);
-//        IPage<LogDO> iPage = this.baseMapper.findLogsByUsernameAndRange(pager, name, start, end);
-        LambdaQueryWrapper<LogDO> lq=new LambdaQueryWrapper<>();
-        if(!StringUtils.isEmpty(name)){
-            lq.eq(LogDO::getUsername,name);
+        LambdaQueryWrapper<LogDO> lq = new LambdaQueryWrapper<>();
+        // 操作人改模糊匹配：审计页通常只记得半个名字
+        if (!StringUtils.isEmpty(name)) {
+            lq.like(LogDO::getUsername, name);
         }
-        if(!StringUtils.isEmpty(start)&&!StringUtils.isEmpty(end)){
-            lq.gt(LogDO::getCreateTime,start);
-            lq.lt(LogDO::getCreateTime,end);
+        // 状态码筛选：快速定位失败请求（如 407/500）
+        if (statusCode != null) {
+            lq.eq(LogDO::getStatusCode, statusCode);
+        }
+        if (start != null) {
+            lq.ge(LogDO::getCreateTime, start);
+        }
+        if (end != null) {
+            lq.le(LogDO::getCreateTime, end);
         }
         lq.orderByDesc(LogDO::getCreateTime);
-        IPage<LogDO> logDOIPage = this.baseMapper.selectPage(pager, lq);
-        return logDOIPage;
+        return this.baseMapper.selectPage(pager, lq);
     }
 
     @Override
