@@ -1,0 +1,75 @@
+# BoleHunter 伯乐猎 —— Docker Compose 一键部署（迭代16）
+# 用法：cp .env.example .env（按需修改） && docker compose up -d
+# 访问：http://localhost:8080   默认账号 root / 123456（首次登录请立即修改）
+
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: bolehunter-mysql
+    # 业务时间统一东八区；utf8mb4 支持表情与生僻字
+    command: >
+      --default-time-zone=+08:00
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-bolehunter2026}
+      MYSQL_DATABASE: bolehunter
+    volumes:
+      - mysql-data:/var/lib/mysql
+      # 首次启动自动初始化：字母序执行 = 基线 + 迭代迁移的正确顺序
+      - ./bolehunter-ats/sql:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-p${DB_PASSWORD:-bolehunter2026}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: bolehunter-redis
+    # 登录限流/验证码等轻量使用，AOF 每 60 秒落盘足够
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    restart: unless-stopped
+
+  backend:
+    build: ./bolehunter-ats
+    image: bolehunter-backend:latest
+    container_name: bolehunter-backend
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      DB_HOST: mysql
+      DB_USERNAME: root
+      DB_PASSWORD: ${DB_PASSWORD:-bolehunter2026}
+      JWT_SECRET: ${JWT_SECRET:-please-change-this-to-a-random-64-char-secret-in-production-0123456789abcdef}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8080}
+      REDIS_HOST: redis
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    # 数据库未初始化完成时允许重启等待
+    restart: unless-stopped
+
+  frontend:
+    build: ./bolehunter-ats-web
+    image: bolehunter-frontend:latest
+    container_name: bolehunter-frontend
+    ports:
+      - "${FRONTEND_PORT:-8080}:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  mysql-data:
+  redis-data:
