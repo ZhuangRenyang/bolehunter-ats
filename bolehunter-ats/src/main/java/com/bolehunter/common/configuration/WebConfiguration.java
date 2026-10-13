@@ -59,15 +59,23 @@ public class WebConfiguration implements WebMvcConfigurer {
     private String servePath;
 
     /**
+     * 允许的跨域来源（迭代15 安全加固）
+     * <p>逗号分隔，如 https://ats.example.com,https://www.example.com；
+     * 默认 * 保持开源开箱即用（dev 本地无妨），生产务必显式配置。</p>
+     */
+    @Value("${app.cors.allowed-origin-patterns:*}")
+    private String corsAllowedOriginPatterns;
+
+    /**
      * 跨域
-     * 注意： 跨域问题涉及安全性问题，这里提供的是最方便简单的配置，任何host和任何方法都可跨域
-     * 但在实际场景中，这样做，无疑很危险，所以谨慎选择开启或者关闭
+     * <p>来源由 app.cors.allowed-origin-patterns 配置：开发默认放开，
+     * 生产环境应收敛为前端站点显式域名列表（application-prod.yml 已给出示例）。</p>
      */
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
                 // Spring 6 不允许 allowedOrigins("*") 与 allowCredentials(true) 组合
-                .allowedOriginPatterns("*")
+                .allowedOriginPatterns(corsAllowedOriginPatterns.split("\\s*,\\s*"))
                 .allowedMethods("GET", "HEAD", "POST", "PUT", "DELETE", "OPTIONS")
                 .allowCredentials(true)
                 .maxAge(3600)

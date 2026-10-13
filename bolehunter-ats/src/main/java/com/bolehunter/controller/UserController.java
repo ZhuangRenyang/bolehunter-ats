@@ -16,12 +16,14 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.bolehunter.mapper.UserGroupMapper;
 import com.bolehunter.model.UserGroupDO;
 import com.bolehunter.service.MailService;
+import com.bolehunter.core.exception.ForbiddenException;
 import com.bolehunter.core.exception.NotFoundException;
 import com.bolehunter.core.exception.ParameterException;
 import com.bolehunter.core.annotation.*;
 import com.bolehunter.core.token.DoubleJWT;
 import com.bolehunter.core.token.Tokens;
 import com.bolehunter.common.LocalUser;
+import com.bolehunter.common.util.LoginAttemptService;
 import com.bolehunter.common.util.ObserverGenerate;
 import com.bolehunter.common.util.SingleUtil;
 import com.bolehunter.dto.user.ChangePasswordDTO;
@@ -41,6 +43,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import jakarta.annotation.Resource;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.List;
 import java.util.Map;
 
@@ -61,6 +64,8 @@ public class UserController {
     private DoubleJWT jwt;
     @Resource
     private MailService mailService;
+    @Resource
+    private LoginAttemptService loginAttemptService;
 
     /**
      * 用户注册
@@ -77,12 +82,17 @@ public class UserController {
     }
 
     /**
-     * 用户登陆
+     * 用户登陆（迭代15 安全加固：失败 5 次/10 分钟锁定，Redis 计数，不可用降级进程内）
      */
     @PostMapping("/login")
-    public Tokens login(@RequestBody @Validated LoginDTO validator) {
+    public Tokens login(@RequestBody @Validated LoginDTO validator, HttpServletRequest request) {
+        String ip = clientIp(request);
+        if (loginAttemptService.isBlocked(validator.getUsername(), ip)) {
+            throw new ForbiddenException(4290);
+        }
         UserDO user = userService.getUserByUsername(validator.getUsername());
         if (user == null) {
+            loginAttemptService.recordFailure(validator.getUsername(), ip);
             throw new NotFoundException(10021);
         }
         boolean valid = userIdentityService.verifyUsernamePassword(
@@ -90,11 +100,22 @@ public class UserController {
                 user.getUsername(),
                 validator.getPassword());
         if (!valid) {
+            loginAttemptService.recordFailure(validator.getUsername(), ip);
             throw new ParameterException(10031);
         }
+        loginAttemptService.clear(validator.getUsername(), ip);
         // 保存当前登录用户到SingleUtil工具类中
         SingleUtil.userDO = user;
         return jwt.generateTokens(user.getId());
+    }
+
+    /** 提取客户端 IP（优先 X-Forwarded-For 首段，兼容反向代理） */
+    private String clientIp(HttpServletRequest request) {
+        String xff = request.getHeader("X-Forwarded-For");
+        if (xff != null && !xff.isBlank()) {
+            return xff.split(",")[0].trim();
+        }
+        return request.getRemoteAddr();
     }
 
     /**

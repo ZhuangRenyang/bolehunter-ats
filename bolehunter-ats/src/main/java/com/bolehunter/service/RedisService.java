@@ -27,4 +27,19 @@ public interface RedisService{
     void saveChatData(String token, String data);
     // 根据传进来的角色认证头字段,取到对应的聊天数据
     String getChatData(String token);
+
+    // ==================== 登录限流（迭代15） ====================
+
+    /**
+     * 计数器自增并设置过期时间（首次自增时设置 TTL）
+     *
+     * @return 自增后的计数值；Redis 不可用时抛出异常由调用方降级
+     */
+    long increment(String key, long ttlSeconds);
+
+    /** 读取计数器当前值，key 不存在返回 0 */
+    long counter(String key);
+
+    /** 删除计数器（如登录成功后清零） */
+    void delete(String key);
 }

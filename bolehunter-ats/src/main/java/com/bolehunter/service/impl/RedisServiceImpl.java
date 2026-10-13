@@ -13,6 +13,7 @@ package com.bolehunter.service.impl;
 import com.alibaba.fastjson.JSONObject;
 import com.bolehunter.service.RedisService;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import jakarta.annotation.Resource;
@@ -81,5 +82,36 @@ public class RedisServiceImpl implements RedisService {
             return String.valueOf(data);
         }
         return "null";
+    }
+
+    // ==================== 登录限流（迭代15） ====================
+    // INCR 计数器必须使用字符串序列化（JDK 序列化的 value 与 INCR 不兼容）
+
+    @Resource
+    private StringRedisTemplate stringRedisTemplate;
+
+    @Override
+    public long increment(String key, long ttlSeconds) {
+        Long value = stringRedisTemplate.opsForValue().increment(key);
+        if (value != null && value == 1L) {
+            // 仅首次自增时设置过期，避免反复续期
+            stringRedisTemplate.expire(key, ttlSeconds, TimeUnit.SECONDS);
+        }
+        return value == null ? 0L : value;
+    }
+
+    @Override
+    public long counter(String key) {
+        String value = stringRedisTemplate.opsForValue().get(key);
+        try {
+            return value == null ? 0L : Long.parseLong(value);
+        } catch (NumberFormatException e) {
+            return 0L;
+        }
+    }
+
+    @Override
+    public void delete(String key) {
+        stringRedisTemplate.delete(key);
     }
 }

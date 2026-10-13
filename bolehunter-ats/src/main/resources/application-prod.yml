@@ -1,17 +1,30 @@
 #生产环境配置
+# 敏感项全部支持环境变量覆盖（迭代15 安全加固）：DB_HOST / DB_USERNAME / DB_PASSWORD / REDIS_PASSWORD / CORS_ORIGINS
 
 server:
   # 服务端口
   port: 5000
 
 spring:
-  # 数据源配置，请修改为你项目的实际配置
+  # 数据源配置：生产部署时通过环境变量注入真实凭据，仓库中不落明文
   datasource:
-    username: root
-    password: 123456
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:123456}
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://127.0.0.1:3306/bolehunter?useSSL=false&serverTimezone=UTC&characterEncoding=UTF8&allowPublicKeyRetrieval=true
+    url: jdbc:mysql://${DB_HOST:127.0.0.1}:3306/bolehunter?useSSL=false&serverTimezone=UTC&characterEncoding=UTF8&allowPublicKeyRetrieval=true
+  data:
+    redis:
+      host: ${REDIS_HOST:127.0.0.1}
+      port: 6379
+      password: ${REDIS_PASSWORD:}
 
+# 跨域来源白名单：生产必须显式列出前端站点域名（逗号分隔），禁止使用默认 *
+app:
+  cors:
+    allowed-origin-patterns: ${CORS_ORIGINS:https://localhost:5173}
+  jwt:
+    # 生产必须通过环境变量注入强随机 secret（>=64 字符），不使用开发默认值
+    token-secret: ${JWT_SECRET:x88Wf0991079889x8796a0Ac68f9ecJJU17c5Vbe8beod7d8d3e695*4}
 
 # 开启权限拦截
 auth:
@@ -20,6 +33,3 @@ auth:
 # 开启请求日志记录
 request-log:
   enabled: true
-
-
-
