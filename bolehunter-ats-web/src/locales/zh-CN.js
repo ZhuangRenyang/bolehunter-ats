@@ -1,0 +1,165 @@
+/*
+ * BoleHunter 伯乐猎 —— 开源猎头 ATS + CRM
+ * Copyright (C) 2026 ZhuangRenyang
+ * GitHub: https://github.com/ZhuangRenyang/bolehunter-ats
+ * Gitee:  https://gitee.com/ZhuangRenyang/bolehunter-ats
+ *
+ * 本程序是自由软件：你可以依据自由软件基金会发布的 GNU AGPL 第 3 版（或任一更高版本）的条款重新发布或修改它。
+ * 依据 AGPL-3.0 发布；详见仓库根目录 LICENSE 文件。本程序不提供任何担保。
+ * 以任何网络服务形式提供本程序（含 SaaS 托管）同样必须遵守 AGPL-3.0 开源。
+ */
+/**
+ * 简体中文语言包（基准语言）。
+ *
+ * 命名空间约定（后续页面批量抽取沿用）：
+ * - common    跨页面通用词
+ * - request   请求层兜底提示
+ * - menu      菜单 / 路由标题（stage.js 与 router meta.title 共用）
+ * - layout    主布局（顶栏 / 通知中心 / 页脚）
+ * - login / im / notFound  对应页面
+ * - workbench 工作台（含推荐阶段 stage.*，供漏斗/看板复用）
+ */
+export default {
+  common: {
+    confirm: '确定',
+    cancel: '取消',
+    delete: '删除',
+    export: '导出 CSV',
+    tip: '提示',
+    search: '搜 索',
+  },
+  request: {
+    failed: '请求失败，请稍后重试',
+    networkError: '网络异常，请检查网络连接',
+  },
+  menu: {
+    workbench: '工作台',
+    clientMgmt: '客户管理',
+    clientList: '客户列表',
+    clientDetail: '客户详情',
+    candidateMgmt: '候选人库',
+    candidateList: '候选人列表',
+    candidateDetail: '候选人详情',
+    recommendationMgmt: '推荐流程',
+    kanban: '推荐看板',
+    recommendationList: '推荐列表',
+    admin: '权限管理',
+    userList: '用户管理',
+    groupList: '角色管理',
+    positionMgmt: '职位管理',
+    positionList: '职位列表',
+    positionDetail: '职位详情',
+    setting: '系统设置',
+    dept: '部门管理',
+    dict: '字典管理',
+    flag: '功能开关',
+    ai: 'AI 服务配置',
+    gen: '代码生成',
+    upgrade: '系统升级',
+    log: '日志管理',
+    confirm: '推荐确认',
+  },
+  layout: {
+    logo: '猎头 ATS',
+    noticeCenter: '通知中心',
+    imEntry: '内部消息',
+    logout: '退出登录',
+    notLoggedIn: '未登录',
+    noticeEmpty: '暂无通知',
+    markAllRead: '全部标记已读',
+    language: '切换语言',
+  },
+  login: {
+    title: '猎头 ATS 工作台',
+    username: '用户名',
+    password: '密码',
+    btn: '登 录',
+    success: '登录成功',
+    ruleUsername: '请输入用户名',
+    rulePassword: '请输入密码',
+  },
+  im: {
+    title: '内部消息',
+    connected: '实时连接已建立',
+    degraded: '实时推送不可用（已降级轮询）',
+    connecting: '连接中…',
+    pickPeer: '选择同事发起会话',
+    conversationsEmpty: '暂无会话，从上方选择同事开始',
+    me: '我：',
+    back: '返回',
+    messagesEmpty: '还没有消息，说点什么吧',
+    inputPlaceholder: '输入消息，Enter 发送 / Ctrl+Enter 换行',
+    send: '发送',
+    sendFailed: '发送失败',
+  },
+  notFound: {
+    text: '页面不存在',
+    back: '回到工作台',
+  },
+  workbench: {
+    metricClient: '客户公司',
+    metricCandidate: '候选人库',
+    metricRecommendation: '推荐记录',
+    metricOverdue: '已逾期任务',
+    myTasks: '我的任务（今日到期 / 已逾期）',
+    newTask: '新建任务',
+    taskEmpty: '太棒了，没有待办任务',
+    duePrefix: '前完成',
+    tagOverdue: '已逾期',
+    tagToday: '今日',
+    done: '完成',
+    funnel: '推荐漏斗（按流程阶段）',
+    trend: '漏斗时间对比（近 30 天 vs 前 30 天各阶段新增）',
+    ranking: '顾问业绩排行（本自然月）',
+    rankingEmpty: '本月暂无推荐记录',
+    conversion: '客户转化率（按公司，取推荐量 Top 20）',
+    conversionEmpty: '暂无客户推荐数据',
+    colConsultant: '顾问',
+    colNew: '新增推荐',
+    colRead: '客户已读',
+    colInterview: '面试',
+    colOffer: 'Offer',
+    colPaid: '回款',
+    colClient: '客户公司',
+    colTotal: '推荐数',
+    colInterviewAfter: '面试及之后',
+    colOfferAfter: 'Offer及之后',
+    colRate: '回款转化率',
+    aiTitle: 'AI 找人 —— 用自然语言搜索候选人',
+    aiPlaceholder: '例如：找一位在杭州有 5 年 Java 经验的候选人',
+    aiDegraded: '大模型未配置或不可用，以下为关键词检索命中结果',
+    aiEmpty: '知识库中未找到相关候选人',
+    colName: '姓名',
+    colCompany: '当前公司',
+    colPosition: '当前职位',
+    colCity: '城市',
+    colPhone: '电话',
+    taskDialogTitle: '新建任务',
+    fieldTitle: '标题',
+    fieldContent: '说明',
+    fieldDue: '到期时间',
+    titlePlaceholder: '如：给客户A打电话跟进张三推荐',
+    duePlaceholder: '选择到期时间',
+    confirmDone: '确认完成任务「{name}」？',
+    confirmDeleteTask: '是否删除该任务？',
+    taskDone: '任务已完成',
+    deleteOk: '删除成功',
+    createOk: '新增成功',
+    ruleTitle: '请输入任务标题',
+    ruleDue: '请选择到期时间',
+    legendRecent: '近 30 天',
+    legendPrev: '前 30 天',
+    stage: {
+      PENDING: '待推荐',
+      RECOMMENDED: '已推荐',
+      CLIENT_READ: '客户已读',
+      INTERVIEW_PENDING: '待面试',
+      INTERVIEWING: '面试中',
+      OFFER_PENDING: '待Offer',
+      OFFERED: 'Offer',
+      ONBOARDED: '入职',
+      PAID: '回款',
+      ARCHIVED: '归档',
+    },
+  },
+}

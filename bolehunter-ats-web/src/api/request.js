@@ -12,6 +12,13 @@ import axios from 'axios'
 import Cookies from 'js-cookie'
 import { ElMessage } from 'element-plus'
 import router from '@/router'
+// 兜底提示走 i18n（迭代 27）；i18n 实例不依赖本模块，无循环引用
+import i18n from '@/locales'
+
+/** 请求层内取当前语言文案（请求层不是组件，用 global API） */
+function t(key) {
+  return i18n.global.t(key)
+}
 
 /**
  * 请求层：令牌存 Cookie（不落 localStorage）；
@@ -108,7 +115,7 @@ instance.interceptors.response.use(
     }
     if (response.status >= 400) {
       const body = response.data || {}
-      const message = typeof body.message === 'string' ? body.message : '请求失败，请稍后重试'
+      const message = typeof body.message === 'string' ? body.message : t('request.failed')
       ElMessage.error(message)
       return Promise.reject(body)
     }
@@ -116,7 +123,7 @@ instance.interceptors.response.use(
   },
   error => {
     // 网络层失败（断网/超时）
-    ElMessage.error('网络异常，请检查网络连接')
+    ElMessage.error(t('request.networkError'))
     return Promise.reject(error)
   },
 )

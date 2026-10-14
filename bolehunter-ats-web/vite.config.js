@@ -29,6 +29,8 @@ export default defineConfig({
         // 第三方库拆分独立 chunk，业务代码更新时缓存不受影响
         manualChunks: {
           'vendor-vue': ['vue', 'vue-router', 'pinia'],
+          // vue-i18n 单独成 chunk（迭代 27 国际化骨架），与 vue 生态解耦缓存
+          'vendor-i18n': ['vue-i18n'],
           'echarts': ['echarts'],
         },
       },

@@ -11,10 +11,16 @@
 <template>
   <div class="not-found">
     <div class="code">404</div>
-    <div class="text">页面不存在</div>
-    <el-button type="primary" @click="$router.push('/workbench')">回到工作台</el-button>
+    <div class="text">{{ t('notFound.text') }}</div>
+    <el-button type="primary" @click="$router.push('/workbench')">{{ t('notFound.back') }}</el-button>
   </div>
 </template>
+
+<script setup>
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
+</script>
 
 <style scoped>
 .not-found {

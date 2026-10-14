@@ -13,6 +13,8 @@ import { createPinia } from 'pinia'
 import { ElLoading } from 'element-plus'
 import App from './App.vue'
 import router from './router'
+// i18n（迭代 27 国际化骨架）：语言包与实例工厂见 src/locales/
+import i18n from './locales'
 import './styles/global.scss'
 
 // ---------- Element Plus 按需引入（迭代17 性能加固） ----------
@@ -29,19 +31,20 @@ import 'element-plus/es/components/loading/style/css'
 import {
   Avatar, Back, Bell, Briefcase, ChatDotSquare, Collection, Download, Edit, HomeFilled,
   MagicStick, Menu, OfficeBuilding, Open, Plus, Position, PriceTag, Promotion,
-  Search, Setting, Share, Suitcase, Tickets, Upload, User, UserFilled,
+  Search, Setting, Share, Suitcase, Tickets, Upload, User, UserFilled, ArrowDown,
 } from '@element-plus/icons-vue'
 
 const ICONS = {
   Avatar, Back, Bell, Briefcase, ChatDotSquare, Collection, Download, Edit, HomeFilled,
   MagicStick, Menu, OfficeBuilding, Open, Plus, Position, PriceTag, Promotion,
-  Search, Setting, Share, Suitcase, Tickets, Upload, User, UserFilled,
+  Search, Setting, Share, Suitcase, Tickets, Upload, User, UserFilled, ArrowDown,
 }
 
 const app = createApp(App)
 
 app.use(createPinia())
 app.use(router)
+app.use(i18n)
 // 注册白名单图标（el-icon / icon 属性 / 动态 component :is 用）
 for (const [key, component] of Object.entries(ICONS)) {
   app.component(key, component)

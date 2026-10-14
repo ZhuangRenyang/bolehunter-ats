@@ -11,32 +11,34 @@
 <template>
   <div class="login-page">
     <el-card class="login-card">
-      <div class="title">猎头 ATS 工作台</div>
+      <div class="title">{{ t('login.title') }}</div>
       <el-form ref="formRef" :model="form" :rules="rules" label-width="0" size="large" @keyup.enter="handleLogin">
         <el-form-item prop="username">
-          <el-input v-model="form.username" placeholder="用户名" clearable>
+          <el-input v-model="form.username" :placeholder="t('login.username')" clearable>
             <template #prefix><el-icon><User /></el-icon></template>
           </el-input>
         </el-form-item>
         <el-form-item prop="password">
-          <el-input v-model="form.password" type="password" placeholder="密码" show-password>
+          <el-input v-model="form.password" type="password" :placeholder="t('login.password')" show-password>
             <template #prefix><el-icon><Lock /></el-icon></template>
           </el-input>
         </el-form-item>
-        <el-button type="primary" class="login-btn" :loading="loading" @click="handleLogin">登 录</el-button>
+        <el-button type="primary" class="login-btn" :loading="loading" @click="handleLogin">{{ t('login.btn') }}</el-button>
       </el-form>
     </el-card>
   </div>
 </template>
 
 <script setup>
-import { reactive, ref } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import { useI18n } from 'vue-i18n'
 import { saveTokens } from '@/api/request'
 import { login } from '@/api/user'
 import { useUserStore } from '@/stores/user'
 
+const { t } = useI18n()
 const router = useRouter()
 const route = useRoute()
 const userStore = useUserStore()
@@ -44,10 +46,11 @@ const userStore = useUserStore()
 const formRef = ref()
 const loading = ref(false)
 const form = reactive({ username: '', password: '' })
-const rules = {
-  username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
-  password: [{ required: true, message: '请输入密码', trigger: 'blur' }],
-}
+// computed 包一层：切换语言后校验文案即时跟随
+const rules = computed(() => ({
+  username: [{ required: true, message: t('login.ruleUsername'), trigger: 'blur' }],
+  password: [{ required: true, message: t('login.rulePassword'), trigger: 'blur' }],
+}))
 
 async function handleLogin() {
   await formRef.value.validate()
@@ -56,7 +59,7 @@ async function handleLogin() {
     const res = await login(form)
     saveTokens(res.access_token, res.refresh_token)
     await userStore.loadPermissions()
-    ElMessage.success('登录成功')
+    ElMessage.success(t('login.success'))
     router.push(route.query.redirect || '/workbench')
   } catch (e) {
     // 错误提示由请求层统一处理

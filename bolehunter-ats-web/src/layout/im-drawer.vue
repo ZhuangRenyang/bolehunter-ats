@@ -9,19 +9,19 @@
   以任何网络服务形式提供本程序（含 SaaS 托管）同样必须遵守 AGPL-3.0 开源。
 -->
 <template>
-  <el-drawer v-model="inner" title="内部消息" size="440px">
+  <el-drawer v-model="inner" :title="t('im.title')" size="440px">
     <template #header>
       <div class="im-head">
-        <span>内部消息</span>
+        <span>{{ t('im.title') }}</span>
         <el-tag size="small" :type="ws.connected ? 'success' : 'info'">
-          {{ ws.connected ? '实时连接已建立' : (ws.unavailable ? '实时推送不可用（已降级轮询）' : '连接中…') }}
+          {{ ws.connected ? t('im.connected') : (ws.unavailable ? t('im.degraded') : t('im.connecting')) }}
         </el-tag>
       </div>
     </template>
 
     <!-- 会话列表 -->
     <div v-if="!peerId" class="im-list">
-      <el-select v-model="picked" filterable placeholder="选择同事发起会话" size="small" style="width: 100%"
+      <el-select v-model="picked" filterable :placeholder="t('im.pickPeer')" size="small" style="width: 100%"
         @change="startConversation">
         <el-option v-for="c in colleagues" :key="c.id" :label="c.nickname || c.username" :value="c.id" />
       </el-select>
@@ -32,17 +32,17 @@
           <span class="im-time">{{ c.lastTime }}</span>
         </div>
         <div class="im-row">
-          <span class="im-last">{{ (c.outgoing ? '我：' : '') + c.lastContent }}</span>
+          <span class="im-last">{{ (c.outgoing ? t('im.me') : '') + c.lastContent }}</span>
           <el-badge v-if="c.unreadCount > 0" :value="c.unreadCount" class="im-badge" />
         </div>
       </div>
-      <el-empty v-if="!conversations.length && !loading" description="暂无会话，从上方选择同事开始" :image-size="60" />
+      <el-empty v-if="!conversations.length && !loading" :description="t('im.conversationsEmpty')" :image-size="60" />
     </div>
 
     <!-- 聊天区 -->
     <div v-else class="im-chat">
       <div class="im-chat-head">
-        <el-button size="small" @click="back">返回</el-button>
+        <el-button size="small" @click="back">{{ t('im.back') }}</el-button>
         <span class="im-peer">{{ peerName }}</span>
       </div>
 
@@ -51,15 +51,15 @@
           <div class="im-bubble">{{ m.content }}</div>
           <div class="im-meta">{{ m.senderName }} · {{ m.createTime }}</div>
         </div>
-        <el-empty v-if="!messages.length" description="还没有消息，说点什么吧" :image-size="60" />
+        <el-empty v-if="!messages.length" :description="t('im.messagesEmpty')" :image-size="60" />
       </div>
 
       <div class="im-input">
         <el-input v-model="draft" type="textarea" :rows="2" resize="none" maxlength="2000" show-word-limit
-          placeholder="输入消息，Enter 发送 / Ctrl+Enter 换行" @keydown.enter.exact.prevent="doSend" />
+          :placeholder="t('im.inputPlaceholder')" @keydown.enter.exact.prevent="doSend" />
         <div class="im-actions">
           <el-button type="primary" size="small" :loading="sending" :disabled="!draft.trim()" @click="doSend">
-            发送
+            {{ t('im.send') }}
           </el-button>
         </div>
       </div>
@@ -70,10 +70,13 @@
 <script setup>
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import { ElMessage } from 'element-plus'
+import { useI18n } from 'vue-i18n'
 import {
   getColleagues, getConversations, getImHistory, getImUnreadTotal, markImRead, sendImMessage,
 } from '@/api/im'
 import { useWsStore } from '@/stores/ws'
+
+const { t } = useI18n()
 
 const props = defineProps({ modelValue: Boolean })
 const emit = defineEmits(['update:modelValue'])
@@ -167,7 +170,7 @@ async function doSend() {
       await scrollBottom()
     }
   } catch (e) {
-    ElMessage.error((e && e.message) || '发送失败')
+    ElMessage.error((e && e.message) || t('im.sendFailed'))
     draft.value = text
   } finally {
     sending.value = false

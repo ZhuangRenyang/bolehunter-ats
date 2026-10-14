@@ -9,8 +9,19 @@
  * 以任何网络服务形式提供本程序（含 SaaS 托管）同样必须遵守 AGPL-3.0 开源。
  -->
 <template>
-  <router-view />
+  <!-- el-config-provider 让 Element Plus 内置组件文案（分页/日期/空数据等）跟随界面语言；
+       按需引入模式下组件由 unplugin resolver 自动导入，这里只绑定 locale -->
+  <el-config-provider :locale="elLocale">
+    <router-view />
+  </el-config-provider>
 </template>
 
 <script setup>
+import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
+import zhCn from 'element-plus/es/locale/lang/zh-cn'
+import en from 'element-plus/es/locale/lang/en'
+
+const { locale } = useI18n()
+const elLocale = computed(() => (locale.value === 'en-US' ? en : zhCn))
 </script>

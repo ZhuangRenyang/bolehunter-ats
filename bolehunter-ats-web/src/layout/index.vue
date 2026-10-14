@@ -11,14 +11,14 @@
 <template>
   <div class="app-layout">
     <aside class="sidebar">
-      <div class="logo">猎头 ATS</div>
+      <div class="logo">{{ t('layout.logo') }}</div>
       <div class="notice-entry" v-if="userStore.user?.username">
         <el-badge :value="unreadCount" :hidden="unreadCount === 0" :max="99">
-          <el-button :icon="'Bell'" circle size="small" title="通知中心" @click="noticeDrawer = true" />
+          <el-button :icon="'Bell'" circle size="small" :title="t('layout.noticeCenter')" @click="noticeDrawer = true" />
         </el-badge>
         <!-- 迭代23：内部消息（未读来自 REST 查询，新消息由 WebSocket 实时驱动刷新） -->
         <el-badge :value="imUnread" :hidden="imUnread === 0" :max="99">
-          <el-button :icon="'ChatDotSquare'" circle size="small" title="内部消息" @click="imDrawer = true" />
+          <el-button :icon="'ChatDotSquare'" circle size="small" :title="t('layout.imEntry')" @click="imDrawer = true" />
         </el-badge>
       </div>
       <el-scrollbar>
@@ -27,22 +27,16 @@
             <!-- 单页菜单 -->
             <el-menu-item v-if="!item.children || item.children.length === 0" :index="item.route">
               <el-icon><component :is="item.icon || 'Menu'" /></el-icon>
-              <span>{{ item.title }}</span>
+              <span>{{ t(item.title) }}</span>
             </el-menu-item>
             <!-- folder 分组菜单（一层展开） -->
             <el-sub-menu v-else :index="item.title">
               <template #title>
                 <el-icon><component :is="item.icon || 'Menu'" /></el-icon>
-                <span>{{ item.title }}</span>
-                    <div class="copyright-footer">
-        © 2026 <a href="https://github.com/ZhuangRenyang/bolehunter-ats" target="_blank">BoleHunter 伯乐猎</a>
-        · ZhuangRenyang · AGPL-3.0 ·
-        <a href="https://gitee.com/ZhuangRenyang/bolehunter-ats" target="_blank">Gitee</a> /
-        <a href="https://github.com/ZhuangRenyang/bolehunter-ats" target="_blank">GitHub</a>
-      </div>
-</template>
+                <span>{{ t(item.title) }}</span>
+              </template>
               <el-menu-item v-for="child in item.children" :key="child.route" :index="child.route">
-                {{ child.title }}
+                {{ t(child.title) }}
               </el-menu-item>
             </el-sub-menu>
           </template>
@@ -51,32 +45,58 @@
     </aside>
     <div class="main-wrap">
       <header class="topbar">
-        <div class="breadcrumb">{{ route.meta.title || '' }}</div>
-        <el-dropdown @command="handleCommand">
-          <span class="user-info">
-            <el-avatar :size="28" style="margin-right: 8px">
-              {{ nicknameFirstChar }}
-            </el-avatar>
-            {{ nickname }}
-            <el-icon><ArrowDown /></el-icon>
-          </span>
-          <template #dropdown>
-            <el-dropdown-menu>
-              <el-dropdown-item command="logout">退出登录</el-dropdown-item>
-            </el-dropdown-menu>
-          </template>
-        </el-dropdown>
+        <div class="breadcrumb">{{ route.meta.title ? t(route.meta.title) : '' }}</div>
+        <div class="topbar-right">
+          <!-- 迭代 27 国际化骨架：语言切换（偏好持久化 localStorage，即时生效无需刷新） -->
+          <el-dropdown v-if="userStore.user?.username" @command="switchLocale" class="locale-switch">
+            <span class="locale-trigger">
+              {{ currentLocaleLabel }}
+              <el-icon><ArrowDown /></el-icon>
+            </span>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item
+                  v-for="item in SUPPORTED_LOCALES" :key="item.value" :command="item.value"
+                  :class="{ 'locale-active': item.value === locale }">
+                  {{ item.label }}
+                </el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
+          <el-dropdown @command="handleCommand">
+            <span class="user-info">
+              <el-avatar :size="28" style="margin-right: 8px">
+                {{ nicknameFirstChar }}
+              </el-avatar>
+              {{ nickname }}
+              <el-icon><ArrowDown /></el-icon>
+            </span>
+            <template #dropdown>
+              <el-dropdown-menu>
+                <el-dropdown-item command="logout">{{ t('layout.logout') }}</el-dropdown-item>
+              </el-dropdown-menu>
+            </template>
+          </el-dropdown>
+        </div>
       </header>
       <main class="content">
         <router-view />
       </main>
+      <!-- 版权页脚：曾因编辑事故被嵌进 el-sub-menu 的 #title 模板内（分组菜单标题里渲染页脚），
+           迭代 27 修复为固定在内容区底部 -->
+      <footer class="copyright-footer">
+        © 2026 <a href="https://github.com/ZhuangRenyang/bolehunter-ats" target="_blank">BoleHunter 伯乐猎</a>
+        · ZhuangRenyang · AGPL-3.0 ·
+        <a href="https://gitee.com/ZhuangRenyang/bolehunter-ats" target="_blank">Gitee</a> /
+        <a href="https://github.com/ZhuangRenyang/bolehunter-ats" target="_blank">GitHub</a>
+      </footer>
     </div>
   </div>
-    <el-drawer v-model="noticeDrawer" title="通知中心" size="380px">
+    <el-drawer v-model="noticeDrawer" :title="t('layout.noticeCenter')" size="380px">
       <div class="notice-toolbar">
-        <el-button size="small" plain @click="markAll">全部标记已读</el-button>
+        <el-button size="small" plain @click="markAll">{{ t('layout.markAllRead') }}</el-button>
       </div>
-      <el-empty v-if="notices.length === 0" description="暂无通知" :image-size="60" />
+      <el-empty v-if="notices.length === 0" :description="t('layout.noticeEmpty')" :image-size="60" />
       <div v-for="n in notices" :key="n.id" class="notice-row" :class="{ unread: String(n.is_read) === 'false' }">
         <div class="notice-content">{{ n.content }}</div>
         <div class="notice-time">{{ (n.time || '').slice(0, 19).replace('T', ' ') }}</div>
@@ -89,18 +109,32 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { useUserStore } from '@/stores/user'
 // getToken 此前被使用却未导入，导致 mounted 里抛 ReferenceError —— 通知从未真正加载过
 import { clearTokens, get, getToken, TOKEN_ACCESS, TOKEN_REFRESH } from '@/api/request'
 import { getAllMyNotices, markAllRead } from '@/api/notify'
 import { getImUnreadTotal } from '@/api/im'
 import { useWsStore } from '@/stores/ws'
+// i18n（迭代 27）：SUPPORTED_LOCALES 供切换菜单、setLocale 完成持久化切换
+import { setLocale, SUPPORTED_LOCALES } from '@/locales'
 import ImDrawer from './im-drawer.vue'
 
+const { t, locale } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const userStore = useUserStore()
 const ws = useWsStore()
+
+/* ===== 语言切换 ===== */
+const currentLocaleLabel = computed(() => {
+  const hit = SUPPORTED_LOCALES.find(item => item.value === locale.value)
+  return (hit || SUPPORTED_LOCALES[0]).label
+})
+
+function switchLocale(value) {
+  setLocale(value)
+}
 
 /* ===== 通知中心 ===== */
 const noticeDrawer = ref(false)
@@ -174,7 +208,7 @@ function require_stage() {
 
 import * as stageModule from '@/router/stage'
 
-const nickname = computed(() => (userStore.user && userStore.user.nickname) || '未登录')
+const nickname = computed(() => (userStore.user && userStore.user.nickname) || t('layout.notLoggedIn'))
 const nicknameFirstChar = computed(() => nickname.value.charAt(0))
 const activeMenu = computed(() => route.path)
 
@@ -283,6 +317,21 @@ onBeforeUnmount(() => {
       color: #303133;
     }
 
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+    }
+
+    .locale-trigger {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      font-size: 13px;
+      color: #303133;
+      outline: none;
+    }
+
     .user-info {
       display: flex;
       align-items: center;
@@ -308,5 +357,9 @@ onBeforeUnmount(() => {
   .copyright-footer a {
     color: #409eff;
     text-decoration: none;
+  }
+  .locale-active {
+    color: #409eff;
+    font-weight: 600;
   }
 </style>

@@ -11,17 +11,20 @@
 /**
  * 路由配置（与旧版 stage 机制同构）：
  * folder（分组导航）→ children 中 view 挂组件；permission 数组为可见权限名。
+ *
+ * 迭代 27 国际化骨架：title 统一存 i18n key（menu.* 命名空间，见 src/locales/*），
+ * 菜单与面包屑渲染时经 t() 翻译；key 本身唯一，el-sub-menu :index 不受影响。
  */
 
 export const adminStage = {
-  title: '权限管理',
+  title: 'menu.admin',
   type: 'folder',
   icon: 'User',
   inNav: true,
   permission: ['管理员'],
   children: [
     {
-      title: '用户管理',
+      title: 'menu.userList',
       type: 'view',
       name: 'userList',
       route: '/admin/user/list',
@@ -31,7 +34,7 @@ export const adminStage = {
       permission: ['查询所有用户'],
     },
     {
-      title: '角色管理',
+      title: 'menu.groupList',
       type: 'view',
       name: 'groupList',
       route: '/admin/group/list',
@@ -44,14 +47,14 @@ export const adminStage = {
 }
 
 export const positionStage = {
-  title: '职位管理',
+  title: 'menu.positionMgmt',
   type: 'folder',
   icon: 'Briefcase',
   inNav: true,
   permission: ['管理职位分页'],
   children: [
     {
-      title: '职位列表',
+      title: 'menu.positionList',
       type: 'view',
       name: 'positionList',
       route: '/position/list',
@@ -64,14 +67,14 @@ export const positionStage = {
 }
 
 export const settingStage = {
-  title: '系统设置',
+  title: 'menu.setting',
   type: 'folder',
   icon: 'Setting',
   inNav: true,
   permission: ['查询部门树', '查询字典类型', '查询功能开关', '查询代码生成表列表'],
   children: [
     {
-      title: '部门管理',
+      title: 'menu.dept',
       type: 'view',
       name: 'deptList',
       route: '/setting/dept/list',
@@ -81,7 +84,7 @@ export const settingStage = {
       permission: ['查询部门树'],
     },
     {
-      title: '字典管理',
+      title: 'menu.dict',
       type: 'view',
       name: 'dictList',
       route: '/setting/dict/list',
@@ -91,7 +94,7 @@ export const settingStage = {
       permission: ['查询字典类型'],
     },
     {
-      title: '功能开关',
+      title: 'menu.flag',
       type: 'view',
       name: 'flagList',
       route: '/setting/flag/list',
@@ -101,7 +104,7 @@ export const settingStage = {
       permission: ['查询功能开关'],
     },
     {
-      title: 'AI 服务配置',
+      title: 'menu.ai',
       type: 'view',
       name: 'aiSetting',
       route: '/setting/ai',
@@ -111,7 +114,7 @@ export const settingStage = {
       permission: ['查询AI服务配置'],
     },
     {
-      title: '代码生成',
+      title: 'menu.gen',
       type: 'view',
       name: 'gen',
       route: '/setting/gen',
@@ -121,7 +124,7 @@ export const settingStage = {
       permission: ['查询代码生成表列表'],
     },
     {
-      title: '系统升级',
+      title: 'menu.upgrade',
       type: 'view',
       name: 'systemUpgrade',
       route: '/setting/upgrade',
@@ -134,14 +137,14 @@ export const settingStage = {
 }
 
 export const clientStage = {
-  title: '客户管理',
+  title: 'menu.clientMgmt',
   type: 'folder',
   icon: 'Suitcase',
   inNav: true,
   permission: ['查询客户列表'],
   children: [
     {
-      title: '客户列表',
+      title: 'menu.clientList',
       type: 'view',
       name: 'clientList',
       route: '/client/list',
@@ -154,14 +157,14 @@ export const clientStage = {
 }
 
 export const candidateStage = {
-  title: '候选人库',
+  title: 'menu.candidateMgmt',
   type: 'folder',
   icon: 'UserFilled',
   inNav: true,
   permission: ['查询候选人列表'],
   children: [
     {
-      title: '候选人列表',
+      title: 'menu.candidateList',
       type: 'view',
       name: 'candidateList',
       route: '/candidate/list',
@@ -174,14 +177,14 @@ export const candidateStage = {
 }
 
 export const recommendationStage = {
-  title: '推荐流程',
+  title: 'menu.recommendationMgmt',
   type: 'folder',
   icon: 'Share',
   inNav: true,
   permission: ['查询推荐列表'],
   children: [
     {
-      title: '推荐看板',
+      title: 'menu.kanban',
       type: 'view',
       name: 'recommendationKanban',
       route: '/recommendation/kanban',
@@ -191,7 +194,7 @@ export const recommendationStage = {
       permission: ['查询推荐列表'],
     },
     {
-      title: '推荐列表',
+      title: 'menu.recommendationList',
       type: 'view',
       name: 'recommendationList',
       route: '/recommendation/list',
@@ -204,7 +207,7 @@ export const recommendationStage = {
 }
 
 export const clientDetailStage = {
-  title: '客户详情',
+  title: 'menu.clientDetail',
   type: 'view',
   name: 'clientDetail',
   route: '/client/detail',
@@ -215,7 +218,7 @@ export const clientDetailStage = {
 }
 
 export const candidateDetailStage = {
-  title: '候选人详情',
+  title: 'menu.candidateDetail',
   type: 'view',
   name: 'candidateDetail',
   route: '/candidate/detail',
@@ -226,7 +229,7 @@ export const candidateDetailStage = {
 }
 
 export const workbenchStage = {
-  title: '工作台',
+  title: 'menu.workbench',
   type: 'view',
   name: 'workbench',
   route: '/workbench',
@@ -237,7 +240,7 @@ export const workbenchStage = {
 }
 
 export const logStage = {
-  title: '日志管理',
+  title: 'menu.log',
   type: 'view',
   name: 'logList',
   route: '/log',

@@ -14,25 +14,25 @@
       <el-col :span="6">
         <el-card shadow="hover">
           <div class="metric">{{ summary.clientTotal }}</div>
-          <div class="metric-label">客户公司</div>
+          <div class="metric-label">{{ t('workbench.metricClient') }}</div>
         </el-card>
       </el-col>
       <el-col :span="6">
         <el-card shadow="hover">
           <div class="metric">{{ summary.candidateTotal }}</div>
-          <div class="metric-label">候选人库</div>
+          <div class="metric-label">{{ t('workbench.metricCandidate') }}</div>
         </el-card>
       </el-col>
       <el-col :span="6">
         <el-card shadow="hover">
           <div class="metric">{{ summary.recommendationTotal }}</div>
-          <div class="metric-label">推荐记录</div>
+          <div class="metric-label">{{ t('workbench.metricRecommendation') }}</div>
         </el-card>
       </el-col>
       <el-col :span="6">
         <el-card shadow="hover">
           <div class="metric warn">{{ overdueCount }}</div>
-          <div class="metric-label">已逾期任务</div>
+          <div class="metric-label">{{ t('workbench.metricOverdue') }}</div>
         </el-card>
       </el-col>
     </el-row>
@@ -43,23 +43,23 @@
         <el-card shadow="hover">
           <template #header>
             <div class="card-head">
-              <span>我的任务（今日到期 / 已逾期）</span>
-              <el-button type="primary" size="small" plain icon="Plus" @click="taskDialogVisible = true">新建任务</el-button>
+              <span>{{ t('workbench.myTasks') }}</span>
+              <el-button type="primary" size="small" plain icon="Plus" @click="taskDialogVisible = true">{{ t('workbench.newTask') }}</el-button>
             </div>
           </template>
-          <el-empty v-if="tasks.length === 0" description="太棒了，没有待办任务" :image-size="60" />
+          <el-empty v-if="tasks.length === 0" :description="t('workbench.taskEmpty')" :image-size="60" />
           <div v-for="task in tasks" :key="task.id" class="task-row">
             <div class="task-main">
               <div class="task-title" :class="{ overdue: isOverdue(task) }">{{ task.title }}</div>
               <div class="task-sub">
-                {{ formatTime(task.due_time) }} 前完成
-                <el-tag v-if="isOverdue(task)" size="small" type="danger">已逾期</el-tag>
-                <el-tag v-else size="small" type="warning">今日</el-tag>
+                {{ formatTime(task.due_time) }} {{ t('workbench.duePrefix') }}
+                <el-tag v-if="isOverdue(task)" size="small" type="danger">{{ t('workbench.tagOverdue') }}</el-tag>
+                <el-tag v-else size="small" type="warning">{{ t('workbench.tagToday') }}</el-tag>
               </div>
             </div>
             <div class="task-ops">
-              <el-button size="small" type="success" plain @click="handleDone(task)">完成</el-button>
-              <el-button size="small" type="danger" plain @click="handleDeleteTask(task)">删除</el-button>
+              <el-button size="small" type="success" plain @click="handleDone(task)">{{ t('workbench.done') }}</el-button>
+              <el-button size="small" type="danger" plain @click="handleDeleteTask(task)">{{ t('common.delete') }}</el-button>
             </div>
           </div>
         </el-card>
@@ -67,7 +67,7 @@
       <!-- 阶段分布漏斗 -->
       <el-col :span="11">
         <el-card shadow="hover">
-          <template #header>推荐漏斗（按流程阶段）</template>
+          <template #header>{{ t('workbench.funnel') }}</template>
           <div ref="funnelRef" class="funnel-chart"></div>
         </el-card>
       </el-col>
@@ -77,21 +77,21 @@
     <el-row :gutter="16" class="row-gap">
       <el-col :span="11">
         <el-card shadow="hover">
-          <template #header>漏斗时间对比（近 30 天 vs 前 30 天各阶段新增）</template>
+          <template #header>{{ t('workbench.trend') }}</template>
           <div ref="trendRef" class="funnel-chart"></div>
         </el-card>
       </el-col>
       <el-col :span="13">
         <el-card shadow="hover">
-          <template #header>顾问业绩排行（本自然月）</template>
-          <el-table :data="ranking" size="small" :empty-text="'本月暂无推荐记录'">
+          <template #header>{{ t('workbench.ranking') }}</template>
+          <el-table :data="ranking" size="small" :empty-text="t('workbench.rankingEmpty')">
             <el-table-column type="index" label="#" width="44" />
-            <el-table-column prop="nickname" label="顾问" min-width="90" show-overflow-tooltip />
-            <el-table-column prop="total" label="新增推荐" width="84" sortable />
-            <el-table-column prop="read_cnt" label="客户已读" width="84" sortable />
-            <el-table-column prop="interview_cnt" label="面试" width="68" sortable />
-            <el-table-column prop="offer_cnt" label="Offer" width="72" sortable />
-            <el-table-column prop="paid_cnt" label="回款" width="68" sortable />
+            <el-table-column prop="nickname" :label="t('workbench.colConsultant')" min-width="90" show-overflow-tooltip />
+            <el-table-column prop="total" :label="t('workbench.colNew')" width="84" sortable />
+            <el-table-column prop="read_cnt" :label="t('workbench.colRead')" width="84" sortable />
+            <el-table-column prop="interview_cnt" :label="t('workbench.colInterview')" width="68" sortable />
+            <el-table-column prop="offer_cnt" :label="t('workbench.colOffer')" width="72" sortable />
+            <el-table-column prop="paid_cnt" :label="t('workbench.colPaid')" width="68" sortable />
           </el-table>
         </el-card>
       </el-col>
@@ -102,18 +102,18 @@
         <el-card shadow="hover">
           <template #header>
             <div class="card-head">
-              <span>客户转化率（按公司，取推荐量 Top 20）</span>
-              <el-button type="primary" size="small" plain icon="Download" @click="handleExportConversion">导出 CSV</el-button>
+              <span>{{ t('workbench.conversion') }}</span>
+              <el-button type="primary" size="small" plain icon="Download" @click="handleExportConversion">{{ t('common.export') }}</el-button>
             </div>
           </template>
-          <el-table :data="conversion" size="small" empty-text="暂无客户推荐数据">
-            <el-table-column prop="client_name" label="客户公司" min-width="140" show-overflow-tooltip />
-            <el-table-column prop="total" label="推荐数" width="76" sortable />
-            <el-table-column prop="read_cnt" label="客户已读" width="84" sortable />
-            <el-table-column prop="interview_cnt" label="面试及之后" width="96" sortable />
-            <el-table-column prop="offer_cnt" label="Offer及之后" width="100" sortable />
-            <el-table-column prop="paid_cnt" label="回款" width="72" sortable />
-            <el-table-column label="回款转化率" width="180">
+          <el-table :data="conversion" size="small" :empty-text="t('workbench.conversionEmpty')">
+            <el-table-column prop="client_name" :label="t('workbench.colClient')" min-width="140" show-overflow-tooltip />
+            <el-table-column prop="total" :label="t('workbench.colTotal')" width="76" sortable />
+            <el-table-column prop="read_cnt" :label="t('workbench.colRead')" width="84" sortable />
+            <el-table-column prop="interview_cnt" :label="t('workbench.colInterviewAfter')" width="96" sortable />
+            <el-table-column prop="offer_cnt" :label="t('workbench.colOfferAfter')" width="100" sortable />
+            <el-table-column prop="paid_cnt" :label="t('workbench.colPaid')" width="72" sortable />
+            <el-table-column :label="t('workbench.colRate')" width="180">
               <template #default="{ row }">
                 <div class="rate-cell">
                   <el-progress :percentage="Number(row.paid_rate) || 0" :stroke-width="10"
@@ -130,25 +130,25 @@
     <el-row class="row-gap">
       <el-col :span="24">
         <el-card shadow="hover">
-          <template #header>AI 找人 —— 用自然语言搜索候选人</template>
+          <template #header>{{ t('workbench.aiTitle') }}</template>
           <div class="ai-ask-bar">
-            <el-input v-model="aiQuestion" maxlength="200" placeholder="例如：找一位在杭州有 5 年 Java 经验的候选人"
+            <el-input v-model="aiQuestion" maxlength="200" :placeholder="t('workbench.aiPlaceholder')"
               @keyup.enter="handleAiAsk" />
-            <el-button type="primary" :loading="aiAsking" @click="handleAiAsk">搜 索</el-button>
+            <el-button type="primary" :loading="aiAsking" @click="handleAiAsk">{{ t('common.search') }}</el-button>
           </div>
           <template v-if="aiResult">
             <el-alert v-if="aiResult.answer" type="success" :closable="false" style="margin: 12px 0">
               <div style="white-space: pre-wrap">{{ aiResult.answer }}</div>
             </el-alert>
             <el-alert v-else-if="!aiResult.llm" type="warning" :closable="false" style="margin: 12px 0"
-              title="大模型未配置或不可用，以下为关键词检索命中结果" />
-            <el-empty v-if="(aiResult.candidates || []).length === 0 && !aiAsking" description="知识库中未找到相关候选人" :image-size="50" />
+              :title="t('workbench.aiDegraded')" />
+            <el-empty v-if="(aiResult.candidates || []).length === 0 && !aiAsking" :description="t('workbench.aiEmpty')" :image-size="50" />
             <el-table v-else :data="aiResult.candidates || []" size="small">
-              <el-table-column prop="name" label="姓名" width="110" />
-              <el-table-column prop="current_company" label="当前公司" min-width="140" show-overflow-tooltip />
-              <el-table-column prop="current_position" label="当前职位" min-width="120" show-overflow-tooltip />
-              <el-table-column prop="city" label="城市" width="90" />
-              <el-table-column prop="phone" label="电话" width="130" />
+              <el-table-column prop="name" :label="t('workbench.colName')" width="110" />
+              <el-table-column prop="current_company" :label="t('workbench.colCompany')" min-width="140" show-overflow-tooltip />
+              <el-table-column prop="current_position" :label="t('workbench.colPosition')" min-width="120" show-overflow-tooltip />
+              <el-table-column prop="city" :label="t('workbench.colCity')" width="90" />
+              <el-table-column prop="phone" :label="t('workbench.colPhone')" width="130" />
             </el-table>
           </template>
         </el-card>
@@ -156,30 +156,31 @@
     </el-row>
 
     <!-- 新建任务 -->
-    <el-dialog v-model="taskDialogVisible" title="新建任务" width="440px">
+    <el-dialog v-model="taskDialogVisible" :title="t('workbench.taskDialogTitle')" width="440px">
       <el-form ref="taskFormRef" :model="taskForm" :rules="taskRules" label-width="90px">
-        <el-form-item label="标题" prop="title">
-          <el-input v-model="taskForm.title" maxlength="100" placeholder="如：给客户A打电话跟进张三推荐" />
+        <el-form-item :label="t('workbench.fieldTitle')" prop="title">
+          <el-input v-model="taskForm.title" maxlength="100" :placeholder="t('workbench.titlePlaceholder')" />
         </el-form-item>
-        <el-form-item label="说明">
+        <el-form-item :label="t('workbench.fieldContent')">
           <el-input v-model="taskForm.content" type="textarea" :rows="2" maxlength="500" />
         </el-form-item>
-        <el-form-item label="到期时间" prop="dueTime">
-          <el-date-picker v-model="taskForm.dueTime" type="datetime" placeholder="选择到期时间"
+        <el-form-item :label="t('workbench.fieldDue')" prop="dueTime">
+          <el-date-picker v-model="taskForm.dueTime" type="datetime" :placeholder="t('workbench.duePlaceholder')"
             value-format="YYYY-MM-DD HH:mm:ss" style="width: 100%" />
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button type="primary" @click="confirmCreateTask">确 定</el-button>
-        <el-button @click="taskDialogVisible = false">取 消</el-button>
+        <el-button type="primary" @click="confirmCreateTask">{{ t('common.confirm') }}</el-button>
+        <el-button @click="taskDialogVisible = false">{{ t('common.cancel') }}</el-button>
       </template>
     </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { useI18n } from 'vue-i18n'
 // ECharts 按需引入（迭代17 性能加固）：仅注册项目用到的图表与组件，主包瘦身
 import * as echarts from 'echarts/core'
 import { BarChart, FunnelChart } from 'echarts/charts'
@@ -192,11 +193,16 @@ echarts.use([BarChart, FunnelChart, GridComponent, LegendComponent, TooltipCompo
 import { getWorkbenchSummary, getWorkbenchDashboard, exportClientConversionCsv, aiAskCandidate,
   getMyTasks, createTask, doneTask, deleteTask } from '@/api/workbench'
 
-const STAGE_LABELS = {
-  PENDING: '待推荐', RECOMMENDED: '已推荐', CLIENT_READ: '客户已读', INTERVIEW_PENDING: '待面试',
-  INTERVIEWING: '面试中', OFFER_PENDING: '待Offer', OFFERED: 'Offer', ONBOARDED: '入职',
-  PAID: '回款', ARCHIVED: '归档',
+const { t, locale } = useI18n()
+
+// 推荐阶段名走 i18n（workbench.stage.*，看板/列表页后续抽取时直接复用同一命名空间）
+function stageLabel(stage) {
+  const key = `workbench.stage.${stage}`
+  const translated = t(key)
+  // 未知阶段（如后端新增）兜底展示原始枚举值
+  return translated === key ? stage : translated
 }
+
 // 漏斗按业务流程顺序展示（归档不计入漏斗）
 const FUNNEL_STAGES = [
   'PENDING', 'RECOMMENDED', 'CLIENT_READ', 'INTERVIEW_PENDING', 'INTERVIEWING',
@@ -208,16 +214,13 @@ const tasks = ref([])
 const taskDialogVisible = ref(false)
 const taskFormRef = ref()
 const taskForm = reactive({ title: '', content: '', dueTime: '' })
-const taskRules = {
-  title: [{ required: true, message: '请输入任务标题', trigger: 'blur' }],
-  dueTime: [{ required: true, message: '请选择到期时间', trigger: 'change' }],
-}
+// computed 包一层：切换语言后校验文案即时跟随
+const taskRules = computed(() => ({
+  title: [{ required: true, message: t('workbench.ruleTitle'), trigger: 'blur' }],
+  dueTime: [{ required: true, message: t('workbench.ruleDue'), trigger: 'change' }],
+}))
 
 const overdueCount = computed(() => (summary.overdueTasks || []).length)
-
-function stageLabel(stage) {
-  return STAGE_LABELS[stage] || stage
-}
 
 function stagePercent(count) {
   const total = (summary.stageStats || []).reduce((sum, item) => sum + item.count, 0)
@@ -250,6 +253,8 @@ const trendRef = ref()
 const ranking = ref([])
 const conversion = ref([])
 let trendChart = null
+// 保留最近一次趋势数据：语言切换时用它整体重渲染图表文案
+let lastTrend = []
 
 async function loadDashboard() {
   try {
@@ -265,6 +270,7 @@ async function loadDashboard() {
 }
 
 function renderTrend(trend) {
+  lastTrend = trend
   if (!trendRef.value) return
   if (!trendChart) {
     trendChart = echarts.init(trendRef.value)
@@ -273,17 +279,17 @@ function renderTrend(trend) {
   const stages = trend.filter(x => x.stage !== 'ARCHIVED')
   trendChart.setOption({
     tooltip: { trigger: 'axis' },
-    legend: { data: ['近 30 天', '前 30 天'], bottom: 0 },
+    legend: { data: [t('workbench.legendRecent'), t('workbench.legendPrev')], bottom: 0 },
     grid: { left: 8, right: 12, top: 24, bottom: 34, containLabel: true },
     xAxis: {
       type: 'category',
-      data: stages.map(x => STAGE_LABELS[x.stage] || x.stage),
+      data: stages.map(x => stageLabel(x.stage)),
       axisLabel: { fontSize: 10, interval: 0, rotate: 30 },
     },
     yAxis: { type: 'value', minInterval: 1 },
     series: [
-      { name: '近 30 天', type: 'bar', barMaxWidth: 18, itemStyle: { color: '#409eff' }, data: stages.map(x => x.recent) },
-      { name: '前 30 天', type: 'bar', barMaxWidth: 18, itemStyle: { color: '#c0c4cc' }, data: stages.map(x => x.prev) },
+      { name: t('workbench.legendRecent'), type: 'bar', barMaxWidth: 18, itemStyle: { color: '#409eff' }, data: stages.map(x => x.recent) },
+      { name: t('workbench.legendPrev'), type: 'bar', barMaxWidth: 18, itemStyle: { color: '#c0c4cc' }, data: stages.map(x => x.prev) },
     ],
   })
 }
@@ -328,7 +334,7 @@ function renderFunnel() {
   const stats = summary.stageStats || []
   const data = FUNNEL_STAGES.map(stage => {
     const item = stats.find(x => x.stage === stage)
-    return { name: STAGE_LABELS[stage], value: item ? item.count : 0 }
+    return { name: stageLabel(stage), value: item ? item.count : 0 }
   })
   chart.setOption({
     tooltip: { trigger: 'item', formatter: '{b}: {c}' },
@@ -348,6 +354,13 @@ function renderFunnel() {
   })
 }
 
+// 语言切换时重渲染两张图表（阶段名/图例即时跟随）
+watch(locale, async () => {
+  await nextTick()
+  renderFunnel()
+  renderTrend(lastTrend)
+})
+
 onBeforeUnmount(() => {
   if (chart) {
     chart.dispose()
@@ -360,17 +373,17 @@ onBeforeUnmount(() => {
 })
 
 function handleDone(task) {
-  ElMessageBox.confirm(`确认完成任务「${task.title}」？`, '提示').then(async () => {
+  ElMessageBox.confirm(t('workbench.confirmDone', { name: task.title }), t('common.tip')).then(async () => {
     const res = await doneTask(task.id)
-    ElMessage.success(res.message || '任务已完成')
+    ElMessage.success(res.message || t('workbench.taskDone'))
     await getAll()
   }).catch(() => {})
 }
 
 function handleDeleteTask(task) {
-  ElMessageBox.confirm('是否删除该任务？', '提示', { type: 'warning' }).then(async () => {
+  ElMessageBox.confirm(t('workbench.confirmDeleteTask'), t('common.tip'), { type: 'warning' }).then(async () => {
     const res = await deleteTask(task.id)
-    ElMessage.success(res.message || '删除成功')
+    ElMessage.success(res.message || t('workbench.deleteOk'))
     await getAll()
   }).catch(() => {})
 }
@@ -379,7 +392,7 @@ function confirmCreateTask() {
   taskFormRef.value.validate(async valid => {
     if (!valid) return
     const res = await createTask(taskForm)
-    ElMessage.success(res.message || '新增成功')
+    ElMessage.success(res.message || t('workbench.createOk'))
     taskDialogVisible.value = false
     Object.assign(taskForm, { title: '', content: '', dueTime: '' })
     await getAll()
