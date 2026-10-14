@@ -1,5 +1,7 @@
-# BoleHunter 伯乐猎 —— Docker Compose 一键部署（迭代16）
-# 用法：cp .env.example .env（按需修改） && docker compose up -d
+# BoleHunter 伯乐猎 —— Docker Compose 一键部署（迭代16；迭代25 免构建默认化）
+# 快速开始：bash deploy.sh   （自动生成 .env + 拉镜像 + 起服务 + 健康检查）
+# 手动等价：cp .env.example .env && docker compose up -d
+# 本地构建镜像（不走 GHCR）：docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
 # 访问：http://localhost:8080   默认账号 root / 123456（首次登录请立即修改）
 
 services:
@@ -40,9 +42,10 @@ services:
       retries: 5
     restart: unless-stopped
 
+  # 默认直接使用 GHCR 公开镜像（迭代18 起 CI 自动发布），服务器无需任何构建环境；
+  # 本地没有该镜像时 up 会自动拉取。要源码构建见 docker-compose.build.yml
   backend:
-    build: ./bolehunter-ats
-    image: bolehunter-backend:latest
+    image: ghcr.io/zhuangrenyang/bolehunter-backend:latest
     container_name: bolehunter-backend
     environment:
       SPRING_PROFILES_ACTIVE: prod
@@ -62,8 +65,7 @@ services:
     restart: unless-stopped
 
   frontend:
-    build: ./bolehunter-ats-web
-    image: bolehunter-frontend:latest
+    image: ghcr.io/zhuangrenyang/bolehunter-frontend:latest
     container_name: bolehunter-frontend
     ports:
       - "${FRONTEND_PORT:-8080}:80"

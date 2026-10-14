@@ -46,14 +46,17 @@
 
 ## 快速开始
 
-**Docker Compose（推荐，一条命令跑起来）：**
+**Docker 部署（推荐，服务器只需装 Docker）：**
 
 ```bash
 git clone https://github.com/ZhuangRenyang/bolehunter-ats.git && cd bolehunter-ats
-cp .env.example .env      # 按需修改（生产必改 JWT_SECRET / DB_PASSWORD）
-docker compose up -d      # 自动初始化数据库，构建约 5-10 分钟
+bash deploy.sh            # 自动生成 .env（随机密钥）→ 拉 GHCR 镜像 → 起服务 → 健康检查
 # 打开 http://localhost:8080，默认账号 root / 123456（首次登录立即修改）
 ```
+
+- **免构建**：默认直接使用 CI 自动发布的 GHCR 公开镜像，服务器无需 JDK/Node/MySQL 任何构建环境
+- **自动运行**：全部容器带 `restart: unless-stopped`，服务器重启或进程崩溃自动拉起
+- 手动等价：`cp .env.example .env && docker compose up -d`；本地源码构建见 `docker-compose.build.yml`
 
 **本地开发：**
 

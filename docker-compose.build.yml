@@ -1,0 +1,12 @@
+# BoleHunter 本地构建 override（可选）
+# 用途：不想拉 GHCR 镜像、想用本地源码构建时使用：
+#   docker compose -f docker-compose.yml -f docker-compose.build.yml up -d --build
+# CI 的镜像构建验证与 GHCR 发布走 .github/workflows/ci.yml，不经过本文件
+services:
+  backend:
+    build: ./bolehunter-ats
+    image: bolehunter-backend:local
+
+  frontend:
+    build: ./bolehunter-ats-web
+    image: bolehunter-frontend:local
