@@ -120,6 +120,16 @@ export const settingStage = {
       icon: 'MagicStick',
       permission: ['查询代码生成表列表'],
     },
+    {
+      title: '系统升级',
+      type: 'view',
+      name: 'systemUpgrade',
+      route: '/setting/upgrade',
+      filePath: 'view/setting/upgrade.vue',
+      inNav: true,
+      icon: 'Open',
+      permission: ['查看系统升级状态'],
+    },
   ],
 }
 

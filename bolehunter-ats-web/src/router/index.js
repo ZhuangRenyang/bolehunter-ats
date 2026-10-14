@@ -86,6 +86,12 @@ const routes = [
         meta: { title: '代码生成' },
       },
       {
+        path: '/setting/upgrade',
+        name: 'systemUpgrade',
+        component: () => import('@/view/setting/upgrade.vue'),
+        meta: { title: '系统升级' },
+      },
+      {
         path: '/position/list',
         name: 'positionList',
         component: () => import('@/view/position/position-list.vue'),

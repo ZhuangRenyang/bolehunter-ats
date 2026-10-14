@@ -56,6 +56,19 @@ services:
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:8080}
       REDIS_HOST: redis
       API_DOCS_ENABLED: ${API_DOCS_ENABLED:-false}
+      # 迭代26 后台一键升级三件套：迁移脚本目录 / compose 目录 / 升级开关
+      MIGRATION_DIR: /app/sql
+      UPGRADE_COMPOSE_DIR: /app/deploy
+      UPGRADE_ENABLED: ${UPGRADE_ENABLED:-true}
+    volumes:
+      # 增量迁移脚本：新版本 backend 启动时自动补齐新表/新字段
+      - ./bolehunter-ats/sql:/app/sql:ro
+      # 自升级（迭代26）：compose 编排文件与 .env（容器内经 docker.sock 控制宿主机 compose）
+      - ./docker-compose.yml:/app/deploy/docker-compose.yml:ro
+      - ./docker-compose.build.yml:/app/deploy/docker-compose.build.yml:ro
+      - ./.env:/app/deploy/.env:ro
+      # docker 控制通道。安全边界：等价宿主机 root，入口仅管理员且有审计；不需要此功能可删除本行并设 UPGRADE_ENABLED=false
+      - /var/run/docker.sock:/var/run/docker.sock
     depends_on:
       mysql:
         condition: service_healthy

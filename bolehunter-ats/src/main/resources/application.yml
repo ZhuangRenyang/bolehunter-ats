@@ -80,6 +80,16 @@ app:
     token-refresh-expire: 2592000
     # 令牌 secret（迭代15：生产环境请用环境变量 JWT_SECRET 覆盖为强随机值）
     token-secret: x88Wf0991079889x8796a0Ac68f9ecJJU17c5Vbe8beod7d8d3e695*4
+  # 数据库增量迁移（迭代26）：目录默认本地工作目录下 sql/，容器内由 MIGRATION_DIR 指向挂载点；
+  # 启动时自动执行未跑过的 migration_iter*.sql，失败快速失败（容器重启重试，已成功脚本有记账不重跑）
+  migration:
+    dir: ${MIGRATION_DIR:sql}
+    auto-run: ${MIGRATION_AUTO_RUN:true}
+  # 系统自升级（迭代26）：默认关闭，仅在有 docker.sock + compose 目录挂载的部署中由 compose 显式开启
+  upgrade:
+    enabled: ${UPGRADE_ENABLED:false}
+    compose-dir: ${UPGRADE_COMPOSE_DIR:.}
+    log-dir: logs
 
 # 多租户开关：开源版默认关闭（单团队），开启后业务表查询自动追加 tenant_id 条件
 tenant:

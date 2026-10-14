@@ -16,10 +16,21 @@ RUN mvn -B -DskipTests package
 FROM eclipse-temurin:17-jre
 WORKDIR /app
 
-# curl 供容器健康检查使用
+# curl 供容器健康检查；docker CLI + compose 插件供后台一键升级（迭代26：经挂载的
+# docker.sock 控制宿主机 compose）。Ubuntu 源无独立的 docker-cli 包，用官方静态二进制
+ARG DOCKER_CLI_VERSION=27.3.1
+ARG DOCKER_COMPOSE_VERSION=2.29.7
 RUN apt-get update \
     && apt-get install -y --no-install-recommends curl \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && curl -fsSL "https://download.docker.com/linux/static/stable/x86_64/docker-${DOCKER_CLI_VERSION}.tgz" \
+        | tar xz --strip-components=1 -C /usr/local/bin docker/docker \
+    && curl -fsSL "https://github.com/docker/compose/releases/download/v${DOCKER_COMPOSE_VERSION}/docker-compose-linux-x86_64" \
+        -o /usr/local/bin/docker-compose \
+    && chmod +x /usr/local/bin/docker-compose \
+    && mkdir -p /usr/local/lib/docker/cli-plugins \
+    && ln -s /usr/local/bin/docker-compose /usr/local/lib/docker/cli-plugins/docker-compose \
+    && docker --version && docker compose version
 
 ENV TZ=Asia/Shanghai \
     JAVA_OPTS=""

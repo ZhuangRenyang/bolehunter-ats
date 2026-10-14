@@ -1,0 +1,89 @@
+/*
+ * BoleHunter 伯乐猎 —— 开源猎头 ATS + CRM
+ * Copyright (C) 2026 ZhuangRenyang
+ * GitHub: https://github.com/ZhuangRenyang/bolehunter-ats
+ * Gitee:  https://gitee.com/ZhuangRenyang/bolehunter-ats
+ *
+ * 本程序是自由软件：你可以依据自由软件基金会发布的 GNU AGPL 第 3 版（或任一更高版本）的条款重新发布或修改它。
+ * 依据 AGPL-3.0 发布；详见仓库根目录 LICENSE 文件。本程序不提供任何担保。
+ * 以任何网络服务形式提供本程序（含 SaaS 托管）同样必须遵守 AGPL-3.0 开源。
+ */
+package com.bolehunter.controller;
+
+import com.bolehunter.core.annotation.AdminRequired;
+import com.bolehunter.core.annotation.Logger;
+import com.bolehunter.core.annotation.PermissionMeta;
+import com.bolehunter.core.migration.DbMigrationService;
+import com.bolehunter.core.upgrade.SelfUpgradeService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
+import java.util.Map;
+
+/**
+ * 系统升级（迭代26，仅管理员）
+ *
+ * <p>两条链路：数据库增量（{@link DbMigrationService}，新版本 backend 启动时也会自动跑）
+ * 与镜像自升级（{@link SelfUpgradeService}，触发宿主机 compose pull/up）。
+ * 触发自升级会重建 backend 容器自身——接口只负责点火，前端轮询健康接口等服务恢复。
+ */
+@RestController
+@RequestMapping("/recruit/admin/upgrade")
+public class AdminUpgradeController {
+
+    @Autowired
+    private DbMigrationService dbMigrationService;
+
+    @Autowired
+    private SelfUpgradeService selfUpgradeService;
+
+    /**
+     * 迁移状态：待执行脚本列表 + 执行历史
+     */
+    @GetMapping("/migration/status")
+    @AdminRequired
+    @PermissionMeta(value = "查看系统升级状态")
+    public Map<String, Object> migrationStatus() {
+        return dbMigrationService.status();
+    }
+
+    /**
+     * 手动执行待迁移（正常情况下新版本 backend 启动时会自动跑，这里作为兜底）
+     */
+    @Logger(template = "手动执行数据库迁移")
+    @PostMapping("/migration/run")
+    @AdminRequired
+    @PermissionMeta(value = "执行数据库迁移")
+    public Map<String, Object> runMigration() {
+        List<DbMigrationService.ExecResult> results = dbMigrationService.runPending();
+        Map<String, Object> result = new java.util.LinkedHashMap<>();
+        result.put("executed", results.size());
+        result.put("results", results);
+        return result;
+    }
+
+    /**
+     * 自升级总状态（含最近一次升级日志尾部）
+     */
+    @GetMapping("/status")
+    @AdminRequired
+    @PermissionMeta(value = "查看系统升级状态")
+    public Map<String, Object> status() {
+        return selfUpgradeService.status();
+    }
+
+    /**
+     * 触发自升级：拉取最新镜像并重建有变化的容器（异步，立即返回）
+     */
+    @Logger(template = "触发系统升级")
+    @PostMapping("/run")
+    @AdminRequired
+    @PermissionMeta(value = "触发系统升级")
+    public Map<String, Object> run() {
+        return selfUpgradeService.trigger();
+    }
+}
