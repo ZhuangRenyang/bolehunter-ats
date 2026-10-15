@@ -11,76 +11,81 @@
 <template>
   <el-card shadow="never">
     <div class="toolbar">
-      <span class="page-title">系统升级</span>
+      <span class="page-title">{{ t('upgrade.title') }}</span>
       <el-tag :type="upgrade.enabled ? 'success' : 'info'" size="small">
-        {{ upgrade.enabled ? '自升级已启用' : '自升级未启用（需部署时挂载 docker.sock）' }}
+        {{ upgrade.enabled ? t('upgrade.enabledTag') : t('upgrade.disabledTag') }}
       </el-tag>
     </div>
 
     <el-alert type="warning" :closable="false" class="hint">
-      <p>升级会拉取最新镜像并重建有变化的容器，数据库增量会在新版本启动时自动补齐。</p>
-      <p>升级过程中服务会短暂中断（后端容器自身也会重启），完成后本页自动恢复，请勿关闭浏览器。</p>
+      <p>{{ t('upgrade.alertLine1') }}</p>
+      <p>{{ t('upgrade.alertLine2') }}</p>
     </el-alert>
 
     <div class="actions">
       <el-button type="primary" :loading="upgrading" :disabled="!upgrade.enabled || upgrading"
         @click="confirmUpgrade">
-        检查并升级
+        {{ t('upgrade.upgradeBtn') }}
       </el-button>
       <el-button :loading="migrating" :disabled="migration.pendingCount === 0 || migrating"
         @click="confirmMigrate">
-        执行数据库迁移（{{ migration.pendingCount || 0 }}）
+        {{ t('upgrade.migrateBtn', { n: migration.pendingCount || 0 }) }}
       </el-button>
-      <el-button plain @click="loadAll">刷新</el-button>
+      <el-button plain @click="loadAll">{{ t('upgrade.refresh') }}</el-button>
     </div>
 
     <!-- 待执行迁移 -->
-    <div class="section-title">待执行的数据库增量</div>
+    <div class="section-title">{{ t('upgrade.pendingSection') }}</div>
     <el-table :data="migration.pending || []" border size="small" v-loading="loading">
-      <el-table-column prop="filename" label="脚本" min-width="220" />
-      <el-table-column prop="title" label="内容" min-width="280" show-overflow-tooltip />
-      <el-table-column label="状态" width="120" align="center">
+      <el-table-column prop="filename" :label="t('upgrade.colScript')" min-width="220" />
+      <el-table-column prop="title" :label="t('upgrade.colContent')" min-width="280" show-overflow-tooltip />
+      <el-table-column :label="t('common.status')" width="120" align="center">
         <template #default="scope">
-          <el-tag size="small" type="warning">{{ scope.row.previouslyFailed ? '上次失败，待重试' : '待执行' }}</el-tag>
+          <el-tag size="small" type="warning">{{ scope.row.previouslyFailed ? t('upgrade.statusRetry') : t('upgrade.statusPending') }}</el-tag>
         </template>
       </el-table-column>
     </el-table>
-    <el-empty v-if="!(migration.pending || []).length" description="数据库结构已是最新"
+    <el-empty v-if="!(migration.pending || []).length" :description="t('upgrade.pendingEmpty')"
       :image-size="50" />
 
     <!-- 已执行历史 -->
-    <div class="section-title">迁移记录</div>
+    <div class="section-title">{{ t('upgrade.historySection') }}</div>
     <el-table :data="migration.executed || []" border size="small" max-height="220">
-      <el-table-column prop="filename" label="脚本" min-width="200" show-overflow-tooltip />
-      <el-table-column prop="executed_at" label="时间" width="170" align="center">
+      <el-table-column prop="filename" :label="t('upgrade.colScript')" min-width="200" show-overflow-tooltip />
+      <el-table-column prop="executed_at" :label="t('upgrade.colTime')" width="170" align="center">
         <template #default="scope">{{ fmtTime(scope.row.executedAt || scope.row.executed_at) }}</template>
       </el-table-column>
-      <el-table-column label="类型" width="90" align="center">
+      <el-table-column :label="t('upgrade.colType')" width="90" align="center">
         <template #default="scope">
           <el-tag size="small" :type="scope.row.baseline ? 'info' : 'success'">
-            {{ scope.row.baseline ? '基线' : '增量' }}
+            {{ scope.row.baseline ? t('upgrade.typeBaseline') : t('upgrade.typeIncremental') }}
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="elapsed_ms" label="耗时(ms)" width="100" align="center" />
+      <el-table-column prop="elapsed_ms" :label="t('upgrade.colElapsed')" width="100" align="center" />
     </el-table>
 
     <!-- 升级日志 -->
-    <div class="section-title">最近升级日志</div>
-    <pre class="upgrade-log">{{ (upgrade.logTail || []).join('\n') || '（尚无升级记录）' }}</pre>
+    <div class="section-title">{{ t('upgrade.logSection') }}</div>
+    <pre class="upgrade-log">{{ (upgrade.logTail || []).join('\n') || t('upgrade.logEmpty') }}</pre>
   </el-card>
 </template>
 
 <script setup>
-import { onBeforeUnmount, onMounted, reactive, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { useI18n } from 'vue-i18n'
 import { getMigrationStatus, getUpgradeStatus, runMigration, triggerUpgrade } from '@/api/upgrade'
 
+const { t, locale } = useI18n()
 const loading = ref(false)
 const upgrading = ref(false)
 const migrating = ref(false)
 const upgrade = reactive({ enabled: false, running: false, logTail: [] })
 const migration = reactive({ pending: [], executed: [], pendingCount: 0 })
+
+// 强确认词跟随语言（中文"升级" / 英文 UPGRADE），防误触机制不绑定单一语言
+const confirmWord = computed(() => (locale.value === 'en-US' ? 'UPGRADE' : '升级'))
 
 async function loadAll() {
   loading.value = true
@@ -102,12 +107,12 @@ async function loadAll() {
  */
 function confirmUpgrade() {
   ElMessageBox.prompt(
-    '将拉取最新镜像并重建有变化的容器，期间服务短暂中断。' +
-    '如确认执行，请在下方输入“升级”：',
-    '系统升级', { type: 'warning', confirmButtonText: '开始升级', cancelButtonText: '取消' },
+    t('upgrade.confirmPrompt', { word: confirmWord.value }),
+    t('upgrade.confirmTitle'),
+    { type: 'warning', confirmButtonText: t('upgrade.confirmOk'), cancelButtonText: t('common.cancel') },
   ).then(async ({ value }) => {
-    if ((value || '').trim() !== '升级') {
-      ElMessage.error('输入不一致，已取消')
+    if ((value || '').trim() !== confirmWord.value) {
+      ElMessage.error(t('upgrade.wordMismatch'))
       return
     }
     try {
@@ -117,7 +122,7 @@ function confirmUpgrade() {
       return
     }
     upgrading.value = true
-    ElMessage.info('升级流程已启动，服务重启中，页面将自动恢复…')
+    ElMessage.info(t('upgrade.started'))
     await pollUntilRecovered()
   }).catch(() => {})
 }
@@ -140,22 +145,23 @@ async function pollUntilRecovered() {
   }
   upgrading.value = false
   if (recovered) {
-    ElMessage.success('升级完成，服务已恢复')
+    ElMessage.success(t('upgrade.recovered'))
     await loadAll()
   } else {
-    ElMessage.error('长时间未恢复，请到服务器查看：docker compose logs -f backend')
+    ElMessage.error(t('upgrade.notRecovered'))
   }
 }
 
 function confirmMigrate() {
   ElMessageBox.confirm(
-    `将手动执行 ${migration.pendingCount} 个待迁移脚本，通常无需手动执行（新版本启动时会自动补齐）。继续？`,
-    '执行数据库迁移', { type: 'warning' },
+    t('upgrade.migrateConfirm', { n: migration.pendingCount }),
+    t('upgrade.migrateTitle'),
+    { type: 'warning' },
   ).then(async () => {
     migrating.value = true
     try {
       const res = await runMigration()
-      ElMessage.success(`已执行 ${res?.executed ?? 0} 个脚本`)
+      ElMessage.success(t('upgrade.migratedOk', { n: res?.executed ?? 0 }))
       await loadAll()
     } catch (e) {
       /* 错误由请求层统一提示 */

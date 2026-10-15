@@ -11,149 +11,145 @@
 <template>
   <el-card shadow="never" v-loading="loading">
     <div class="toolbar">
-      <span class="page-title">推荐看板</span>
-      <el-button type="primary" plain size="small" icon="Plus" @click="handleCreate">新增推荐</el-button>
+      <span class="page-title">{{ t('kanban.title') }}</span>
+      <el-button type="primary" plain size="small" icon="Plus" @click="handleCreate">{{ t('kanban.create') }}</el-button>
     </div>
     <div class="filters">
-      <el-select v-model="filters.job_id" placeholder="按职位筛选" clearable filterable style="width: 280px" @change="getAll">
+      <el-select v-model="filters.job_id" :placeholder="t('kanban.filterJob')" clearable filterable style="width: 280px" @change="getAll">
         <el-option v-for="j in jobOptions" :key="j.id" :value="j.id"
-          :label="`${j.title}${j.company_name ? '（' + j.company_name + '）' : ''}`" />
+          :label="jobOptionLabel(j)" />
       </el-select>
-      <el-select v-model="filters.owner_id" placeholder="按顾问筛选" clearable filterable style="width: 150px" @change="getAll">
+      <el-select v-model="filters.owner_id" :placeholder="t('kanban.filterOwner')" clearable filterable style="width: 150px" @change="getAll">
         <el-option v-for="u in owners" :key="u.id" :label="u.nickname" :value="u.id" />
       </el-select>
     </div>
     <div class="kanban">
-      <div v-for="stage in stages" :key="stage.value" class="kanban-column"
-        @dragover.prevent @drop.prevent="onDrop(stage.value)">
+      <div v-for="stage in stages" :key="stage" class="kanban-column"
+        @dragover.prevent @drop.prevent="onDrop(stage)">
         <div class="column-header">
-          <span class="column-title">{{ stage.label }}</span>
-          <span class="column-count">{{ groupItems(stage.value).length }}</span>
+          <span class="column-title">{{ stageLabel(stage) }}</span>
+          <span class="column-count">{{ groupItems(stage).length }}</span>
         </div>
         <div class="column-body">
-          <div v-for="item in groupItems(stage.value)" :key="item.id" class="card" draggable="true"
+          <div v-for="item in groupItems(stage)" :key="item.id" class="card" draggable="true"
             @dragstart="onDragStart(item, $event)" @click="handleCardClick(item)">
-            <div class="card-name">{{ item.candidate_name || '候选人#' + item.candidate_id }}</div>
+            <div class="card-name">{{ item.candidate_name || t('kanban.candidateNo', { id: item.candidate_id }) }}</div>
             <div class="card-sub">{{ item.candidate_company || '—' }} · {{ item.candidate_position || '—' }}</div>
             <div class="card-sub">{{ item.job_title || '—' }}</div>
             <div class="card-footer">
               <span>{{ formatDate(item.stage_time) }}</span>
               <span class="footer-badges">
-                <el-tooltip content="关联任务今日到期或已逾期" placement="top">
+                <el-tooltip :content="t('kanban.urgentTip')" placement="top">
                   <span v-if="urgentCounts[item.id]" class="task-dot">⏰ {{ urgentCounts[item.id] }}</span>
                 </el-tooltip>
-                <span v-if="item.feedback" class="feedback-dot">反馈</span>
+                <span v-if="item.feedback" class="feedback-dot">{{ t('kanban.feedbackTag') }}</span>
               </span>
             </div>
           </div>
-          <div v-if="groupItems(stage.value).length === 0" class="empty-column">拖拽卡片到此</div>
+          <div v-if="groupItems(stage).length === 0" class="empty-column">{{ t('kanban.emptyColumn') }}</div>
         </div>
       </div>
     </div>
 
     <!-- 新增推荐 -->
-    <el-dialog v-model="createDialogVisible" title="新增推荐" width="460px">
+    <el-dialog v-model="createDialogVisible" :title="t('kanban.createTitle')" width="460px">
       <el-form ref="createFormRef" :model="createForm" :rules="createRules" label-width="90px">
-        <el-form-item label="职位" prop="jobId">
+        <el-form-item :label="t('kanban.fieldJob')" prop="jobId">
           <el-select v-model="createForm.jobId" filterable style="width: 100%">
-            <el-option v-for="j in jobOptions" :key="j.id" :value="j.id"
-              :label="`${j.title}${j.company_name ? '（' + j.company_name + '）' : ''}`" />
+            <el-option v-for="j in jobOptions" :key="j.id" :value="j.id" :label="jobOptionLabel(j)" />
           </el-select>
         </el-form-item>
-        <el-form-item label="候选人" prop="candidateId">
+        <el-form-item :label="t('kanban.fieldCandidate')" prop="candidateId">
           <el-select v-model="createForm.candidateId" filterable style="width: 100%">
             <el-option v-for="c in candidateOptions" :key="c.id" :value="c.id"
               :label="`${c.name}（${c.current_company || '—'}）`" />
           </el-select>
         </el-form-item>
-        <el-form-item label="负责人">
+        <el-form-item :label="t('common.owner')">
           <el-select v-model="createForm.ownerId" clearable filterable style="width: 100%">
             <el-option v-for="u in owners" :key="u.id" :label="u.nickname" :value="u.id" />
           </el-select>
         </el-form-item>
-        <el-form-item label="备注">
+        <el-form-item :label="t('common.remark')">
           <el-input v-model="createForm.remark" type="textarea" :rows="2" maxlength="500" />
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button type="primary" @click="confirmCreate">确 定</el-button>
-        <el-button @click="createDialogVisible = false">取 消</el-button>
+        <el-button type="primary" @click="confirmCreate">{{ t('common.confirm') }}</el-button>
+        <el-button @click="createDialogVisible = false">{{ t('common.cancel') }}</el-button>
       </template>
     </el-dialog>
 
     <!-- 详情/流转/反馈 -->
-    <el-dialog v-model="detailDialogVisible" title="推荐详情" width="560px">
+    <el-dialog v-model="detailDialogVisible" :title="t('kanban.detailTitle')" width="560px">
       <el-form v-if="current" label-width="90px" size="small">
-        <el-form-item label="候选人">{{ current.candidate_name || '#' + current.candidate_id }}
+        <el-form-item :label="t('kanban.fieldCandidate')">{{ current.candidate_name || '#' + current.candidate_id }}
           （{{ current.candidate_company || '—' }} · {{ current.candidate_position || '—' }}）</el-form-item>
-        <el-form-item label="职位">{{ current.job_title || '—' }}</el-form-item>
-        <el-form-item label="客户">{{ current.client_name || '—' }}</el-form-item>
-        <el-form-item label="负责人">{{ current.owner_name || '未分配' }}</el-form-item>
-        <el-form-item label="当前阶段">
+        <el-form-item :label="t('kanban.fieldJob')">{{ current.job_title || '—' }}</el-form-item>
+        <el-form-item :label="t('kanban.fieldClient')">{{ current.client_name || '—' }}</el-form-item>
+        <el-form-item :label="t('common.owner')">{{ current.owner_name || t('common.notAssigned') }}</el-form-item>
+        <el-form-item :label="t('kanban.fieldStage')">
           <el-select v-model="editStage" style="width: 100%">
-            <el-option v-for="s in stages" :key="s.value" :label="s.label" :value="s.value" />
+            <el-option v-for="s in stages" :key="s" :label="stageLabel(s)" :value="s" />
           </el-select>
         </el-form-item>
-        <el-form-item label="客户反馈">
+        <el-form-item :label="t('kanban.fieldFeedback')">
           <el-input v-model="editFeedback" type="textarea" :rows="3" maxlength="5000"
-            placeholder="顾问代录：微信/电话沟通后记录客户 HR 的反馈意见" />
+            :placeholder="t('kanban.feedbackPlaceholder')" />
         </el-form-item>
       </el-form>
       <el-tabs v-if="current" v-model="detailTab" style="margin-top: 4px">
-        <el-tab-pane label="沟通记录" name="comm">
+        <el-tab-pane :label="t('kanban.tabComm')" name="comm">
           <div class="comm-add">
             <el-select v-model="commForm.type" size="small" style="width: 90px">
-              <el-option label="电话" value="phone" />
-              <el-option label="微信" value="wechat" />
-              <el-option label="邮件" value="email" />
-              <el-option label="面谈" value="meeting" />
-              <el-option label="备注" value="note" />
+              <el-option v-for="(i18nKey, key) in COMM_TYPE_KEYS" :key="key" :label="t(i18nKey)" :value="key" />
             </el-select>
-            <el-input v-model="commForm.content" size="small" maxlength="1000" placeholder="记录与客户 HR 的沟通内容"
+            <el-input v-model="commForm.content" size="small" maxlength="1000" :placeholder="t('kanban.commPlaceholder')"
               @keyup.enter="confirmAddComm" />
-            <el-button type="primary" size="small" @click="confirmAddComm">添加</el-button>
+            <el-button type="primary" size="small" @click="confirmAddComm">{{ t('kanban.commAdd') }}</el-button>
           </div>
           <div v-for="comm in communications" :key="comm.id" class="comm-row">
             <el-tag size="small" class="comm-type">{{ commTypeLabel(comm.type) }}</el-tag>
             <span class="comm-content">{{ comm.content }}</span>
             <span class="comm-meta">{{ comm.communicator_name || '' }} · {{ formatDateTime(comm.communicate_time) }}</span>
           </div>
-          <el-empty v-if="communications.length === 0" description="暂无沟通记录，来记录第一次沟通吧" :image-size="50" />
+          <el-empty v-if="communications.length === 0" :description="t('kanban.commEmpty')" :image-size="50" />
         </el-tab-pane>
-        <el-tab-pane label="跟进任务" name="tasks">
+        <el-tab-pane :label="t('kanban.tabTasks')" name="tasks">
           <div style="margin-bottom: 8px">
-            <el-button type="primary" size="small" plain icon="Plus" @click="confirmFollowTask">创建跟进任务（明天09:00）</el-button>
+            <el-button type="primary" size="small" plain icon="Plus" @click="confirmFollowTask">{{ t('kanban.followTaskBtn') }}</el-button>
           </div>
           <div v-for="task in relatedTasks" :key="task.id" class="task-line">
             <span class="task-line-title" :class="{ done: task.status === 1 }">{{ task.title }}</span>
-            <span class="task-line-meta">{{ formatDateTime(task.due_time) }} · {{ task.status === 1 ? '已完成' : '待办' }}</span>
-            <el-button v-if="task.status === 0" size="small" type="success" plain @click="handleDoneTask(task)">完成</el-button>
+            <span class="task-line-meta">{{ formatDateTime(task.due_time) }} · {{ task.status === 1 ? t('kanban.taskDone') : t('kanban.taskTodo') }}</span>
+            <el-button v-if="task.status === 0" size="small" type="success" plain @click="handleDoneTask(task)">{{ t('workbench.done') }}</el-button>
           </div>
-          <el-empty v-if="relatedTasks.length === 0" description="暂无跟进任务" :image-size="50" />
+          <el-empty v-if="relatedTasks.length === 0" :description="t('kanban.tasksEmpty')" :image-size="50" />
         </el-tab-pane>
-        <el-tab-pane label="流转历史" name="history">
+        <el-tab-pane :label="t('kanban.tabHistory')" name="history">
           <el-timeline v-if="stageHistory.length" style="padding-left: 6px">
             <el-timeline-item v-for="h in stageHistory" :key="h.id" :timestamp="formatDateTime(h.create_time)">
-              {{ h.from_stage ? (stageLabelMap[h.from_stage] || h.from_stage) + ' → ' : '创建：' }}{{ stageLabelMap[h.to_stage] || h.to_stage }}
+              {{ h.from_stage ? stageLabel(h.from_stage) + ' → ' : t('kanban.historyCreate') }}{{ stageLabel(h.to_stage) }}
               <span class="history-operator">（{{ h.operator_name || '—' }}）</span>
               <div v-if="h.feedback" class="history-feedback">{{ h.feedback }}</div>
             </el-timeline-item>
           </el-timeline>
-          <el-empty v-else description="暂无流转历史" :image-size="50" />
+          <el-empty v-else :description="t('kanban.historyEmpty')" :image-size="50" />
         </el-tab-pane>
       </el-tabs>
       <template #footer>
-        <el-button type="warning" plain @click="handleGenConfirmLink">客户确认链接</el-button>
-        <el-button type="primary" @click="confirmDetailSave">保 存</el-button>
-        <el-button @click="detailDialogVisible = false">取 消</el-button>
+        <el-button type="warning" plain @click="handleGenConfirmLink">{{ t('kanban.confirmLinkBtn') }}</el-button>
+        <el-button type="primary" @click="confirmDetailSave">{{ t('common.save') }}</el-button>
+        <el-button @click="detailDialogVisible = false">{{ t('common.cancel') }}</el-button>
       </template>
     </el-dialog>
   </el-card>
 </template>
 
 <script setup>
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { useI18n } from 'vue-i18n'
 import {
   STAGES, createRecommendation, generateConfirmToken, getJobOptions, getKanban, getUrgentTaskCounts,
   updateRecommendationFeedback, updateRecommendationStage,
@@ -164,8 +160,20 @@ import {
   createCommunication, createTask, doneTask, getCommunications, getRelatedTasks, getStageHistory,
 } from '@/api/workbench'
 
+const { t } = useI18n()
+
+// STAGES 现为枚举值数组（保序），显示文案统一经 stageLabel 走语言包 stage.*
 const stages = STAGES
-const stageLabelMap = Object.fromEntries(STAGES.map(s => [s.value, s.label]))
+
+function stageLabel(stage) {
+  const translated = t(`stage.${stage}`)
+  return translated === `stage.${stage}` ? stage : translated
+}
+
+function jobOptionLabel(j) {
+  return `${j.title}${j.company_name ? '（' + j.company_name + '）' : ''}`
+}
+
 const loading = ref(false)
 const items = ref([])
 const jobOptions = ref([])
@@ -176,10 +184,10 @@ const dragging = ref(null)
 const createDialogVisible = ref(false)
 const createFormRef = ref()
 const createForm = reactive({ jobId: null, candidateId: null, ownerId: null, remark: '' })
-const createRules = {
-  jobId: [{ required: true, message: '请选择职位', trigger: 'change' }],
-  candidateId: [{ required: true, message: '请选择候选人', trigger: 'change' }],
-}
+const createRules = computed(() => ({
+  jobId: [{ required: true, message: t('kanban.ruleJob'), trigger: 'change' }],
+  candidateId: [{ required: true, message: t('kanban.ruleCandidate'), trigger: 'change' }],
+}))
 const detailDialogVisible = ref(false)
 const current = ref(null)
 const editStage = ref('')
@@ -191,12 +199,12 @@ const commForm = reactive({ type: 'phone', content: '' })
 const relatedTasks = ref([])
 const urgentCounts = ref({})
 
-const COMM_TYPE_LABELS = {
-  phone: '电话', wechat: '微信', email: '邮件', meeting: '面谈', note: '备注', other: '其他',
-}
+const COMM_TYPE_KEYS = { phone: 'kanban.commType.phone', wechat: 'kanban.commType.wechat', email: 'kanban.commType.email', meeting: 'kanban.commType.meeting', note: 'kanban.commType.note', other: 'kanban.commType.other' }
 
 function commTypeLabel(type) {
-  return COMM_TYPE_LABELS[type] || type
+  const key = COMM_TYPE_KEYS[type]
+  // 未知类型兜底展示原始值
+  return key ? t(key) : type
 }
 
 function formatDateTime(val) {
@@ -248,13 +256,13 @@ async function handleGenConfirmLink() {
   try {
     await navigator.clipboard.writeText(link)
     ElMessageBox.alert(
-      `<p>已复制到剪贴板：</p><code style="word-break:break-all">${link}</code><p style="color:#999">链接 7 天内有效，发给客户 HR 即可免登录查看并确认。</p>`,
-      '客户确认链接',
-      { dangerouslyUseHTMLString: true, confirmButtonText: '好 的' },
+      `<p>${t('kanban.linkCopied')}</p><code style="word-break:break-all">${link}</code><p style="color:#999">${t('kanban.linkHint')}</p>`,
+      t('kanban.confirmLinkTitle'),
+      { dangerouslyUseHTMLString: true, confirmButtonText: t('kanban.linkOk') },
     )
   } catch (e) {
-    ElMessageBox.prompt('复制以下链接发给客户 HR（7 天内有效）', '客户确认链接', {
-      inputValue: link, readOnly: true, confirmButtonText: '关 闭', showCancelButton: false,
+    ElMessageBox.prompt(t('kanban.linkPrompt'), t('kanban.confirmLinkTitle'), {
+      inputValue: link, readOnly: true, confirmButtonText: t('kanban.linkClose'), showCancelButton: false,
     })
   }
 }
@@ -270,10 +278,13 @@ function onDrop(stage) {
   const item = dragging.value
   dragging.value = null
   if (!item || item.current_stage === stage) return
-  ElMessageBox.confirm(`确认将「${item.candidate_name || '该候选人'}」流转到「${stageLabelMap[stage]}」？`, '提示')
+  ElMessageBox.confirm(
+    t('kanban.confirmMove', { name: item.candidate_name || t('kanban.fieldCandidate'), stage: stageLabel(stage) }),
+    t('common.tip'),
+  )
     .then(async () => {
       const res = await updateRecommendationStage(item.id, { stage })
-      ElMessage.success(res.message || '流转成功')
+      ElMessage.success(res.message || t('kanban.moveOk'))
       await getAll()
     })
     .catch(() => {})
@@ -288,7 +299,7 @@ function confirmCreate() {
   createFormRef.value.validate(async valid => {
     if (!valid) return
     const res = await createRecommendation(createForm)
-    ElMessage.success(res.message || '新增成功')
+    ElMessage.success(res.message || t('kanban.createOk'))
     createDialogVisible.value = false
     await getAll()
   })
@@ -329,18 +340,18 @@ async function confirmFollowTask() {
   const pad = n => String(n).padStart(2, '0')
   const dueStr = `${due.getFullYear()}-${pad(due.getMonth() + 1)}-${pad(due.getDate())} 09:00:00`
   const res = await createTask({
-    title: `跟进：${current.value.candidate_name || '候选人'}`,
+    title: t('kanban.followTaskTitle', { name: current.value.candidate_name || t('kanban.fieldCandidate') }),
     dueTime: dueStr,
     relatedType: 'recommendation',
     relatedId: current.value.id,
   })
-  ElMessage.success(res.message || '已创建跟进任务')
+  ElMessage.success(res.message || t('kanban.followOk'))
   await loadRelatedTasks(current.value.id)
 }
 
 async function handleDoneTask(task) {
   const res = await doneTask(task.id)
-  ElMessage.success(res.message || '任务已完成')
+  ElMessage.success(res.message || t('workbench.taskDone'))
   await loadRelatedTasks(current.value.id)
 }
 
@@ -354,7 +365,7 @@ async function loadStageHistory(recommendationId) {
 
 async function confirmAddComm() {
   if (!commForm.content.trim()) {
-    ElMessage.warning('请输入沟通内容')
+    ElMessage.warning(t('kanban.commRequired'))
     return
   }
   const res = await createCommunication({
@@ -362,7 +373,7 @@ async function confirmAddComm() {
     type: commForm.type,
     content: commForm.content.trim(),
   })
-  ElMessage.success(res.message || '添加成功')
+  ElMessage.success(res.message || t('kanban.addOk'))
   commForm.content = ''
   await loadCommunications(current.value.id)
 }
@@ -384,7 +395,7 @@ async function confirmDetailSave() {
   } else {
     res = await updateRecommendationFeedback(current.value.id, editFeedback.value)
   }
-  ElMessage.success(res.message || '保存成功')
+  ElMessage.success(res.message || t('common.saveOk'))
   detailDialogVisible.value = false
   await getAll()
 }

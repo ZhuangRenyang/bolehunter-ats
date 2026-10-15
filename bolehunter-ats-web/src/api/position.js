@@ -12,13 +12,10 @@ import { get, post, put, _delete } from './request'
 
 /**
  * 职位管理（管理端）
+ *
+ * 迭代 27 i18n：状态仅保留枚举值，显示文案走语言包 position.state.*（t(`position.state.${value}`)）
  */
-export const POSITIONS_STATES = [
-  { value: -1, label: '全部' },
-  { value: 1, label: '已通过' },
-  { value: 0, label: '未审核' },
-  { value: 2, label: '不通过' },
-]
+export const POSITION_STATES = [-1, 1, 0, 2]
 
 export const getPositionsAdmin = params => get('recruit/position/page/admin', params)
 export const getPositionById = id => get(`recruit/position/${id}`)

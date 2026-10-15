@@ -12,72 +12,72 @@
   <el-card shadow="never" v-loading="loading">
     <div class="toolbar">
       <div class="title-wrap">
-        <el-button size="small" icon="Back" @click="$router.push('/candidate/list')">返回</el-button>
+        <el-button size="small" icon="Back" @click="$router.push('/candidate/list')">{{ t('client.back') }}</el-button>
         <span class="title" v-if="candidate">{{ candidate.name }}</span>
-        <el-tag v-for="t in candidate ? candidate.tag_names : []" :key="t" size="small" class="tag-item">{{ t }}</el-tag>
+        <el-tag v-for="tagName in candidate ? candidate.tag_names : []" :key="tagName" size="small" class="tag-item">{{ tagName }}</el-tag>
       </div>
       <div>
-        <el-button size="small" plain icon="PriceTag" @click="openTagDialog">编辑标签</el-button>
-        <el-button type="primary" plain size="small" icon="Edit" @click="handleEdit">编辑</el-button>
+        <el-button size="small" plain icon="PriceTag" @click="openTagDialog">{{ t('candidate.editTags') }}</el-button>
+        <el-button type="primary" plain size="small" icon="Edit" @click="handleEdit">{{ t('common.edit') }}</el-button>
       </div>
     </div>
 
     <div class="section" v-if="candidate">
-      <div class="section-title">基本信息</div>
+      <div class="section-title">{{ t('candidate.baseInfo') }}</div>
       <el-descriptions :column="3" border>
-        <el-descriptions-item label="电话">{{ candidate.phone || '—' }}</el-descriptions-item>
-        <el-descriptions-item label="邮箱">{{ candidate.email || '—' }}</el-descriptions-item>
-        <el-descriptions-item label="城市">{{ candidate.city || '—' }}</el-descriptions-item>
-        <el-descriptions-item label="当前公司">{{ candidate.current_company || '—' }}</el-descriptions-item>
-        <el-descriptions-item label="当前职位">{{ candidate.current_position || '—' }}</el-descriptions-item>
-        <el-descriptions-item label="学历">{{ dictMaps.education[candidate.education] || '—' }}</el-descriptions-item>
-        <el-descriptions-item label="来源">{{ dictMaps.candidate_source[candidate.source] || candidate.source }}</el-descriptions-item>
-        <el-descriptions-item label="负责人">{{ ownerMap[candidate.owner_id] || '未分配' }}</el-descriptions-item>
-        <el-descriptions-item label="备注" :span="3">{{ candidate.remark || '—' }}</el-descriptions-item>
+        <el-descriptions-item :label="t('candidate.colPhone')">{{ candidate.phone || '—' }}</el-descriptions-item>
+        <el-descriptions-item :label="t('candidate.colEmail')">{{ candidate.email || '—' }}</el-descriptions-item>
+        <el-descriptions-item :label="t('candidate.colCity')">{{ candidate.city || '—' }}</el-descriptions-item>
+        <el-descriptions-item :label="t('candidate.colCompany')">{{ candidate.current_company || '—' }}</el-descriptions-item>
+        <el-descriptions-item :label="t('candidate.colPosition')">{{ candidate.current_position || '—' }}</el-descriptions-item>
+        <el-descriptions-item :label="t('candidate.colEdu')">{{ dictMaps.education[candidate.education] || '—' }}</el-descriptions-item>
+        <el-descriptions-item :label="t('candidate.filterSource')">{{ dictMaps.candidate_source[candidate.source] || candidate.source }}</el-descriptions-item>
+        <el-descriptions-item :label="t('common.owner')">{{ ownerMap[candidate.owner_id] || t('common.notAssigned') }}</el-descriptions-item>
+        <el-descriptions-item :label="t('candidate.colRemark')" :span="3">{{ candidate.remark || '—' }}</el-descriptions-item>
       </el-descriptions>
     </div>
 
     <div class="section" v-if="candidate">
-      <div class="section-title">简历原件</div>
+      <div class="section-title">{{ t('candidate.resumeSection') }}</div>
       <el-link v-if="candidate.resume_file" type="primary" :href="resumeUrl" target="_blank" :underline="false">
-        <el-icon><Document /></el-icon>&nbsp;查看简历文件
+        <el-icon><Document /></el-icon>&nbsp;{{ t('candidate.viewResume') }}
       </el-link>
-      <span v-else class="empty-tip">未上传简历原件</span>
+      <span v-else class="empty-tip">{{ t('candidate.noResume') }}</span>
     </div>
 
-    <el-dialog v-model="dialogVisible" title="编辑候选人" width="520px">
+    <el-dialog v-model="dialogVisible" :title="t('candidate.editTitle')" width="520px">
       <el-form ref="formRef" :model="form" :rules="rules" label-width="90px">
-        <el-form-item label="姓名" prop="name"><el-input v-model="form.name" maxlength="50" /></el-form-item>
-        <el-form-item label="电话"><el-input v-model="form.phone" maxlength="20" /></el-form-item>
-        <el-form-item label="邮箱"><el-input v-model="form.email" maxlength="100" /></el-form-item>
-        <el-form-item label="所在城市"><el-input v-model="form.city" maxlength="50" /></el-form-item>
-        <el-form-item label="当前公司"><el-input v-model="form.currentCompany" maxlength="100" /></el-form-item>
-        <el-form-item label="当前职位"><el-input v-model="form.currentPosition" maxlength="100" /></el-form-item>
-        <el-form-item label="学历">
+        <el-form-item :label="t('candidate.formName')" prop="name"><el-input v-model="form.name" maxlength="50" /></el-form-item>
+        <el-form-item :label="t('candidate.colPhone')"><el-input v-model="form.phone" maxlength="20" /></el-form-item>
+        <el-form-item :label="t('candidate.colEmail')"><el-input v-model="form.email" maxlength="100" /></el-form-item>
+        <el-form-item :label="t('candidate.formCity')"><el-input v-model="form.city" maxlength="50" /></el-form-item>
+        <el-form-item :label="t('candidate.colCompany')"><el-input v-model="form.currentCompany" maxlength="100" /></el-form-item>
+        <el-form-item :label="t('candidate.colPosition')"><el-input v-model="form.currentPosition" maxlength="100" /></el-form-item>
+        <el-form-item :label="t('candidate.colEdu')">
           <el-select v-model="form.education" clearable style="width: 100%">
             <el-option v-for="(label, value) in dictMaps.education" :key="value" :label="label" :value="value" />
           </el-select>
         </el-form-item>
-        <el-form-item label="负责人">
+        <el-form-item :label="t('common.owner')">
           <el-select v-model="form.ownerId" clearable filterable style="width: 100%">
             <el-option v-for="u in owners" :key="u.id" :label="u.nickname" :value="u.id" />
           </el-select>
         </el-form-item>
-        <el-form-item label="备注"><el-input v-model="form.remark" type="textarea" :rows="2" maxlength="500" /></el-form-item>
+        <el-form-item :label="t('candidate.colRemark')"><el-input v-model="form.remark" type="textarea" :rows="2" maxlength="500" /></el-form-item>
       </el-form>
       <template #footer>
-        <el-button type="primary" @click="confirmSubmit">确 定</el-button>
-        <el-button @click="dialogVisible = false">取 消</el-button>
+        <el-button type="primary" @click="confirmSubmit">{{ t('common.confirm') }}</el-button>
+        <el-button @click="dialogVisible = false">{{ t('common.cancel') }}</el-button>
       </template>
     </el-dialog>
 
-    <el-dialog v-model="tagDialogVisible" title="编辑标签" width="420px">
+    <el-dialog v-model="tagDialogVisible" :title="t('candidate.editTags')" width="420px">
       <el-select v-model="selectedTagIds" multiple filterable style="width: 100%">
-        <el-option v-for="t in tags" :key="t.id" :label="t.name" :value="t.id" />
+        <el-option v-for="tag in tags" :key="tag.id" :label="tag.name" :value="tag.id" />
       </el-select>
       <template #footer>
-        <el-button type="primary" @click="confirmTags">确 定</el-button>
-        <el-button @click="tagDialogVisible = false">取 消</el-button>
+        <el-button type="primary" @click="confirmTags">{{ t('common.confirm') }}</el-button>
+        <el-button @click="tagDialogVisible = false">{{ t('common.cancel') }}</el-button>
       </template>
     </el-dialog>
   </el-card>
@@ -87,10 +87,12 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { getCandidateDetail, getCandidateOptions, setCandidateTags, updateCandidate } from '@/api/candidate'
+import { useI18n } from 'vue-i18n'
+import { getCandidateDetail, getTags, setCandidateTags, updateCandidate } from '@/api/candidate'
 import { getClientOwners } from '@/api/client'
 import { getDictDataByType } from '@/api/setting'
 
+const { t } = useI18n()
 const route = useRoute()
 const loading = ref(false)
 const candidateId = ref(null)
@@ -102,7 +104,7 @@ const dictMaps = reactive({ education: {}, candidate_source: {} })
 const dialogVisible = ref(false)
 const formRef = ref()
 const form = reactive({})
-const rules = { name: [{ required: true, message: '请输入候选人姓名', trigger: 'blur' }] }
+const rules = computed(() => ({ name: [{ required: true, message: t('candidate.ruleName'), trigger: 'blur' }] }))
 const tagDialogVisible = ref(false)
 const selectedTagIds = ref([])
 
@@ -141,7 +143,7 @@ function confirmSubmit() {
   formRef.value.validate(async valid => {
     if (!valid) return
     const res = await updateCandidate(candidateId.value, form)
-    ElMessage.success(res.message || '保存成功')
+    ElMessage.success(res.message || t('common.saveOk'))
     dialogVisible.value = false
     await getDetail()
   })
@@ -154,7 +156,7 @@ function openTagDialog() {
 
 async function confirmTags() {
   const res = await setCandidateTags(candidateId.value, selectedTagIds.value)
-  ElMessage.success(res.message || '保存成功')
+  ElMessage.success(res.message || t('common.saveOk'))
   tagDialogVisible.value = false
   await getDetail()
 }
@@ -162,13 +164,14 @@ async function confirmTags() {
 onMounted(async () => {
   candidateId.value = Number(route.query.id)
   if (!candidateId.value) {
-    ElMessage.error('缺少候选人id参数')
+    ElMessage.error(t('candidate.missingId'))
     return
   }
   owners.value = await getClientOwners()
   const map = {}
   owners.value.forEach(u => { map[u.id] = u.nickname })
   ownerMap.value = map
+  // 修复：getTags 此前未导入（onMounted 抛 ReferenceError 中断后续加载链）
   tags.value = await getTags()
   const [education, source] = await Promise.all([
     getDictDataByType('education'), getDictDataByType('candidate_source'),

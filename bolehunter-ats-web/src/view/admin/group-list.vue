@@ -11,40 +11,40 @@
 <template>
   <el-card shadow="never">
     <div class="toolbar">
-      <span class="page-title">角色管理</span>
-      <el-button type="primary" plain size="small" icon="Plus" @click="handleCreate">新建角色</el-button>
+      <span class="page-title">{{ t('role.title') }}</span>
+      <el-button type="primary" plain size="small" icon="Plus" @click="handleCreate">{{ t('role.create') }}</el-button>
     </div>
     <el-table :data="tableData" border v-loading="loading">
       <el-table-column prop="id" label="ID" width="70" />
-      <el-table-column prop="name" label="角色名" min-width="180" />
-      <el-table-column prop="info" label="描述" min-width="240" show-overflow-tooltip />
-      <el-table-column label="操作" width="220" align="center">
+      <el-table-column prop="name" :label="t('role.colRoleName')" min-width="180" />
+      <el-table-column prop="info" :label="t('role.colDesc')" min-width="240" show-overflow-tooltip />
+      <el-table-column :label="t('common.operation')" width="220" align="center">
         <template #default="scope">
-          <el-button size="small" type="primary" plain @click="handlePermission(scope.row)">分配权限</el-button>
-          <el-button size="small" type="primary" plain @click="handleEdit(scope.row)">编辑</el-button>
-          <el-button size="small" type="danger" plain @click="handleDelete(scope.row)">删除</el-button>
+          <el-button size="small" type="primary" plain @click="handlePermission(scope.row)">{{ t('role.permBtn') }}</el-button>
+          <el-button size="small" type="primary" plain @click="handleEdit(scope.row)">{{ t('common.edit') }}</el-button>
+          <el-button size="small" type="danger" plain @click="handleDelete(scope.row)">{{ t('common.delete') }}</el-button>
         </template>
       </el-table-column>
     </el-table>
 
     <!-- 新建/编辑角色 -->
-    <el-dialog v-model="groupDialogVisible" :title="form.id ? '编辑角色' : '新建角色'" width="440px">
+    <el-dialog v-model="groupDialogVisible" :title="form.id ? t('role.editTitle') : t('role.createTitle')" width="440px">
       <el-form label-width="90px">
-        <el-form-item label="角色名">
+        <el-form-item :label="t('role.formName')">
           <el-input v-model="form.name" maxlength="30" />
         </el-form-item>
-        <el-form-item label="描述">
+        <el-form-item :label="t('role.formDesc')">
           <el-input v-model="form.info" type="textarea" maxlength="100" />
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button type="primary" @click="confirmGroup">确 定</el-button>
-        <el-button @click="groupDialogVisible = false">取 消</el-button>
+        <el-button type="primary" @click="confirmGroup">{{ t('common.confirm') }}</el-button>
+        <el-button @click="groupDialogVisible = false">{{ t('common.cancel') }}</el-button>
       </template>
     </el-dialog>
 
     <!-- 分配权限 -->
-    <el-dialog v-model="permDialogVisible" title="分配权限" width="560px">
+    <el-dialog v-model="permDialogVisible" :title="t('role.permTitle')" width="560px">
       <div v-for="(perms, module) in allPermissions" :key="module" class="perm-module">
         <div class="perm-module-title">{{ module }}</div>
         <el-checkbox-group v-model="selectedPermissionIds">
@@ -52,8 +52,8 @@
         </el-checkbox-group>
       </div>
       <template #footer>
-        <el-button type="primary" @click="confirmPermissions">保 存</el-button>
-        <el-button @click="permDialogVisible = false">取 消</el-button>
+        <el-button type="primary" @click="confirmPermissions">{{ t('common.save') }}</el-button>
+        <el-button @click="permDialogVisible = false">{{ t('common.cancel') }}</el-button>
       </template>
     </el-dialog>
   </el-card>
@@ -62,6 +62,7 @@
 <script setup>
 import { onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { useI18n } from 'vue-i18n'
 import {
   createGroup,
   deleteGroup,
@@ -74,6 +75,7 @@ import {
   updateGroup,
 } from '@/api/user'
 
+const { t } = useI18n()
 const loading = ref(false)
 const tableData = ref([])
 const groupDialogVisible = ref(false)
@@ -113,15 +115,15 @@ async function confirmGroup() {
   } else {
     await createGroup({ name: form.name, info: form.info, permission_ids: [] })
   }
-  ElMessage.success('保存成功')
+  ElMessage.success(t('common.saveOk'))
   groupDialogVisible.value = false
   await getAll()
 }
 
 async function handleDelete(row) {
-  await ElMessageBox.confirm('是否删除该角色？', '提示', { type: 'warning' })
+  await ElMessageBox.confirm(t('role.confirmDelete'), t('common.tip'), { type: 'warning' })
   const res = await deleteGroup(row.id)
-  ElMessage.success(res.message || '删除成功')
+  ElMessage.success(res.message || t('common.deleted'))
   await getAll()
 }
 
@@ -146,7 +148,7 @@ async function confirmPermissions() {
   if (toRemove.length) {
     await removePermissions({ group_id: currentGroup.value.id, permission_ids: toRemove })
   }
-  ElMessage.success('权限已更新')
+  ElMessage.success(t('role.permUpdated'))
   permDialogVisible.value = false
 }
 

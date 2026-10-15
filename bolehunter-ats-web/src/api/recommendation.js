@@ -13,18 +13,13 @@ import defaultAxios from './request'
 
 /**
  * 推荐流程
+ *
+ * 迭代 27 i18n：STAGES 仅保留枚举值（保序，看板列头/下拉顺序依赖它），
+ * 显示文案统一走语言包 stage.* 命名空间（t(`stage.${value}`)）。
  */
 export const STAGES = [
-  { value: 'PENDING', label: '待推荐' },
-  { value: 'RECOMMENDED', label: '已推荐' },
-  { value: 'CLIENT_READ', label: '客户已读' },
-  { value: 'INTERVIEW_PENDING', label: '待面试' },
-  { value: 'INTERVIEWING', label: '面试中' },
-  { value: 'OFFER_PENDING', label: '待Offer' },
-  { value: 'OFFERED', label: 'Offer' },
-  { value: 'ONBOARDED', label: '入职' },
-  { value: 'PAID', label: '回款' },
-  { value: 'ARCHIVED', label: '归档' },
+  'PENDING', 'RECOMMENDED', 'CLIENT_READ', 'INTERVIEW_PENDING', 'INTERVIEWING',
+  'OFFER_PENDING', 'OFFERED', 'ONBOARDED', 'PAID', 'ARCHIVED',
 ]
 
 export const getRecommendationPage = params => get('recruit/recommendation/page', params)

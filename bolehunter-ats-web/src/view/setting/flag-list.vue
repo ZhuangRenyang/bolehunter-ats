@@ -11,63 +11,65 @@
 <template>
   <el-card shadow="never">
     <div class="toolbar">
-      <span class="page-title">功能开关</span>
-      <el-button type="primary" plain size="small" icon="Plus" @click="handleCreate">新增开关</el-button>
+      <span class="page-title">{{ t('flag.title') }}</span>
+      <el-button type="primary" plain size="small" icon="Plus" @click="handleCreate">{{ t('flag.create') }}</el-button>
     </div>
     <el-table :data="tableData" border v-loading="loading">
-      <el-table-column prop="flag_name" label="名称" width="160" />
-      <el-table-column prop="flag_key" label="开关键" width="180" />
-      <el-table-column prop="description" label="说明" min-width="260" show-overflow-tooltip />
-      <el-table-column label="状态" width="100" align="center">
+      <el-table-column prop="flag_name" :label="t('common.name')" width="160" />
+      <el-table-column prop="flag_key" :label="t('flag.colKey')" width="180" />
+      <el-table-column prop="description" :label="t('common.description')" min-width="260" show-overflow-tooltip />
+      <el-table-column :label="t('common.status')" width="100" align="center">
         <template #default="scope">
           <el-switch :model-value="scope.row.enabled === 1" @change="handleToggle(scope.row)" />
         </template>
       </el-table-column>
-      <el-table-column label="操作" width="160" align="center">
+      <el-table-column :label="t('common.operation')" width="160" align="center">
         <template #default="scope">
-          <el-button size="small" type="primary" plain @click="handleEdit(scope.row)">编辑</el-button>
-          <el-button size="small" type="danger" plain @click="handleDelete(scope.row)">删除</el-button>
+          <el-button size="small" type="primary" plain @click="handleEdit(scope.row)">{{ t('common.edit') }}</el-button>
+          <el-button size="small" type="danger" plain @click="handleDelete(scope.row)">{{ t('common.delete') }}</el-button>
         </template>
       </el-table-column>
     </el-table>
 
-    <el-dialog v-model="dialogVisible" :title="form.id ? '编辑开关' : '新增开关'" width="440px">
+    <el-dialog v-model="dialogVisible" :title="form.id ? t('flag.editTitle') : t('flag.createTitle')" width="440px">
       <el-form ref="formRef" :model="form" :rules="rules" label-width="90px">
-        <el-form-item label="开关键" prop="flagKey">
-          <el-input v-model="form.flagKey" maxlength="64" :disabled="!!form.id" placeholder="如 resume_parse" />
+        <el-form-item :label="t('flag.formKey')" prop="flagKey">
+          <el-input v-model="form.flagKey" maxlength="64" :disabled="!!form.id" :placeholder="t('flag.formKeyPlaceholder')" />
         </el-form-item>
-        <el-form-item label="名称" prop="flagName">
+        <el-form-item :label="t('common.name')" prop="flagName">
           <el-input v-model="form.flagName" maxlength="64" />
         </el-form-item>
-        <el-form-item label="说明">
+        <el-form-item :label="t('common.description')">
           <el-input v-model="form.description" type="textarea" maxlength="255" />
         </el-form-item>
-        <el-form-item label="是否开启">
+        <el-form-item :label="t('flag.formEnabled')">
           <el-switch v-model="form.enabled" :active-value="1" :inactive-value="0" />
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button type="primary" @click="confirmSubmit">确 定</el-button>
-        <el-button @click="dialogVisible = false">取 消</el-button>
+        <el-button type="primary" @click="confirmSubmit">{{ t('common.confirm') }}</el-button>
+        <el-button @click="dialogVisible = false">{{ t('common.cancel') }}</el-button>
       </template>
     </el-dialog>
   </el-card>
 </template>
 
 <script setup>
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { useI18n } from 'vue-i18n'
 import { createFlag, deleteFlag, getFlags, toggleFlag, updateFlag } from '@/api/setting'
 
+const { t } = useI18n()
 const loading = ref(false)
 const tableData = ref([])
 const dialogVisible = ref(false)
 const formRef = ref()
 const form = reactive({ id: null, flagKey: '', flagName: '', description: '', enabled: 0 })
-const rules = {
-  flagKey: [{ required: true, message: '请输入开关键', trigger: 'blur' }],
-  flagName: [{ required: true, message: '请输入开关名称', trigger: 'blur' }],
-}
+const rules = computed(() => ({
+  flagKey: [{ required: true, message: t('flag.ruleKey'), trigger: 'blur' }],
+  flagName: [{ required: true, message: t('flag.ruleName'), trigger: 'blur' }],
+}))
 
 async function getAll() {
   loading.value = true
@@ -94,7 +96,7 @@ function confirmSubmit() {
   formRef.value.validate(async valid => {
     if (!valid) return
     const res = form.id ? await updateFlag(form.id, form) : await createFlag(form)
-    ElMessage.success(res.message || '保存成功')
+    ElMessage.success(res.message || t('common.saveOk'))
     dialogVisible.value = false
     await getAll()
   })
@@ -103,13 +105,13 @@ function confirmSubmit() {
 async function handleToggle(row) {
   await toggleFlag(row.id)
   row.enabled = row.enabled === 1 ? 0 : 1
-  ElMessage.success(row.enabled === 1 ? '已开启' : '已关闭')
+  ElMessage.success(row.enabled === 1 ? t('common.enabled') : t('common.disabled'))
 }
 
 function handleDelete(row) {
-  ElMessageBox.confirm('是否删除该功能开关？', '提示', { type: 'warning' }).then(async () => {
+  ElMessageBox.confirm(t('flag.confirmDelete'), t('common.tip'), { type: 'warning' }).then(async () => {
     const res = await deleteFlag(row.id)
-    ElMessage.success(res.message || '删除成功')
+    ElMessage.success(res.message || t('common.deleted'))
     await getAll()
   })
 }

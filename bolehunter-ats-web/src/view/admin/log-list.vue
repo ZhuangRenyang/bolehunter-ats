@@ -11,40 +11,41 @@
 <template>
   <el-card shadow="never">
     <div class="toolbar">
-      <span class="page-title">操作审计</span>
+      <span class="page-title">{{ t('log.title') }}</span>
     </div>
 
     <!-- 审计流水筛选（迭代24）：操作人模糊 / 状态码 / 时间范围 -->
     <el-form inline class="filter-bar" @submit.prevent>
-      <el-form-item label="操作人">
-        <el-input v-model="filter.username" placeholder="模糊匹配，如：张" clearable style="width: 140px"
+      <el-form-item :label="t('log.filterUser')">
+        <el-input v-model="filter.username" :placeholder="t('log.filterUserPlaceholder')" clearable style="width: 140px"
           @keyup.enter="handleSearch" @clear="handleSearch" />
       </el-form-item>
-      <el-form-item label="状态码">
-        <el-select v-model="filter.statusCode" placeholder="全部" clearable style="width: 120px" @change="handleSearch">
+      <el-form-item :label="t('log.filterStatus')">
+        <el-select v-model="filter.statusCode" :placeholder="t('common.all')" clearable style="width: 120px" @change="handleSearch">
           <el-option v-for="code in statusOptions" :key="code" :label="code" :value="code" />
         </el-select>
       </el-form-item>
-      <el-form-item label="时间范围">
-        <el-date-picker v-model="range" type="datetimerange" range-separator="至" start-placeholder="开始"
-          end-placeholder="结束" value-format="YYYY-MM-DD HH:mm:ss" style="width: 340px" />
+      <el-form-item :label="t('log.filterRange')">
+        <el-date-picker v-model="range" type="datetimerange" :range-separator="t('log.rangeTo')"
+          :start-placeholder="t('log.rangeStart')" :end-placeholder="t('log.rangeEnd')"
+          value-format="YYYY-MM-DD HH:mm:ss" style="width: 340px" />
       </el-form-item>
       <el-form-item>
-        <el-button type="primary" @click="handleSearch">查询</el-button>
-        <el-button plain @click="handleReset">重置</el-button>
+        <el-button type="primary" @click="handleSearch">{{ t('log.search') }}</el-button>
+        <el-button plain @click="handleReset">{{ t('log.reset') }}</el-button>
       </el-form-item>
     </el-form>
 
     <el-table :data="tableData" border v-loading="loading">
-      <el-table-column prop="create_time" label="时间" width="170" align="center">
+      <el-table-column prop="create_time" :label="t('log.colTime')" width="170" align="center">
         <template #default="scope">{{ formatTime(scope.row.create_time) }}</template>
       </el-table-column>
-      <el-table-column prop="message" label="事件" min-width="190" show-overflow-tooltip />
-      <el-table-column prop="username" label="操作人" width="110" />
-      <el-table-column prop="permission" label="权限" width="130" show-overflow-tooltip />
-      <el-table-column prop="method" label="方法" width="76" align="center" />
-      <el-table-column prop="path" label="路径" min-width="200" show-overflow-tooltip />
-      <el-table-column prop="status_code" label="状态码" width="92" align="center">
+      <el-table-column prop="message" :label="t('log.colEvent')" min-width="190" show-overflow-tooltip />
+      <el-table-column prop="username" :label="t('log.colUser')" width="110" />
+      <el-table-column prop="permission" :label="t('log.colPermission')" width="130" show-overflow-tooltip />
+      <el-table-column prop="method" :label="t('log.colMethod')" width="76" align="center" />
+      <el-table-column prop="path" :label="t('log.colPath')" min-width="200" show-overflow-tooltip />
+      <el-table-column prop="status_code" :label="t('log.colStatus')" width="92" align="center">
         <template #default="scope">
           <el-tag size="small" :type="statusTagType(scope.row.status_code)">{{ scope.row.status_code }}</el-tag>
         </template>
@@ -59,8 +60,10 @@
 
 <script setup>
 import { onMounted, reactive, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { getLogs } from '@/api/user'
 
+const { t } = useI18n()
 const loading = ref(false)
 const tableData = ref([])
 const total = ref(0)

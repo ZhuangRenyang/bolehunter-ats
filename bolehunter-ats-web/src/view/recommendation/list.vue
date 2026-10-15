@@ -11,53 +11,53 @@
 <template>
   <el-card shadow="never">
     <div class="toolbar">
-      <span class="page-title">推荐列表</span>
+      <span class="page-title">{{ t('rlist.title') }}</span>
     </div>
     <div class="filters">
-      <el-select v-model="filters.job_id" placeholder="职位" clearable filterable style="width: 260px" @change="handleSearch">
+      <el-select v-model="filters.job_id" :placeholder="t('rlist.filterJob')" clearable filterable style="width: 260px" @change="handleSearch">
         <el-option v-for="j in jobOptions" :key="j.id" :value="j.id"
           :label="`${j.title}${j.company_name ? '（' + j.company_name + '）' : ''}`" />
       </el-select>
-      <el-select v-model="filters.stage" placeholder="阶段" clearable style="width: 130px" @change="handleSearch">
-        <el-option v-for="s in stages" :key="s.value" :label="s.label" :value="s.value" />
+      <el-select v-model="filters.stage" :placeholder="t('rlist.filterStage')" clearable style="width: 130px" @change="handleSearch">
+        <el-option v-for="s in stages" :key="s" :label="stageLabel(s)" :value="s" />
       </el-select>
-      <el-select v-model="filters.owner_id" placeholder="顾问" clearable filterable style="width: 130px" @change="handleSearch">
+      <el-select v-model="filters.owner_id" :placeholder="t('rlist.filterOwner')" clearable filterable style="width: 130px" @change="handleSearch">
         <el-option v-for="u in owners" :key="u.id" :label="u.nickname" :value="u.id" />
       </el-select>
-      <el-button @click="handleReset">重置</el-button>
+      <el-button @click="handleReset">{{ t('rlist.reset') }}</el-button>
     </div>
     <el-table :data="tableData" border v-loading="loading">
-      <el-table-column label="候选人" width="120">
+      <el-table-column :label="t('rlist.colCandidate')" width="120">
         <template #default="scope">
           <div>{{ scope.row.candidate_name || '#' + scope.row.candidate_id }}</div>
           <div class="sub-text">{{ scope.row.candidate_company || '—' }}</div>
         </template>
       </el-table-column>
-      <el-table-column prop="job_title" label="职位" min-width="140" show-overflow-tooltip />
-      <el-table-column prop="client_name" label="客户" min-width="130" show-overflow-tooltip />
-      <el-table-column label="阶段" width="100" align="center">
+      <el-table-column prop="job_title" :label="t('rlist.colJob')" min-width="140" show-overflow-tooltip />
+      <el-table-column prop="client_name" :label="t('rlist.colClient')" min-width="130" show-overflow-tooltip />
+      <el-table-column :label="t('rlist.colStage')" width="100" align="center">
         <template #default="scope">
           <el-tag size="small" :type="stageTagType(scope.row.current_stage)">
-            {{ stageLabelMap[scope.row.current_stage] || scope.row.current_stage }}
+            {{ stageLabel(scope.row.current_stage) }}
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="最近客户反馈" min-width="180" show-overflow-tooltip>
+      <el-table-column :label="t('rlist.colFeedback')" min-width="180" show-overflow-tooltip>
         <template #default="scope">{{ scope.row.feedback || '—' }}</template>
       </el-table-column>
-      <el-table-column label="反馈时间" width="110" align="center">
+      <el-table-column :label="t('rlist.colFeedbackTime')" width="110" align="center">
         <template #default="scope">{{ formatDate(scope.row.feedback_time) }}</template>
       </el-table-column>
-      <el-table-column label="进入阶段" width="110" align="center">
+      <el-table-column :label="t('rlist.colStageTime')" width="110" align="center">
         <template #default="scope">{{ formatDate(scope.row.stage_time) }}</template>
       </el-table-column>
-      <el-table-column label="顾问" width="90" align="center">
-        <template #default="scope">{{ scope.row.owner_name || '未分配' }}</template>
+      <el-table-column :label="t('rlist.filterOwner')" width="90" align="center">
+        <template #default="scope">{{ scope.row.owner_name || t('common.notAssigned') }}</template>
       </el-table-column>
-      <el-table-column label="操作" width="170" align="center">
+      <el-table-column :label="t('common.operation')" width="170" align="center">
         <template #default="scope">
-          <el-button size="small" type="primary" plain @click="handleEdit(scope.row)">流转/反馈</el-button>
-          <el-button size="small" type="danger" plain @click="handleDelete(scope.row)">删除</el-button>
+          <el-button size="small" type="primary" plain @click="handleEdit(scope.row)">{{ t('rlist.edit') }}</el-button>
+          <el-button size="small" type="danger" plain @click="handleDelete(scope.row)">{{ t('common.delete') }}</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -66,22 +66,22 @@
         :current-page="currentPage" @current-change="handlePageChange" />
     </div>
 
-    <el-dialog v-model="editDialogVisible" title="阶段流转与客户反馈" width="460px">
+    <el-dialog v-model="editDialogVisible" :title="t('rlist.dialogTitle')" width="460px">
       <el-form v-if="current" label-width="90px" size="small">
-        <el-form-item label="候选人">{{ current.candidate_name || '#' + current.candidate_id }}</el-form-item>
-        <el-form-item label="职位">{{ current.job_title || '—' }}（{{ current.client_name || '—' }}）</el-form-item>
-        <el-form-item label="流转到">
+        <el-form-item :label="t('rlist.colCandidate')">{{ current.candidate_name || '#' + current.candidate_id }}</el-form-item>
+        <el-form-item :label="t('rlist.colJob')">{{ current.job_title || '—' }}（{{ current.client_name || '—' }}）</el-form-item>
+        <el-form-item :label="t('rlist.moveTo')">
           <el-select v-model="editStage" style="width: 100%">
-            <el-option v-for="s in stages" :key="s.value" :label="s.label" :value="s.value" />
+            <el-option v-for="s in stages" :key="s" :label="stageLabel(s)" :value="s" />
           </el-select>
         </el-form-item>
-        <el-form-item label="客户反馈">
-          <el-input v-model="editFeedback" type="textarea" :rows="4" maxlength="5000" placeholder="顾问代录：客户 HR 的反馈意见" />
+        <el-form-item :label="t('rlist.feedback')">
+          <el-input v-model="editFeedback" type="textarea" :rows="4" maxlength="5000" :placeholder="t('rlist.feedbackPlaceholder')" />
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button type="primary" @click="confirmEdit">保 存</el-button>
-        <el-button @click="editDialogVisible = false">取 消</el-button>
+        <el-button type="primary" @click="confirmEdit">{{ t('common.save') }}</el-button>
+        <el-button @click="editDialogVisible = false">{{ t('common.cancel') }}</el-button>
       </template>
     </el-dialog>
   </el-card>
@@ -90,14 +90,23 @@
 <script setup>
 import { onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { useI18n } from 'vue-i18n'
 import {
   STAGES, deleteRecommendation, exportCsv, getJobOptions, getRecommendationPage, updateRecommendationStage,
 } from '@/api/recommendation'
 import { getClientOwners } from '@/api/client'
 import moment from 'moment'
 
+const { t } = useI18n()
+
+// STAGES 现为枚举值数组（保序），显示文案统一经 stageLabel 走语言包 stage.*
 const stages = STAGES
-const stageLabelMap = Object.fromEntries(STAGES.map(s => [s.value, s.label]))
+
+function stageLabel(stage) {
+  const translated = t(`stage.${stage}`)
+  return translated === `stage.${stage}` ? stage : translated
+}
+
 const loading = ref(false)
 const tableData = ref([])
 const total = ref(0)
@@ -167,13 +176,13 @@ function confirmEdit() {
     editDialogVisible.value = false
     return
   }
-  ElMessageBox.confirm(stageChanged ? '确认流转推荐阶段？' : '确认保存客户反馈？', '提示')
+  ElMessageBox.confirm(stageChanged ? t('rlist.confirmStage') : t('rlist.confirmFeedback'), t('common.tip'))
     .then(async () => {
       const res = await updateRecommendationStage(current.value.id, {
         stage: editStage.value,
         feedback: editFeedback.value,
       })
-      ElMessage.success(res.message || '保存成功')
+      ElMessage.success(res.message || t('common.saveOk'))
       editDialogVisible.value = false
       await getAll()
     })
@@ -181,9 +190,9 @@ function confirmEdit() {
 }
 
 function handleDelete(row) {
-  ElMessageBox.confirm('是否删除该推荐记录？', '提示', { type: 'warning' }).then(async () => {
+  ElMessageBox.confirm(t('rlist.confirmDelete'), t('common.tip'), { type: 'warning' }).then(async () => {
     const res = await deleteRecommendation(row.id)
-    ElMessage.success(res.message || '删除成功')
+    ElMessage.success(res.message || t('common.deleted'))
     if (total.value % pageCount === 1 && currentPage.value !== 1) {
       currentPage.value--
     }
@@ -193,7 +202,7 @@ function handleDelete(row) {
 
 async function handleExport() {
   if (!filters.job_id && !filters.owner_id) {
-    ElMessage.info('请先按职位筛选，或按顾问筛选后导出')
+    ElMessage.info(t('rlist.exportNeedFilter'))
     return
   }
   try {

@@ -11,33 +11,33 @@
 <template>
   <el-card shadow="never">
     <div class="toolbar">
-      <span class="page-title">客户列表</span>
-      <el-button type="primary" plain size="small" icon="Plus" @click="handleCreate">新建客户</el-button>
+      <span class="page-title">{{ t('client.title') }}</span>
+      <el-button type="primary" plain size="small" icon="Plus" @click="handleCreate">{{ t('client.create') }}</el-button>
     </div>
     <div class="filters">
-      <el-input v-model="filters.keyword" placeholder="客户名称" clearable style="width: 180px" @keyup.enter="handleSearch" />
-      <el-select v-model="filters.industry" placeholder="行业" clearable style="width: 150px">
+      <el-input v-model="filters.keyword" :placeholder="t('client.filterKeyword')" clearable style="width: 180px" @keyup.enter="handleSearch" />
+      <el-select v-model="filters.industry" :placeholder="t('client.filterIndustry')" clearable style="width: 150px">
         <el-option v-for="(label, value) in dictMaps.industry" :key="value" :label="label" :value="value" />
       </el-select>
-      <el-select v-model="filters.level" placeholder="客户等级" clearable style="width: 140px">
+      <el-select v-model="filters.level" :placeholder="t('client.filterLevel')" clearable style="width: 140px">
         <el-option v-for="(label, value) in dictMaps.client_level" :key="value" :label="label" :value="value" />
       </el-select>
-      <el-select v-model="filters.client_status" placeholder="合作状态" clearable style="width: 140px">
+      <el-select v-model="filters.client_status" :placeholder="t('client.filterStatus')" clearable style="width: 140px">
         <el-option v-for="(label, value) in dictMaps.client_status" :key="value" :label="label" :value="value" />
       </el-select>
-      <el-select v-model="filters.owner_id" placeholder="负责人" clearable filterable style="width: 140px">
+      <el-select v-model="filters.owner_id" :placeholder="t('common.owner')" clearable filterable style="width: 140px">
         <el-option v-for="u in owners" :key="u.id" :label="u.nickname" :value="u.id" />
       </el-select>
-      <el-button type="primary" icon="Search" @click="handleSearch">搜索</el-button>
-      <el-button @click="handleReset">重置</el-button>
+      <el-button type="primary" icon="Search" @click="handleSearch">{{ t('common.search') }}</el-button>
+      <el-button @click="handleReset">{{ t('client.reset') }}</el-button>
     </div>
     <el-table :data="tableData" border v-loading="loading">
-      <el-table-column prop="name" label="客户名称" min-width="160" show-overflow-tooltip />
-      <el-table-column prop="city" label="城市" width="110" />
-      <el-table-column label="行业" width="140">
+      <el-table-column prop="name" :label="t('client.colName')" min-width="160" show-overflow-tooltip />
+      <el-table-column prop="city" :label="t('client.colCity')" width="110" />
+      <el-table-column :label="t('client.colIndustry')" width="140">
         <template #default="scope">{{ dictMaps.industry[scope.row.industry] || '—' }}</template>
       </el-table-column>
-      <el-table-column label="等级" width="120" align="center">
+      <el-table-column :label="t('client.colLevel')" width="120" align="center">
         <template #default="scope">
           <el-tag v-if="scope.row.level" size="small" :type="levelTagType(scope.row.level)">
             {{ dictMaps.client_level[scope.row.level] || scope.row.level }}
@@ -45,21 +45,21 @@
           <span v-else>—</span>
         </template>
       </el-table-column>
-      <el-table-column label="合作状态" width="110" align="center">
+      <el-table-column :label="t('client.colStatus')" width="110" align="center">
         <template #default="scope">
           <el-tag size="small" :type="statusTagType(scope.row.client_status)">
             {{ dictMaps.client_status[scope.row.client_status] || scope.row.client_status }}
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="负责人" width="110" align="center">
-        <template #default="scope">{{ ownerMap[scope.row.owner_id] || '未分配' }}</template>
+      <el-table-column :label="t('common.owner')" width="110" align="center">
+        <template #default="scope">{{ ownerMap[scope.row.owner_id] || t('common.notAssigned') }}</template>
       </el-table-column>
-      <el-table-column label="操作" width="220" align="center">
+      <el-table-column :label="t('common.operation')" width="220" align="center">
         <template #default="scope">
-          <el-button size="small" type="primary" plain @click="handleDetail(scope.row)">详情</el-button>
-          <el-button size="small" type="primary" plain @click="handleEdit(scope.row)">编辑</el-button>
-          <el-button size="small" type="danger" plain @click="handleDelete(scope.row)">删除</el-button>
+          <el-button size="small" type="primary" plain @click="handleDetail(scope.row)">{{ t('common.detail') }}</el-button>
+          <el-button size="small" type="primary" plain @click="handleEdit(scope.row)">{{ t('common.edit') }}</el-button>
+          <el-button size="small" type="danger" plain @click="handleDelete(scope.row)">{{ t('common.delete') }}</el-button>
         </template>
       </el-table-column>
     </el-table>
@@ -68,56 +68,58 @@
         :current-page="currentPage" @current-change="handlePageChange" />
     </div>
 
-    <el-dialog v-model="dialogVisible" :title="form.id ? '编辑客户' : '新建客户'" width="520px">
+    <el-dialog v-model="dialogVisible" :title="form.id ? t('client.editTitle') : t('client.createTitle')" width="520px">
       <el-form ref="formRef" :model="form" :rules="rules" label-width="90px">
-        <el-form-item label="客户名称" prop="name">
+        <el-form-item :label="t('client.formName')" prop="name">
           <el-input v-model="form.name" maxlength="100" />
         </el-form-item>
-        <el-form-item label="外文名称">
+        <el-form-item :label="t('client.colForeignName')">
           <el-input v-model="form.foreignName" maxlength="100" />
         </el-form-item>
-        <el-form-item label="城市" prop="city">
+        <el-form-item :label="t('client.colCity')" prop="city">
           <el-input v-model="form.city" maxlength="50" />
         </el-form-item>
-        <el-form-item label="行业">
+        <el-form-item :label="t('client.colIndustry')">
           <el-select v-model="form.industry" clearable style="width: 100%">
             <el-option v-for="(label, value) in dictMaps.industry" :key="value" :label="label" :value="value" />
           </el-select>
         </el-form-item>
-        <el-form-item label="客户等级">
+        <el-form-item :label="t('client.filterLevel')">
           <el-select v-model="form.level" clearable style="width: 100%">
             <el-option v-for="(label, value) in dictMaps.client_level" :key="value" :label="label" :value="value" />
           </el-select>
         </el-form-item>
-        <el-form-item label="合作状态">
+        <el-form-item :label="t('client.formCoopStatus')">
           <el-select v-model="form.clientStatus" style="width: 100%">
             <el-option v-for="(label, value) in dictMaps.client_status" :key="value" :label="label" :value="value" />
           </el-select>
         </el-form-item>
-        <el-form-item label="负责人">
+        <el-form-item :label="t('common.owner')">
           <el-select v-model="form.ownerId" clearable filterable style="width: 100%">
             <el-option v-for="u in owners" :key="u.id" :label="u.nickname" :value="u.id" />
           </el-select>
         </el-form-item>
-        <el-form-item label="公司简介">
+        <el-form-item :label="t('client.colDescription')">
           <el-input v-model="form.description" type="textarea" :rows="3" />
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button type="primary" @click="confirmSubmit">确 定</el-button>
-        <el-button @click="dialogVisible = false">取 消</el-button>
+        <el-button type="primary" @click="confirmSubmit">{{ t('common.confirm') }}</el-button>
+        <el-button @click="dialogVisible = false">{{ t('common.cancel') }}</el-button>
       </template>
     </el-dialog>
   </el-card>
 </template>
 
 <script setup>
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { useI18n } from 'vue-i18n'
 import { createClient, deleteClient, getClientOwners, getClientPage, updateClient } from '@/api/client'
 import { getDictDataByType } from '@/api/setting'
 
+const { t } = useI18n()
 const router = useRouter()
 const loading = ref(false)
 const tableData = ref([])
@@ -129,10 +131,10 @@ const ownerMap = ref({})
 const dialogVisible = ref(false)
 const formRef = ref()
 const form = reactive({ id: null, name: '', foreignName: '', city: '', industry: '', level: '', clientStatus: 'potential', ownerId: null, description: '' })
-const rules = {
-  name: [{ required: true, message: '请输入客户公司名称', trigger: 'blur' }],
-  city: [{ required: true, message: '请输入城市', trigger: 'blur' }],
-}
+const rules = computed(() => ({
+  name: [{ required: true, message: t('client.ruleName'), trigger: 'blur' }],
+  city: [{ required: true, message: t('client.ruleCity'), trigger: 'blur' }],
+}))
 const filters = reactive({ keyword: '', industry: '', level: '', client_status: '', owner_id: '' })
 const dictMaps = reactive({ industry: {}, client_level: {}, client_status: {} })
 
@@ -199,17 +201,17 @@ function handleCreate() {
  */
 function handleDelete(row) {
   ElMessageBox.prompt(
-    `此操作将删除客户「${row.name}」及其名下的职位与联系人，且不可恢复。` +
-    '如确认执行，请在下方输入客户名称：',
-    '删除客户', { type: 'warning', confirmButtonText: '删除', cancelButtonText: '取消' },
+    t('client.deletePrompt', { name: row.name }),
+    t('client.deleteTitle'),
+    { type: 'warning', confirmButtonText: t('common.delete'), cancelButtonText: t('common.cancel') },
   ).then(async ({ value }) => {
     if ((value || '').trim() !== row.name) {
-      ElMessage.error('输入的客户名称不一致，已取消删除')
+      ElMessage.error(t('client.deleteConfirmWord'))
       return
     }
     try {
       const res = await deleteClient(row.id)
-      ElMessage.success(res.message || '删除成功')
+      ElMessage.success(res.message || t('common.deleted'))
       await getAll()
     } catch (e) {
       /* 错误提示由请求层统一处理（含 80290 有推荐拒绝） */
@@ -229,7 +231,7 @@ function confirmSubmit() {
   formRef.value.validate(async valid => {
     if (!valid) return
     const res = form.id ? await updateClient(form.id, form) : await createClient(form)
-    ElMessage.success(res.message || '保存成功')
+    ElMessage.success(res.message || t('common.saveOk'))
     dialogVisible.value = false
     await getAll()
   })

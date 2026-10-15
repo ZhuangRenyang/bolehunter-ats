@@ -7,46 +7,46 @@
 -->
 <template>
   <div class="page">
-    <div class="page-title">职位列表</div>
+    <div class="page-title">{{ t('position.title') }}</div>
 
     <el-card shadow="never">
       <div class="search-bar">
-        <el-input v-model="keyword" placeholder="按职位名称搜索" clearable style="width: 220px" @keyup.enter="loadPage(0)" />
+        <el-input v-model="keyword" :placeholder="t('position.searchPlaceholder')" clearable style="width: 220px" @keyup.enter="loadPage(0)" />
         <el-select v-model="state" style="width: 130px" @change="loadPage(0)">
-          <el-option v-for="s in POSITIONS_STATES" :key="s.value" :label="s.label" :value="s.value" />
+          <el-option v-for="s in POSITION_STATES" :key="s" :label="stateText(s)" :value="s" />
         </el-select>
-        <el-button type="primary" icon="Search" @click="loadPage(0)">搜索</el-button>
+        <el-button type="primary" icon="Search" @click="loadPage(0)">{{ t('common.search') }}</el-button>
       </div>
 
       <el-table :data="items" border stripe v-loading="loading">
-        <el-table-column label="职位名称" min-width="180" show-overflow-tooltip>
+        <el-table-column :label="t('position.colTitle')" min-width="180" show-overflow-tooltip>
           <template #default="scope">
             <el-link type="primary" @click="goDetail(scope.row)">{{ scope.row.title }}</el-link>
           </template>
         </el-table-column>
-        <el-table-column label="所属公司" min-width="150" show-overflow-tooltip>
+        <el-table-column :label="t('position.colCompany')" min-width="150" show-overflow-tooltip>
           <template #default="scope">{{ scope.row.company_name || '-' }}</template>
         </el-table-column>
-        <el-table-column label="分类" width="110" show-overflow-tooltip>
+        <el-table-column :label="t('position.colCategory')" width="110" show-overflow-tooltip>
           <template #default="scope">{{ scope.row.category_name || '-' }}</template>
         </el-table-column>
-        <el-table-column label="城市" width="110" prop="city" show-overflow-tooltip />
-        <el-table-column label="薪资范围" width="140">
+        <el-table-column :label="t('position.colCity')" width="110" prop="city" show-overflow-tooltip />
+        <el-table-column :label="t('position.colSalary')" width="140">
           <template #default="scope">{{ salaryText(scope.row) }}</template>
         </el-table-column>
-        <el-table-column label="招聘人数" width="90" prop="quantity" align="center" />
-        <el-table-column label="状态" width="100" align="center">
+        <el-table-column :label="t('position.colQuantity')" width="90" prop="quantity" align="center" />
+        <el-table-column :label="t('common.status')" width="100" align="center">
           <template #default="scope">
             <el-tag :type="stateTag(scope.row.state)" size="small">{{ stateText(scope.row.state) }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="浏览" width="80" prop="hits" align="center" />
-        <el-table-column label="发布日期" width="120">
+        <el-table-column :label="t('position.colHits')" width="80" prop="hits" align="center" />
+        <el-table-column :label="t('position.colRelease')" width="120">
           <template #default="scope">{{ (scope.row.release_date || '').slice(0, 10) || '-' }}</template>
         </el-table-column>
-        <el-table-column label="操作" width="90" fixed="right" align="center">
+        <el-table-column :label="t('common.operation')" width="90" fixed="right" align="center">
           <template #default="scope">
-            <el-button size="small" type="primary" plain @click="goDetail(scope.row)">详情</el-button>
+            <el-button size="small" type="primary" plain @click="goDetail(scope.row)">{{ t('common.detail') }}</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -60,8 +60,10 @@
 <script setup>
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
-import { getPositionsAdmin, POSITIONS_STATES } from '@/api/position'
+import { useI18n } from 'vue-i18n'
+import { getPositionsAdmin, POSITION_STATES } from '@/api/position'
 
+const { t } = useI18n()
 const router = useRouter()
 const items = ref([])
 const total = ref(0)
@@ -77,7 +79,8 @@ function salaryText(row) {
 }
 
 function stateText(s) {
-  return (POSITIONS_STATES.find(x => x.value === s) || {}).label || String(s)
+  const translated = t(`position.state.${s}`)
+  return translated === `position.state.${s}` ? String(s) : translated
 }
 
 function stateTag(s) {

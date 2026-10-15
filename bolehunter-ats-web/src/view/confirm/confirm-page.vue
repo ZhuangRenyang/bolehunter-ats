@@ -14,28 +14,28 @@
       <template v-if="error">
         <div class="state-block">
           <el-icon :size="56" color="#f56c6c"><CircleCloseFilled /></el-icon>
-          <h2>链接无效或已过期</h2>
-          <p class="muted">请联系您的猎头顾问重新获取确认链接</p>
+          <h2>{{ t('confirm.invalidTitle') }}</h2>
+          <p class="muted">{{ t('confirm.invalidHint') }}</p>
         </div>
       </template>
       <template v-else-if="info">
         <div class="brand">
           <span class="logo">伯</span>
-          <span class="brand-name">伯乐猎 · 推荐确认</span>
+          <span class="brand-name">{{ t('confirm.brandName') }}</span>
         </div>
-        <h2 class="title">候选人推荐摘要</h2>
+        <h2 class="title">{{ t('confirm.summaryTitle') }}</h2>
         <div class="summary">
-          <div class="row"><span class="label">候选人</span><b>{{ info.candidate_name }}</b></div>
+          <div class="row"><span class="label">{{ t('confirm.labelCandidate') }}</span><b>{{ info.candidate_name }}</b></div>
           <div class="row" v-if="info.candidate_position">
-            <span class="label">候选人背景</span><span>{{ info.candidate_position }}<template v-if="info.candidate_company"> · {{ info.candidate_company }}</template></span>
+            <span class="label">{{ t('confirm.labelCandidateBg') }}</span><span>{{ info.candidate_position }}<template v-if="info.candidate_company"> · {{ info.candidate_company }}</template></span>
           </div>
-          <div class="row"><span class="label">推荐职位</span><b>{{ info.job_title }}</b></div>
-          <div class="row"><span class="label">客户公司</span><span>{{ info.client_name }}</span></div>
-          <div class="row"><span class="label">当前阶段</span>
+          <div class="row"><span class="label">{{ t('confirm.labelJob') }}</span><b>{{ info.job_title }}</b></div>
+          <div class="row"><span class="label">{{ t('confirm.labelClient') }}</span><span>{{ info.client_name }}</span></div>
+          <div class="row"><span class="label">{{ t('confirm.labelStage') }}</span>
             <el-tag size="small">{{ stageLabel(info.current_stage) }}</el-tag>
           </div>
-          <div class="row" v-if="info.feedback"><span class="label">最近反馈</span><span>{{ info.feedback }}</span></div>
-          <div class="row"><span class="label">链接有效期至</span><span>{{ formatDate(info.expire) }}</span></div>
+          <div class="row" v-if="info.feedback"><span class="label">{{ t('confirm.labelFeedback') }}</span><span>{{ info.feedback }}</span></div>
+          <div class="row"><span class="label">{{ t('confirm.labelExpire') }}</span><span>{{ formatDate(info.expire) }}</span></div>
         </div>
 
         <template v-if="!done">
@@ -45,22 +45,22 @@
             :rows="3"
             maxlength="200"
             show-word-limit
-            placeholder="补充反馈（可选）：例如安排下周三下午面试 / 暂不考虑该候选人…"
+            :placeholder="t('confirm.feedbackPlaceholder')"
           />
           <div class="actions">
-            <el-button type="primary" :loading="acting" @click="act('read')">已读确认</el-button>
-            <el-button type="success" :loading="acting" @click="act('interview')">约面试</el-button>
-            <el-button type="danger" plain :loading="acting" @click="act('reject')">婉拒</el-button>
+            <el-button type="primary" :loading="acting" @click="act('read')">{{ t('confirm.actRead') }}</el-button>
+            <el-button type="success" :loading="acting" @click="act('interview')">{{ t('confirm.actInterview') }}</el-button>
+            <el-button type="danger" plain :loading="acting" @click="act('reject')">{{ t('confirm.actReject') }}</el-button>
           </div>
         </template>
         <div v-else class="state-block done">
           <el-icon :size="56" color="#67c23a"><SuccessFilled /></el-icon>
           <h2>{{ doneMessage }}</h2>
-          <p class="muted">您的反馈已通知负责顾问，感谢配合！</p>
+          <p class="muted">{{ t('confirm.doneHint') }}</p>
         </div>
       </template>
     </div>
-    <p class="footer">本页面由伯乐猎猎头系统生成 · 无需登录</p>
+    <p class="footer">{{ t('confirm.footer') }}</p>
   </div>
 </template>
 
@@ -68,9 +68,11 @@
 import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import { useI18n } from 'vue-i18n'
 import { CircleCloseFilled, SuccessFilled } from '@element-plus/icons-vue'
 import { getConfirmInfo, submitConfirmAction } from '@/api/open'
 
+const { t, locale } = useI18n()
 const route = useRoute()
 const token = route.params.token
 const loading = ref(true)
@@ -81,20 +83,16 @@ const acting = ref(false)
 const done = ref(false)
 const doneMessage = ref('')
 
-const STAGE_LABELS = {
-  PENDING: '待推荐',
-  RECOMMENDED: '已推荐',
-  CLIENT_READ: '客户已读',
-  INTERVIEW_PENDING: '待面试',
-  INTERVIEWING: '面试中',
-  OFFER_PENDING: '待Offer',
-  OFFERED: 'Offer',
-  ONBOARDED: '入职',
-  PAID: '回款',
-  ARCHIVED: '归档',
+// 阶段名与全站共用语言包顶层 stage.*，未知枚举兜底原始值
+function stageLabel(stage) {
+  const translated = t(`stage.${stage}`)
+  return translated === `stage.${stage}` ? stage : translated
 }
-const stageLabel = value => STAGE_LABELS[value] || value
-const formatDate = value => (value ? new Date(value).toLocaleString('zh-CN', { hour12: false }) : '-')
+
+const formatDate = value => {
+  if (!value) return '-'
+  return new Date(value).toLocaleString(locale.value === 'en-US' ? 'en-US' : 'zh-CN', { hour12: false })
+}
 
 onMounted(async () => {
   try {
@@ -110,13 +108,13 @@ async function act(action) {
   acting.value = true
   try {
     const result = await submitConfirmAction(token, action, feedback.value || undefined)
-    doneMessage.value = result.message || '操作成功'
+    doneMessage.value = result.message || t('confirm.actOk')
     done.value = true
   } catch (e) {
     if (e && (e.code === 80250 || e.code === 80230)) {
       error.value = true
     } else {
-      ElMessage.error('操作失败，请重试')
+      ElMessage.error(t('confirm.actFail'))
     }
   } finally {
     acting.value = false

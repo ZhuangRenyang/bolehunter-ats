@@ -7,44 +7,44 @@
 -->
 <template>
   <div class="page">
-    <div class="page-title">代码生成</div>
+    <div class="page-title">{{ t('gen.title') }}</div>
 
     <el-card shadow="never" style="margin-bottom: 14px">
       <el-form label-width="110px" style="max-width: 640px">
-        <el-form-item label="选择数据表" required>
-          <el-select v-model="form.tableName" filterable placeholder="选择或搜索表" style="width: 100%" @change="loadPreview">
-            <el-option v-for="t in tables" :key="t.tableName" :value="t.tableName"
-              :label="t.tableName + (t.tableComment ? '（' + t.tableComment + '）' : '')" />
+        <el-form-item :label="t('gen.selectTable')" required>
+          <el-select v-model="form.tableName" filterable :placeholder="t('gen.selectTablePlaceholder')" style="width: 100%" @change="loadPreview">
+            <el-option v-for="tb in tables" :key="tb.tableName" :value="tb.tableName"
+              :label="tb.tableName + (tb.tableComment ? '（' + tb.tableComment + '）' : '')" />
           </el-select>
         </el-form-item>
-        <el-form-item label="模块名" required>
-          <el-input v-model="form.moduleName" placeholder="如 candidate（URL 与包内子路径）" maxlength="40" />
+        <el-form-item :label="t('gen.moduleName')" required>
+          <el-input v-model="form.moduleName" :placeholder="t('gen.modulePlaceholder')" maxlength="40" />
         </el-form-item>
-        <el-form-item label="类名" required>
-          <el-input v-model="form.className" placeholder="如 Candidate（大驼峰，生成 DO/Service/Controller）" maxlength="40" />
+        <el-form-item :label="t('gen.className')" required>
+          <el-input v-model="form.className" :placeholder="t('gen.classPlaceholder')" maxlength="40" />
         </el-form-item>
-        <el-form-item label="功能中文名">
-          <el-input v-model="form.businessName" placeholder="如 候选人（用于注释与页面标题）" maxlength="30" />
+        <el-form-item :label="t('gen.businessName')">
+          <el-input v-model="form.businessName" :placeholder="t('gen.businessPlaceholder')" maxlength="30" />
         </el-form-item>
-        <el-form-item label="作者">
-          <el-input v-model="form.author" placeholder="默认 ZhuangRenyang" maxlength="30" />
+        <el-form-item :label="t('gen.author')">
+          <el-input v-model="form.author" :placeholder="t('gen.authorPlaceholder')" maxlength="30" />
         </el-form-item>
-        <el-form-item label="软删除模式">
+        <el-form-item :label="t('gen.softDelete')">
           <el-switch v-model="form.inheritBase" :disabled="!preview.tableName" />
-          <span class="gen-tip">继承 BaseModel（含 create/update/delete_time 与逻辑删除）；表缺这三列时强制关闭</span>
+          <span class="gen-tip">{{ t('gen.softDeleteTip') }}</span>
         </el-form-item>
         <el-form-item>
           <el-button type="success" icon="Tickets" :loading="previewingCode" :disabled="!form.tableName || !form.moduleName || !form.className"
-            @click="handlePreviewCode">预览生成代码</el-button>
+            @click="handlePreviewCode">{{ t('gen.previewBtn') }}</el-button>
           <el-button type="primary" icon="Download" :loading="downloading" :disabled="!form.tableName || !form.moduleName || !form.className"
-            @click="handleDownload">生成并下载 zip</el-button>
-          <span class="gen-tip">生成 DO / Mapper / Service / Controller / Vue 列表页，自动携带 AGPL 版权头</span>
+            @click="handleDownload">{{ t('gen.downloadBtn') }}</el-button>
+          <span class="gen-tip">{{ t('gen.genTip') }}</span>
         </el-form-item>
       </el-form>
     </el-card>
 
     <el-card shadow="never" style="margin-bottom: 14px" v-if="codeFiles.length">
-      <template #header>生成代码预览（共 {{ codeFiles.length }} 个文件）</template>
+      <template #header>{{ t('gen.codePreviewHeader', { n: codeFiles.length }) }}</template>
       <el-tabs v-model="activeFile" type="border-card">
         <el-tab-pane v-for="f in codeFiles" :key="f.name" :name="f.name" :label="f.name.split('/').pop()">
           <pre class="code-view">{{ f.content }}</pre>
@@ -53,21 +53,21 @@
     </el-card>
 
     <el-card shadow="never">
-      <template #header>字段预览{{ preview.tableName ? '：' + preview.tableName : '' }}</template>
+      <template #header>{{ preview.tableName ? t('gen.fieldHeaderWithTable', { table: preview.tableName }) : t('gen.fieldHeader') }}</template>
       <el-table :data="previewColumns" border size="small" v-loading="previewing">
-        <el-table-column prop="columnName" label="列名" width="180" />
-        <el-table-column prop="fieldName" label="字段名（驼峰）" width="180" />
-        <el-table-column prop="javaType" label="Java 类型" width="160" />
-        <el-table-column prop="jdbcType" label="JDBC 类型" width="110" />
-        <el-table-column prop="comment" label="注释" min-width="150" show-overflow-tooltip />
-        <el-table-column label="主键" width="70" align="center">
+        <el-table-column prop="columnName" :label="t('gen.colColumn')" width="180" />
+        <el-table-column prop="fieldName" :label="t('gen.colField')" width="180" />
+        <el-table-column prop="javaType" :label="t('gen.colJavaType')" width="160" />
+        <el-table-column prop="jdbcType" :label="t('gen.colJdbcType')" width="110" />
+        <el-table-column prop="comment" :label="t('gen.colComment')" min-width="150" show-overflow-tooltip />
+        <el-table-column :label="t('gen.colPk')" width="70" align="center">
           <template #default="scope">{{ scope.row.isPk ? '✓' : '' }}</template>
         </el-table-column>
-        <el-table-column label="必填" width="70" align="center">
+        <el-table-column :label="t('gen.colRequired')" width="70" align="center">
           <template #default="scope">{{ scope.row.isRequired ? '✓' : '' }}</template>
         </el-table-column>
       </el-table>
-      <el-empty v-if="!preview.tableName && !previewing" description="选择数据表后预览字段映射" :image-size="60" />
+      <el-empty v-if="!preview.tableName && !previewing" :description="t('gen.emptyPreview')" :image-size="60" />
     </el-card>
   </div>
 </template>
@@ -75,8 +75,10 @@
 <script setup>
 import { onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
+import { useI18n } from 'vue-i18n'
 import { getGenTables, previewGenTable, downloadGen, previewCodeGen } from '@/api/setting'
 
+const { t } = useI18n()
 const tables = ref([])
 const preview = reactive({ tableName: '' })
 const previewing = ref(false)
@@ -117,8 +119,8 @@ async function loadPreview(tableName) {
         .map(p => p.charAt(0).toUpperCase() + p.slice(1)).join('')
       form.className = camel
     }
-    if (!form.businessName && tables.value.find(t => t.tableName === tableName)?.tableComment) {
-      form.businessName = tables.value.find(t => t.tableName === tableName).tableComment
+    if (!form.businessName && tables.value.find(tb => tb.tableName === tableName)?.tableComment) {
+      form.businessName = tables.value.find(tb => tb.tableName === tableName).tableComment
     }
   } catch (e) {
     preview.tableName = ''
@@ -162,7 +164,7 @@ async function handleDownload() {
     link.download = `bolehunter-gen-${form.moduleName}.zip`
     link.click()
     window.URL.revokeObjectURL(url)
-    ElMessage.success('生成成功，zip 已下载')
+    ElMessage.success(t('gen.downloadOk'))
   } catch (e) {
     console.log(e)
   } finally {

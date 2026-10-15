@@ -12,66 +12,66 @@
   <el-card shadow="never" v-loading="loading">
     <div class="toolbar">
       <div class="title-wrap">
-        <el-button size="small" icon="Back" @click="$router.push('/client/list')">返回</el-button>
+        <el-button size="small" icon="Back" @click="$router.push('/client/list')">{{ t('client.back') }}</el-button>
         <span class="title" v-if="company">{{ company.name }}</span>
         <el-tag v-if="company" size="small" :type="statusTagType(company.client_status)">
           {{ dictMaps.client_status[company.client_status] || company.client_status }}
         </el-tag>
       </div>
-      <el-button type="primary" plain size="small" icon="Edit" @click="handleEditClient">编辑客户</el-button>
+      <el-button type="primary" plain size="small" icon="Edit" @click="handleEditClient">{{ t('client.editClient') }}</el-button>
     </div>
 
     <div class="section" v-if="company">
-      <div class="section-title">基本信息</div>
+      <div class="section-title">{{ t('client.baseInfo') }}</div>
       <el-descriptions :column="3" border>
-        <el-descriptions-item label="外文名称">{{ company.foreign_name || '—' }}</el-descriptions-item>
-        <el-descriptions-item label="城市">{{ company.city || '—' }}</el-descriptions-item>
-        <el-descriptions-item label="行业">{{ dictMaps.industry[company.industry] || '—' }}</el-descriptions-item>
-        <el-descriptions-item label="客户等级">{{ dictMaps.client_level[company.level] || '—' }}</el-descriptions-item>
-        <el-descriptions-item label="负责人">{{ ownerMap[company.owner_id] || '未分配' }}</el-descriptions-item>
-        <el-descriptions-item label="关联职位">{{ positions.length }} 个</el-descriptions-item>
-        <el-descriptions-item label="公司简介" :span="3">{{ company.description || '—' }}</el-descriptions-item>
+        <el-descriptions-item :label="t('client.colForeignName')">{{ company.foreign_name || '—' }}</el-descriptions-item>
+        <el-descriptions-item :label="t('client.colCity')">{{ company.city || '—' }}</el-descriptions-item>
+        <el-descriptions-item :label="t('client.colIndustry')">{{ dictMaps.industry[company.industry] || '—' }}</el-descriptions-item>
+        <el-descriptions-item :label="t('client.colLevel')">{{ dictMaps.client_level[company.level] || '—' }}</el-descriptions-item>
+        <el-descriptions-item :label="t('common.owner')">{{ ownerMap[company.owner_id] || t('common.notAssigned') }}</el-descriptions-item>
+        <el-descriptions-item :label="t('client.colPositions')">{{ t('client.positionCount', { n: positions.length }) }}</el-descriptions-item>
+        <el-descriptions-item :label="t('client.colDescription')" :span="3">{{ company.description || '—' }}</el-descriptions-item>
       </el-descriptions>
     </div>
 
     <div class="section">
       <div class="section-title-wrap">
-        <span class="section-title">联系人（{{ contacts.length }}）</span>
-        <el-button type="primary" plain size="small" icon="Plus" @click="handleContactCreate">新增联系人</el-button>
+        <span class="section-title">{{ t('client.contactsSection') }}（{{ contacts.length }}）</span>
+        <el-button type="primary" plain size="small" icon="Plus" @click="handleContactCreate">{{ t('client.addContact') }}</el-button>
       </div>
       <el-table :data="contacts" border>
-        <el-table-column label="姓名" width="140">
+        <el-table-column :label="t('client.contactColName')" width="140">
           <template #default="scope">
             {{ scope.row.name }}
-            <el-tag v-if="scope.row.is_primary === 1" size="small" type="success">主</el-tag>
+            <el-tag v-if="scope.row.is_primary === 1" size="small" type="success">{{ t('client.primaryTag') }}</el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="title" label="职位" width="150" />
-        <el-table-column prop="phone" label="电话" width="150" />
-        <el-table-column prop="email" label="邮箱" min-width="180" show-overflow-tooltip />
-        <el-table-column prop="remark" label="备注" min-width="140" show-overflow-tooltip />
-        <el-table-column label="操作" width="140" align="center">
+        <el-table-column prop="title" :label="t('client.contactColTitle')" width="150" />
+        <el-table-column prop="phone" :label="t('client.contactColPhone')" width="150" />
+        <el-table-column prop="email" :label="t('client.contactColEmail')" min-width="180" show-overflow-tooltip />
+        <el-table-column prop="remark" :label="t('common.remark')" min-width="140" show-overflow-tooltip />
+        <el-table-column :label="t('common.operation')" width="140" align="center">
           <template #default="scope">
-            <el-button size="small" type="primary" plain @click="handleContactEdit(scope.row)">编辑</el-button>
-            <el-button size="small" type="danger" plain @click="handleContactDelete(scope.row)">删除</el-button>
+            <el-button size="small" type="primary" plain @click="handleContactEdit(scope.row)">{{ t('common.edit') }}</el-button>
+            <el-button size="small" type="danger" plain @click="handleContactDelete(scope.row)">{{ t('common.delete') }}</el-button>
           </template>
         </el-table-column>
       </el-table>
     </div>
 
     <div class="section">
-      <div class="section-title">关联职位（{{ positions.length }}）</div>
+      <div class="section-title">{{ t('client.positionsSection') }}（{{ positions.length }}）</div>
       <el-table :data="positions" border>
-        <el-table-column prop="title" label="职位名称" min-width="180" show-overflow-tooltip />
-        <el-table-column prop="city" label="城市" width="110" />
-        <el-table-column label="薪资" width="130" align="center">
+        <el-table-column prop="title" :label="t('client.colPosTitle')" min-width="180" show-overflow-tooltip />
+        <el-table-column prop="city" :label="t('client.colCity')" width="110" />
+        <el-table-column :label="t('client.colSalary')" width="130" align="center">
           <template #default="scope">{{ scope.row.salary_down }}~{{ scope.row.salary_up }}</template>
         </el-table-column>
-        <el-table-column prop="quantity" label="人数" width="70" align="center" />
-        <el-table-column label="状态" width="90" align="center">
+        <el-table-column prop="quantity" :label="t('client.colQuantity')" width="70" align="center" />
+        <el-table-column :label="t('common.status')" width="90" align="center">
           <template #default="scope">
             <el-tag size="small" :type="scope.row.state === 1 ? 'success' : 'info'">
-              {{ scope.row.state === 1 ? '招聘中' : '已下架' }}
+              {{ scope.row.state === 1 ? t('client.recruiting') : t('client.offShelf') }}
             </el-tag>
           </template>
         </el-table-column>
@@ -79,69 +79,69 @@
     </div>
 
     <!-- 编辑客户 -->
-    <el-dialog v-model="clientDialogVisible" title="编辑客户" width="520px">
+    <el-dialog v-model="clientDialogVisible" :title="t('client.editClient')" width="520px">
       <el-form ref="clientFormRef" :model="clientForm" :rules="clientRules" label-width="90px">
-        <el-form-item label="客户名称" prop="name">
+        <el-form-item :label="t('client.formName')" prop="name">
           <el-input v-model="clientForm.name" maxlength="100" />
         </el-form-item>
-        <el-form-item label="城市" prop="city">
+        <el-form-item :label="t('client.colCity')" prop="city">
           <el-input v-model="clientForm.city" maxlength="50" />
         </el-form-item>
-        <el-form-item label="行业">
+        <el-form-item :label="t('client.colIndustry')">
           <el-select v-model="clientForm.industry" clearable style="width: 100%">
             <el-option v-for="(label, value) in dictMaps.industry" :key="value" :label="label" :value="value" />
           </el-select>
         </el-form-item>
-        <el-form-item label="客户等级">
+        <el-form-item :label="t('client.colLevel')">
           <el-select v-model="clientForm.level" clearable style="width: 100%">
             <el-option v-for="(label, value) in dictMaps.client_level" :key="value" :label="label" :value="value" />
           </el-select>
         </el-form-item>
-        <el-form-item label="合作状态">
+        <el-form-item :label="t('client.formCoopStatus')">
           <el-select v-model="clientForm.clientStatus" style="width: 100%">
             <el-option v-for="(label, value) in dictMaps.client_status" :key="value" :label="label" :value="value" />
           </el-select>
         </el-form-item>
-        <el-form-item label="负责人">
+        <el-form-item :label="t('common.owner')">
           <el-select v-model="clientForm.ownerId" clearable filterable style="width: 100%">
             <el-option v-for="u in owners" :key="u.id" :label="u.nickname" :value="u.id" />
           </el-select>
         </el-form-item>
-        <el-form-item label="公司简介">
+        <el-form-item :label="t('client.colDescription')">
           <el-input v-model="clientForm.description" type="textarea" :rows="3" />
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button type="primary" @click="confirmClientSubmit">确 定</el-button>
-        <el-button @click="clientDialogVisible = false">取 消</el-button>
+        <el-button type="primary" @click="confirmClientSubmit">{{ t('common.confirm') }}</el-button>
+        <el-button @click="clientDialogVisible = false">{{ t('common.cancel') }}</el-button>
       </template>
     </el-dialog>
 
     <!-- 联系人 -->
-    <el-dialog v-model="contactDialogVisible" :title="contactForm.id ? '编辑联系人' : '新增联系人'" width="440px">
+    <el-dialog v-model="contactDialogVisible" :title="contactForm.id ? t('client.editContact') : t('client.addContact')" width="440px">
       <el-form ref="contactFormRef" :model="contactForm" :rules="contactRules" label-width="90px">
-        <el-form-item label="姓名" prop="name">
+        <el-form-item :label="t('client.contactColName')" prop="name">
           <el-input v-model="contactForm.name" maxlength="50" />
         </el-form-item>
-        <el-form-item label="职位">
+        <el-form-item :label="t('client.contactColTitle')">
           <el-input v-model="contactForm.title" maxlength="50" />
         </el-form-item>
-        <el-form-item label="电话">
+        <el-form-item :label="t('client.contactColPhone')">
           <el-input v-model="contactForm.phone" maxlength="20" />
         </el-form-item>
-        <el-form-item label="邮箱">
+        <el-form-item :label="t('client.contactColEmail')">
           <el-input v-model="contactForm.email" maxlength="100" />
         </el-form-item>
-        <el-form-item label="主联系人">
+        <el-form-item :label="t('client.primaryContact')">
           <el-switch v-model="contactForm.isPrimary" :active-value="1" :inactive-value="0" />
         </el-form-item>
-        <el-form-item label="备注">
+        <el-form-item :label="t('common.remark')">
           <el-input v-model="contactForm.remark" type="textarea" maxlength="255" />
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button type="primary" @click="confirmContactSubmit">确 定</el-button>
-        <el-button @click="contactDialogVisible = false">取 消</el-button>
+        <el-button type="primary" @click="confirmContactSubmit">{{ t('common.confirm') }}</el-button>
+        <el-button @click="contactDialogVisible = false">{{ t('common.cancel') }}</el-button>
       </template>
     </el-dialog>
   </el-card>
@@ -151,12 +151,13 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { useI18n } from 'vue-i18n'
 import {
   createContact, deleteContact, getClientDetail, getClientOwners, updateClient, updateContact,
 } from '@/api/client'
 import { getDictDataByType } from '@/api/setting'
-import { STAGES, exportCsv, getRecommendationPage } from '@/api/recommendation'
 
+const { t } = useI18n()
 const route = useRoute()
 const loading = ref(false)
 const companyId = ref(null)
@@ -169,18 +170,16 @@ const dictMaps = reactive({ industry: {}, client_level: {}, client_status: {} })
 const clientDialogVisible = ref(false)
 const clientFormRef = ref()
 const clientForm = reactive({})
-const clientRules = {
-  name: [{ required: true, message: '请输入客户公司名称', trigger: 'blur' }],
-  city: [{ required: true, message: '请输入城市', trigger: 'blur' }],
-}
+const clientRules = computed(() => ({
+  name: [{ required: true, message: t('client.ruleName'), trigger: 'blur' }],
+  city: [{ required: true, message: t('client.ruleCity'), trigger: 'blur' }],
+}))
 const contactDialogVisible = ref(false)
 const contactFormRef = ref()
 const contactForm = reactive({})
-const contactRules = {
-  name: [{ required: true, message: '请输入联系人姓名', trigger: 'blur' }],
-}
-const recItems = ref([])
-const stageLabelMap = Object.fromEntries(STAGES.map(s => [s.value, s.label]))
+const contactRules = computed(() => ({
+  name: [{ required: true, message: t('client.ruleContactName'), trigger: 'blur' }],
+}))
 
 function toMap(list) {
   const map = {}
@@ -224,7 +223,7 @@ function confirmClientSubmit() {
   clientFormRef.value.validate(async valid => {
     if (!valid) return
     const res = await updateClient(companyId.value, clientForm)
-    ElMessage.success(res.message || '保存成功')
+    ElMessage.success(res.message || t('common.saveOk'))
     clientDialogVisible.value = false
     await getDetail()
   })
@@ -249,16 +248,16 @@ function confirmContactSubmit() {
     const res = contactForm.id
       ? await updateContact(companyId.value, contactForm.id, contactForm)
       : await createContact(companyId.value, contactForm)
-    ElMessage.success(res.message || '保存成功')
+    ElMessage.success(res.message || t('common.saveOk'))
     contactDialogVisible.value = false
     await getDetail()
   })
 }
 
 function handleContactDelete(row) {
-  ElMessageBox.confirm('是否删除该联系人？', '提示', { type: 'warning' }).then(async () => {
+  ElMessageBox.confirm(t('client.confirmDeleteContact'), t('common.tip'), { type: 'warning' }).then(async () => {
     const res = await deleteContact(companyId.value, row.id)
-    ElMessage.success(res.message || '删除成功')
+    ElMessage.success(res.message || t('common.deleted'))
     await getDetail()
   })
 }
@@ -266,7 +265,7 @@ function handleContactDelete(row) {
 onMounted(async () => {
   companyId.value = Number(route.query.id)
   if (!companyId.value) {
-    ElMessage.error('缺少客户id参数')
+    ElMessage.error(t('client.missingId'))
     return
   }
   owners.value = await getClientOwners()
@@ -280,34 +279,7 @@ onMounted(async () => {
   dictMaps.client_level = toMap(level)
   dictMaps.client_status = toMap(status)
   await getDetail()
-  await loadRecs()
 })
-
-async function loadRecs() {
-  try {
-    const res = await getRecommendationPage({ client_id: companyId.value, page: 0, count: 50 })
-    recItems.value = res.items || []
-  } catch (e) {
-    recItems.value = []
-  }
-}
-
-function stageTag(stage) {
-  if (stage === 'OFFERED' || stage === 'ONBOARDED' || stage === 'PAID') return 'success'
-  if (stage === 'ARCHIVED') return 'info'
-  if (stage === 'PENDING') return ''
-  return 'warning'
-}
-
-async function handleExportRecs() {
-  const blob = await exportCsv({ client_id: companyId.value })
-  const url = window.URL.createObjectURL(new Blob([blob]))
-  const link = document.createElement('a')
-  link.href = url
-  link.download = `recommendations_client_${companyId.value}.csv`
-  link.click()
-  window.URL.revokeObjectURL(url)
-}
 </script>
 
 <style scoped>

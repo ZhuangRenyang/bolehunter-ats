@@ -10,45 +10,46 @@
 -->
 <template>
   <el-card shadow="never" v-loading="loading">
-    <div class="toolbar"><span class="page-title">AI 服务配置</span></div>
-    <el-alert type="info" :closable="false" style="margin-bottom: 16px"
-      title="供“简历 AI 解析”等功能调用大模型。兼容 OpenAI 协议的服务均可（DeepSeek / 通义 / Kimi 等）。在此填写后无需配置服务器环境变量；未填写时回落环境变量，均未配置则 AI 功能自动关闭、规则解析兜底。" />
+    <div class="toolbar"><span class="page-title">{{ t('ai.title') }}</span></div>
+    <el-alert type="info" :closable="false" style="margin-bottom: 16px" :title="t('ai.alert')" />
 
     <el-form label-width="140px" style="max-width: 640px">
-      <el-form-item label="接口地址">
+      <el-form-item :label="t('ai.baseUrl')">
         <el-input v-model="form.base_url" placeholder="https://api.deepseek.com" />
       </el-form-item>
-      <el-form-item label="模型名">
+      <el-form-item :label="t('ai.model')">
         <el-input v-model="form.model" placeholder="deepseek-chat" />
       </el-form-item>
       <el-form-item label="API Key">
         <el-input v-model="form.api_key" type="password" show-password
-          :placeholder="keyMasked ? `已配置（${keyMasked}），留空保持不变` : 'sk-...'" />
+          :placeholder="keyMasked ? t('ai.keyConfigured', { mask: keyMasked }) : 'sk-...'" />
       </el-form-item>
-      <el-form-item label="向量模型（可选）">
-        <el-input v-model="form.embedding_model" placeholder="text-embedding-v3（需供应商支持 embeddings 接口）" />
-        <div class="field-tip">用于 AI 找人的语义检索；DeepSeek 不提供 embeddings，可留空走关键词检索</div>
-      </el-form-item>
-      <el-form-item>
-        <el-tag v-if="ready" type="success" size="small">AI 服务已就绪</el-tag>
-        <el-tag v-else type="info" size="small">未配置 Key，AI 功能将使用规则解析兜底</el-tag>
+      <el-form-item :label="t('ai.embedding')">
+        <el-input v-model="form.embedding_model" placeholder="text-embedding-v3" />
+        <div class="field-tip">{{ t('ai.embeddingTip') }}</div>
       </el-form-item>
       <el-form-item>
-        <el-button type="primary" :loading="saving" @click="save">保 存</el-button>
-        <el-button @click="clearKey" :disabled="!keyMasked">清除 Key</el-button>
+        <el-tag v-if="ready" type="success" size="small">{{ t('ai.ready') }}</el-tag>
+        <el-tag v-else type="info" size="small">{{ t('ai.notReady') }}</el-tag>
+      </el-form-item>
+      <el-form-item>
+        <el-button type="primary" :loading="saving" @click="save">{{ t('common.save') }}</el-button>
+        <el-button @click="clearKey" :disabled="!keyMasked">{{ t('ai.clearKey') }}</el-button>
       </el-form-item>
     </el-form>
 
     <el-divider />
-    <p class="tip">提示：启用“设置 → 功能开关”中的 <b>resume_parse</b> 开关后，导入简历将自动解析字段（需先在上方完成配置）。</p>
+    <p class="tip">{{ t('ai.hint') }}</p>
   </el-card>
 </template>
 
 <script setup>
 import { onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
+import { useI18n } from 'vue-i18n'
 import { get, put } from '@/api/request'
 
+const { t } = useI18n()
 const loading = ref(false)
 const saving = ref(false)
 const keyMasked = ref('')
@@ -78,7 +79,7 @@ async function save() {
       body.api_key = form.api_key.trim()
     }
     const res = await put('recruit/admin/setting/ai', body)
-    ElMessage.success(res.message || '保存成功')
+    ElMessage.success(res.message || t('common.saveOk'))
     form.api_key = ''
     await load()
   } finally {
@@ -88,7 +89,7 @@ async function save() {
 
 async function clearKey() {
   await put('recruit/admin/setting/ai', { api_key: '' })
-  ElMessage.success('已清除 Key，回落环境变量')
+  ElMessage.success(t('ai.keyCleared'))
   await load()
 }
 

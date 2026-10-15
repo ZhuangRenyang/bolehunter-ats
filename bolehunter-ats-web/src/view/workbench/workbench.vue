@@ -195,9 +195,9 @@ import { getWorkbenchSummary, getWorkbenchDashboard, exportClientConversionCsv, 
 
 const { t, locale } = useI18n()
 
-// 推荐阶段名走 i18n（workbench.stage.*，看板/列表页后续抽取时直接复用同一命名空间）
+// 推荐阶段名走 i18n 顶层 stage.* 命名空间（看板/列表/详情页共用同一份）
 function stageLabel(stage) {
-  const key = `workbench.stage.${stage}`
+  const key = `stage.${stage}`
   const translated = t(key)
   // 未知阶段（如后端新增）兜底展示原始枚举值
   return translated === key ? stage : translated
