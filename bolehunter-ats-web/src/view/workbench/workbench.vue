@@ -10,37 +10,46 @@
  -->
 <template>
   <div>
+    <!-- 仪器化读数卡（迭代 29b 珍珠玻璃）：等宽大数字 + 单位上标 -->
     <el-row :gutter="16">
       <el-col :span="6">
-        <el-card shadow="hover">
-          <div class="metric">{{ summary.clientTotal }}</div>
+        <div class="m-surface stat-card">
           <div class="metric-label">{{ t('workbench.metricClient') }}</div>
-        </el-card>
+          <div class="metric-value num">{{ summary.clientTotal ?? 0 }}<span class="unit">{{ t('workbench.unitClient') }}</span></div>
+        </div>
       </el-col>
       <el-col :span="6">
-        <el-card shadow="hover">
-          <div class="metric">{{ summary.candidateTotal }}</div>
+        <div class="m-surface stat-card">
           <div class="metric-label">{{ t('workbench.metricCandidate') }}</div>
-        </el-card>
+          <div class="metric-value num">{{ summary.candidateTotal ?? 0 }}<span class="unit">{{ t('workbench.unitCandidate') }}</span></div>
+        </div>
       </el-col>
       <el-col :span="6">
-        <el-card shadow="hover">
-          <div class="metric">{{ summary.recommendationTotal }}</div>
+        <div class="m-surface stat-card">
           <div class="metric-label">{{ t('workbench.metricRecommendation') }}</div>
-        </el-card>
+          <div class="metric-value num">{{ summary.recommendationTotal ?? 0 }}<span class="unit">{{ t('workbench.unitRecommendation') }}</span></div>
+        </div>
       </el-col>
       <el-col :span="6">
-        <el-card shadow="hover">
-          <div class="metric warn">{{ overdueCount }}</div>
+        <div class="m-surface stat-card" :class="{ 'stat-warn': overdueCount > 0 }">
           <div class="metric-label">{{ t('workbench.metricOverdue') }}</div>
-        </el-card>
+          <div class="metric-value num" :class="{ 'text-danger': overdueCount > 0 }">{{ overdueCount }}<span class="unit">{{ t('workbench.unitOverdue') }}</span></div>
+        </div>
       </el-col>
     </el-row>
+
+    <!-- 系统规格铭牌（迭代 29b）：来自健康检查接口的只读汇总 -->
+    <div class="m-plate sys-plate">
+      <span class="cell"><span class="k">SERVICE</span><span class="dot" :class="{ ok: sys.service === 'UP' }"></span>{{ sys.service || '—' }}</span>
+      <span class="cell"><span class="k">DATABASE</span><span class="dot" :class="{ ok: sys.database === 'UP' }"></span>{{ sys.database || '—' }}</span>
+      <span class="cell"><span class="k">UPTIME</span>{{ sys.uptime || '—' }}</span>
+      <span class="cell"><span class="k">MODE</span>{{ t('appearance.' + (theme === 'dark' ? 'dark' : 'light')) }}</span>
+    </div>
 
     <el-row :gutter="16" class="row-gap">
       <!-- 今日/逾期任务 -->
       <el-col :span="13">
-        <el-card shadow="hover">
+        <el-card shadow="never">
           <template #header>
             <div class="card-head">
               <span>{{ t('workbench.myTasks') }}</span>
@@ -66,7 +75,7 @@
       </el-col>
       <!-- 阶段分布漏斗 -->
       <el-col :span="11">
-        <el-card shadow="hover">
+        <el-card shadow="never">
           <template #header>{{ t('workbench.funnel') }}</template>
           <div ref="funnelRef" class="funnel-chart"></div>
         </el-card>
@@ -76,13 +85,13 @@
     <!-- 数据看板增强：漏斗时间对比 / 顾问业绩 / 客户转化 -->
     <el-row :gutter="16" class="row-gap">
       <el-col :span="11">
-        <el-card shadow="hover">
+        <el-card shadow="never">
           <template #header>{{ t('workbench.trend') }}</template>
           <div ref="trendRef" class="funnel-chart"></div>
         </el-card>
       </el-col>
       <el-col :span="13">
-        <el-card shadow="hover">
+        <el-card shadow="never">
           <template #header>{{ t('workbench.ranking') }}</template>
           <el-table :data="ranking" size="small" :empty-text="t('workbench.rankingEmpty')">
             <el-table-column type="index" label="#" width="44" />
@@ -99,7 +108,7 @@
 
     <el-row class="row-gap">
       <el-col :span="24">
-        <el-card shadow="hover">
+        <el-card shadow="never">
           <template #header>
             <div class="card-head">
               <span>{{ t('workbench.conversion') }}</span>
@@ -129,7 +138,7 @@
     <!-- AI 找人（迭代20 RAG） -->
     <el-row class="row-gap">
       <el-col :span="24">
-        <el-card shadow="hover">
+        <el-card shadow="never">
           <template #header>{{ t('workbench.aiTitle') }}</template>
           <div class="ai-ask-bar">
             <el-input v-model="aiQuestion" maxlength="200" :placeholder="t('workbench.aiPlaceholder')"
@@ -192,6 +201,8 @@ import { CanvasRenderer } from 'echarts/renderers'
 echarts.use([BarChart, FunnelChart, GridComponent, LegendComponent, TooltipComponent, CanvasRenderer])
 import { getWorkbenchSummary, getWorkbenchDashboard, exportClientConversionCsv, aiAskCandidate,
   getMyTasks, createTask, doneTask, deleteTask } from '@/api/workbench'
+import { get } from '@/api/request'
+import { getTheme } from '@/composables/appearance'
 
 const { t, locale } = useI18n()
 
@@ -208,6 +219,36 @@ const FUNNEL_STAGES = [
   'PENDING', 'RECOMMENDED', 'CLIENT_READ', 'INTERVIEW_PENDING', 'INTERVIEWING',
   'OFFER_PENDING', 'OFFERED', 'ONBOARDED', 'PAID',
 ]
+
+// ---------- 珍珠玻璃：系统规格铭牌数据（迭代 29b） ----------
+const sys = reactive({ service: '', database: '', uptime: '' })
+const theme = ref(getTheme())
+
+function formatUptime(seconds) {
+  const s = Number(seconds) || 0
+  if (s < 60) return `${s}s`
+  const m = Math.floor(s / 60)
+  if (m < 60) return `${m}m`
+  const h = Math.floor(m / 60)
+  if (h < 24) return `${h}h ${m % 60}m`
+  return `${Math.floor(h / 24)}d ${h % 24}h`
+}
+
+async function loadHealth() {
+  try {
+    const res = await get('recruit/health')
+    sys.service = res?.status || ''
+    sys.database = res?.database || ''
+    sys.uptime = formatUptime(res?.uptime_seconds)
+  } catch (e) {
+    sys.service = '—'
+  }
+}
+
+// ---------- 图表配色跟随设计令牌（深浅主题切换后重渲染） ----------
+function cssVar(name) {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim()
+}
 
 const summary = reactive({})
 const tasks = ref([])
@@ -276,20 +317,22 @@ function renderTrend(trend) {
     trendChart = echarts.init(trendRef.value)
     window.addEventListener('resize', () => trendChart && trendChart.resize())
   }
+  const inkSoft = cssVar('--ink-soft')
   const stages = trend.filter(x => x.stage !== 'ARCHIVED')
   trendChart.setOption({
     tooltip: { trigger: 'axis' },
-    legend: { data: [t('workbench.legendRecent'), t('workbench.legendPrev')], bottom: 0 },
+    legend: { data: [t('workbench.legendRecent'), t('workbench.legendPrev')], bottom: 0, textStyle: { color: inkSoft } },
     grid: { left: 8, right: 12, top: 24, bottom: 34, containLabel: true },
     xAxis: {
       type: 'category',
       data: stages.map(x => stageLabel(x.stage)),
-      axisLabel: { fontSize: 10, interval: 0, rotate: 30 },
+      axisLabel: { fontSize: 10, interval: 0, rotate: 30, color: inkSoft },
+      axisLine: { lineStyle: { color: cssVar('--tick-strong') } },
     },
-    yAxis: { type: 'value', minInterval: 1 },
+    yAxis: { type: 'value', minInterval: 1, axisLabel: { color: inkSoft }, splitLine: { lineStyle: { color: cssVar('--tick') } } },
     series: [
-      { name: t('workbench.legendRecent'), type: 'bar', barMaxWidth: 18, itemStyle: { color: '#409eff' }, data: stages.map(x => x.recent) },
-      { name: t('workbench.legendPrev'), type: 'bar', barMaxWidth: 18, itemStyle: { color: '#c0c4cc' }, data: stages.map(x => x.prev) },
+      { name: t('workbench.legendRecent'), type: 'bar', barMaxWidth: 18, itemStyle: { color: cssVar('--blue') }, data: stages.map(x => x.recent) },
+      { name: t('workbench.legendPrev'), type: 'bar', barMaxWidth: 18, itemStyle: { color: cssVar('--ink-faint') }, data: stages.map(x => x.prev) },
     ],
   })
 }
@@ -347,8 +390,16 @@ function renderFunnel() {
       minSize: '18%',
       sort: 'none',
       gap: 2,
-      label: { show: true, position: 'inside', formatter: '{b}: {c}' },
-      itemStyle: { borderColor: '#fff', borderWidth: 1 },
+      label: { show: true, position: 'inside', formatter: '{b}: {c}', color: '#fff' },
+      itemStyle: {
+        borderColor: cssVar('--pearl-solid') || '#fff',
+        borderWidth: 1,
+        // 蓝色系按阶段深度渐变（主色 → 浅）
+        color: ({ dataIndex }) => {
+          const blues = ['#1c57ba', '#236de9', '#4a86ec', '#6c9bf2', '#8fb0f5', '#a9c3f7', '#c2d4f9', '#d6e2fb', '#e9f0fc']
+          return blues[dataIndex] || '#236de9'
+        },
+      },
       data,
     }],
   })
@@ -361,6 +412,19 @@ watch(locale, async () => {
   renderTrend(lastTrend)
 })
 
+// 深浅主题切换时重渲染图表（文字/轴线颜色跟随设计令牌）
+let themeObserver = null
+onMounted(() => {
+  themeObserver = new MutationObserver(() => {
+    theme.value = getTheme()
+    nextTick(() => {
+      renderFunnel()
+      renderTrend(lastTrend)
+    })
+  })
+  themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
+})
+
 onBeforeUnmount(() => {
   if (chart) {
     chart.dispose()
@@ -370,6 +434,7 @@ onBeforeUnmount(() => {
     trendChart.dispose()
     trendChart = null
   }
+  if (themeObserver) themeObserver.disconnect()
 })
 
 function handleDone(task) {
@@ -399,23 +464,79 @@ function confirmCreateTask() {
   })
 }
 
-onMounted(getAll)
+onMounted(() => {
+  getAll()
+  loadHealth()
+})
 </script>
 
 <style scoped>
-.metric {
-  font-size: 30px;
-  font-weight: 600;
-  color: #303133;
+.stat-card {
+  padding: 16px 18px;
+  transition: transform 0.2s, box-shadow 0.2s;
 }
-.metric.warn {
-  color: #f56c6c;
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--e2);
 }
 .metric-label {
   font-size: 12px;
-  color: #909399;
-  margin-top: 4px;
+  letter-spacing: var(--track-eyebrow);
+  color: var(--ink-soft);
+  margin-bottom: 6px;
 }
+.metric-value {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--fs-display-m);
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.1;
+}
+.metric-value .unit {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-soft);
+  margin-left: 5px;
+  vertical-align: super;
+}
+.metric-value.text-danger {
+  color: var(--red-text);
+}
+.stat-warn {
+  border-color: rgba(224, 68, 59, 0.25);
+}
+
+/* 系统规格铭牌 */
+.sys-plate {
+  display: flex;
+  gap: 28px;
+  margin-top: 14px;
+  padding: 10px 16px;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+  flex-wrap: wrap;
+}
+.sys-plate .cell { display: inline-flex; align-items: center; gap: 7px; }
+.sys-plate .k {
+  font-family: var(--font-sans);
+  font-size: 10px;
+  letter-spacing: var(--track-eyebrow);
+  color: var(--plate-soft);
+}
+.sys-plate .dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ink-faint);
+  display: inline-block;
+}
+.sys-plate .dot.ok {
+  background: var(--leaf);
+  box-shadow: 0 0 6px var(--leaf);
+}
+
 .row-gap {
   margin-top: 16px;
 }
@@ -429,21 +550,21 @@ onMounted(getAll)
   justify-content: space-between;
   align-items: center;
   padding: 8px 4px;
-  border-bottom: 1px solid #f0f2f5;
+  border-bottom: 1px solid var(--glass-line);
 }
 .task-row:last-child {
   border-bottom: none;
 }
 .task-title {
   font-size: 13px;
-  color: #303133;
+  color: var(--ink);
 }
 .task-title.overdue {
-  color: #f56c6c;
+  color: var(--red-text);
 }
 .task-sub {
   font-size: 12px;
-  color: #909399;
+  color: var(--ink-soft);
   margin-top: 2px;
   display: flex;
   gap: 6px;
