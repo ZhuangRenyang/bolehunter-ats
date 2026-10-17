@@ -17,7 +17,17 @@ import App from './App.vue'
 import router from './router'
 // i18n（迭代 27 国际化骨架）：语言包与实例工厂见 src/locales/
 import i18n from './locales'
-import './styles/global.scss'
+// 迭代 29a 珍珠玻璃设计系统：七层样式（顺序即层叠优先级）
+import './styles/tokens.css'
+import './styles/base.css'
+import './styles/materials.css'
+import './styles/components.css'
+import './styles/instruments.css'
+import './styles/layout.css'
+import './styles/pages.css'
+
+// 迭代 29a：外观偏好（浅/深/跟随系统），在渲染前应用 data-theme
+import '@/composables/appearance'
 
 // ---------- Element Plus 按需引入（迭代17 性能加固） ----------
 // 模板中的 el-* 组件由 unplugin-vue-components 自动按需导入（见 vite.config.js）；

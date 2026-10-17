@@ -49,6 +49,12 @@ export default {
     failed: '请求失败，请稍后重试',
     networkError: '网络异常，请检查网络连接',
   },
+  appearance: {
+    title: '外观',
+    light: '浅色',
+    dark: '深色',
+    system: '跟随系统',
+  },
   // 推荐阶段（跨页面共用：工作台漏斗 / 看板列头 / 详情下拉 / 流转历史）
   stage: {
     PENDING: '待推荐',
@@ -91,6 +97,7 @@ export default {
   },
   layout: {
     logo: '猎头 ATS',
+    menu: '菜单',
     noticeCenter: '通知中心',
     imEntry: '内部消息',
     logout: '退出登录',
@@ -100,7 +107,12 @@ export default {
     language: '切换语言',
   },
   login: {
-    title: '猎头 ATS 工作台',
+    title: '登录工作台',
+    sub: '开源猎头 ATS + CRM · 珍珠玻璃工作台',
+    slogan: '把每一次推荐，\n送到最合适的岗位上。',
+    sloganSub: '客户 · 候选人 · 推荐看板 · 实时协作 —— 一个工作台全部完成。',
+    plateHealthy: '服务运行中',
+    foot: 'BoleHunter 开源猎头工作台',
     username: '用户名',
     password: '密码',
     btn: '登 录',

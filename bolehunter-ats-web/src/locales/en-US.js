@@ -41,6 +41,12 @@ export default {
     failed: 'Request failed. Please try again later.',
     networkError: 'Network error. Please check your connection.',
   },
+  appearance: {
+    title: 'Appearance',
+    light: 'Light',
+    dark: 'Dark',
+    system: 'System',
+  },
   // Recommendation stages (shared: workbench funnel / kanban columns / detail selects / history)
   stage: {
     PENDING: 'Pending',
@@ -83,6 +89,7 @@ export default {
   },
   layout: {
     logo: 'Headhunter ATS',
+    menu: 'Menu',
     noticeCenter: 'Notification Center',
     imEntry: 'Messages',
     logout: 'Sign out',
@@ -92,7 +99,12 @@ export default {
     language: 'Language',
   },
   login: {
-    title: 'Headhunter ATS Workbench',
+    title: 'Sign in to Workspace',
+    sub: 'Open-source Headhunting ATS + CRM · Pearl-glass workspace',
+    slogan: 'Deliver every referral\nto the right seat.',
+    sloganSub: 'Clients · Candidates · Pipeline board · Realtime collaboration — all in one workspace.',
+    plateHealthy: 'All services healthy',
+    foot: 'BoleHunter open-source headhunting workspace',
     username: 'Username',
     password: 'Password',
     btn: 'Sign in',

@@ -1,0 +1,153 @@
+/*
+ * BoleHunter 伯乐猎 —— 珍珠玻璃设计系统 · 设计令牌（迭代 29a）
+ * 设计语言源自开源脚手架 scaffold-master 的珍珠玻璃规范（MIT），
+ * 以 BoleHunter 自己的实现落地；浅色为基线，深色经 data-theme="dark" 切换。
+ * 分层顺序：tokens → base → materials → components → instruments → layout → pages
+ */
+
+:root {
+  /* ---------- 字色四档 ---------- */
+  --ink: #1f2430;          /* 正文 */
+  --ink-muted: #4c5468;    /* 次级正文 */
+  --ink-soft: #7a8298;     /* 标签 */
+  --ink-faint: #a8aebf;    /* 元信息 */
+
+  /* ---------- 语义色 ---------- */
+  --blue: #236de9;              /* 主操作 */
+  --blue-soft: rgba(35, 109, 233, 0.10);
+  --leaf: #58a021;              /* 正常状态 */
+  --leaf-text: #58a021;
+  --red-text: #e0443b;          /* 警示 */
+  --red-soft: rgba(224, 68, 59, 0.10);
+
+  /* ---------- 纸面与玻璃 ---------- */
+  --paper: #f3f4f6;             /* 页面底色：柔和灰白 */
+  --paper-deep: #e9ebef;
+  --pearl: rgba(255, 255, 255, 0.72);       /* 珍珠阅读面 */
+  --pearl-solid: #ffffff;
+  --glass-bg: rgba(255, 255, 255, 0.55);    /* 玻璃块底 */
+  --glass-line: rgba(31, 36, 48, 0.10);     /* 细边线 */
+  --glass-line-strong: rgba(31, 36, 48, 0.16);
+
+  /* ---------- 圆角：小控件至大容器 ---------- */
+  --r-xs: 8px;
+  --r-sm: 12px;
+  --r-md: 16px;
+  --r-lg: 20px;
+  --r-xl: 24px;
+
+  /* ---------- 阴影三档 ---------- */
+  --e1: 0 1px 2px rgba(31, 36, 48, 0.05), 0 2px 8px rgba(31, 36, 48, 0.05);   /* 阅读面 */
+  --e2: 0 2px 6px rgba(31, 36, 48, 0.08), 0 8px 24px rgba(31, 36, 48, 0.08);  /* 高亮块 */
+  --e3: 0 4px 12px rgba(31, 36, 48, 0.10), 0 16px 48px rgba(31, 36, 48, 0.14);/* 浮层 */
+
+  /* ---------- 结构尺寸 ---------- */
+  --rail-w: 232px;         /* 侧栏导航轨 */
+  --rail-w-collapsed: 64px;
+  --topbar-h: 64px;        /* 顶栏 */
+  --control-h: 36px;       /* 标准控件高 */
+  --control-h-sm: 30px;    /* 小控件高 */
+  --row-h: 48px;           /* 表格行高（紧凑 40 / 宽松 56） */
+  --cell-px: 16px;         /* 单元格左右内距 */
+  --page-px: 24px;         /* 内容区左右内距 */
+
+  /* ---------- 字体 ---------- */
+  --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'PingFang SC',
+    'Noto Sans SC', 'Microsoft YaHei', 'Segoe UI', sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', 'Cascadia Mono', 'JetBrains Mono',
+    Consolas, 'Courier New', monospace;
+  --fs-display-xl: 56px;   /* 主卡读数 */
+  --fs-display-l: 40px;    /* 侧块读数 */
+  --fs-display-m: 28px;    /* 概览读数 */
+  --track-eyebrow: 0.14em; /* 刻度标签字距 */
+
+  /* ---------- 仪器化：刻度/斜线/铭牌 ---------- */
+  --tick: rgba(31, 36, 48, 0.12);
+  --tick-strong: rgba(31, 36, 48, 0.28);
+  --hatch: repeating-linear-gradient(135deg, rgba(31, 36, 48, 0.14) 0 1px, transparent 1px 6px);
+  --plate-bg: rgba(24, 28, 38, 0.92);        /* 深色规格铭牌（两主题均深色） */
+  --plate-ink: #e8ebf2;
+  --plate-soft: rgba(232, 235, 242, 0.55);
+
+  /* ---------- 分类色（沙/天/丁香/玫瑰/薄荷）：只区分类别不表达状态 ---------- */
+  --cat-1: #b98a3a;  --cat-1-bg: #f6efe0;
+  --cat-2: #2f7fb5;  --cat-2-bg: #e4f0f8;
+  --cat-3: #8a63c2;  --cat-3-bg: #f0eaf9;
+  --cat-4: #c2508a;  --cat-4-bg: #f9e9f1;
+  --cat-5: #3f9a72;  --cat-5-bg: #e5f3ec;
+
+  /* ---------- 环境光与点阵（页面背景装饰） ---------- */
+  --ambient-a: rgba(88, 160, 33, 0.05);   /* 青柠漫射 */
+  --ambient-b: rgba(35, 109, 233, 0.05);  /* 蓝漫射 */
+  --dot-grid: rgba(31, 36, 48, 0.06);
+
+  /* ---------- Element Plus 桥接（组件库跟随设计令牌） ---------- */
+  --el-color-primary: var(--blue);
+  --el-color-primary-light-3: #5c93ee;
+  --el-color-primary-light-5: #91b6f3;
+  --el-color-primary-light-7: #c7daf9;
+  --el-color-primary-light-8: #dde8fb;
+  --el-color-primary-light-9: #eef3fd;
+  --el-color-primary-dark-2: #1c57ba;
+  --el-color-success: var(--leaf);
+  --el-color-danger: var(--red-text);
+  --el-color-error: var(--red-text);
+  --el-color-warning: #d99a26;
+  --el-border-radius-base: var(--r-xs);
+  --el-border-radius-small: 6px;
+  --el-text-color-primary: var(--ink);
+  --el-text-color-regular: var(--ink-muted);
+  --el-text-color-secondary: var(--ink-soft);
+  --el-text-color-placeholder: var(--ink-faint);
+  --el-border-color: rgba(31, 36, 48, 0.14);
+  --el-border-color-light: rgba(31, 36, 48, 0.10);
+  --el-border-color-lighter: rgba(31, 36, 48, 0.07);
+  --el-fill-color-blank: var(--pearl-solid);
+  --el-font-family: var(--font-sans);
+  --el-box-shadow-light: var(--e1);
+}
+
+/* ---------- 深色主题（data-theme="dark"） ---------- */
+[data-theme='dark'] {
+  --ink: #e6e9f0;
+  --ink-muted: #b6bcc9;
+  --ink-soft: #8a91a3;
+  --ink-faint: #5d6475;
+
+  --paper: #14171f;
+  --paper-deep: #0f1218;
+  --pearl: rgba(30, 34, 45, 0.72);
+  --pearl-solid: #1c2029;
+  --glass-bg: rgba(38, 43, 56, 0.55);
+  --glass-line: rgba(230, 233, 240, 0.12);
+  --glass-line-strong: rgba(230, 233, 240, 0.18);
+
+  --e1: 0 1px 2px rgba(0, 0, 0, 0.3), 0 2px 8px rgba(0, 0, 0, 0.25);
+  --e2: 0 2px 6px rgba(0, 0, 0, 0.35), 0 8px 24px rgba(0, 0, 0, 0.30);
+  --e3: 0 4px 12px rgba(0, 0, 0, 0.40), 0 16px 48px rgba(0, 0, 0, 0.45);
+
+  --ambient-a: rgba(88, 160, 33, 0.06);
+  --ambient-b: rgba(35, 109, 233, 0.07);
+  --dot-grid: rgba(230, 233, 240, 0.07);
+
+  --el-text-color-primary: var(--ink);
+  --el-text-color-regular: var(--ink-muted);
+  --el-bg-color: var(--pearl-solid);
+  --el-bg-color-overlay: #232834;
+  --el-fill-color-blank: var(--pearl-solid);
+  --el-border-color: rgba(230, 233, 240, 0.16);
+  --el-border-color-light: rgba(230, 233, 240, 0.12);
+  --el-border-color-lighter: rgba(230, 233, 240, 0.08);
+}
+
+/* ---------- 密度（data-density） ---------- */
+[data-density='compact'] {
+  --row-h: 40px;
+  --cell-px: 14px;
+  --control-h: 30px;
+}
+[data-density='relaxed'] {
+  --row-h: 56px;
+  --cell-px: 18px;
+  --control-h: 40px;
+}

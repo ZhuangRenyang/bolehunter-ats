@@ -1,0 +1,102 @@
+/*
+ * BoleHunter 珍珠玻璃 · 基础层（base.css）
+ * 基础元素、可见焦点、全局布局基线；不包含任何组件皮肤。
+ */
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+body {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  color: var(--ink);
+  background: var(--paper);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* 页面底：柔和灰白 + 点阵 + 两团静态环境光（青柠/蓝） */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(720px 480px at 8% -8%, var(--ambient-b), transparent 70%),
+    radial-gradient(640px 420px at 96% 104%, var(--ambient-a), transparent 70%),
+    radial-gradient(var(--dot-grid) 1px, transparent 1px);
+  background-size: auto, auto, 22px 22px;
+}
+
+#app {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+}
+
+/* 数值读数统一等宽数字 */
+.num,
+.tabular {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum';
+}
+
+/* 可见焦点（键盘可达） */
+:focus-visible {
+  outline: 2px solid var(--blue);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* 链接基线 */
+a {
+  color: var(--blue);
+  text-decoration: none;
+}
+
+/* 滚动条融入珍珠质感 */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(122, 130, 152, 0.35);
+  border-radius: 6px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(122, 130, 152, 0.55);
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* 选中文本 */
+::selection {
+  background: var(--blue-soft);
+}
+
+/* 通用工具类 */
+.text-muted { color: var(--ink-soft); }
+.text-faint { color: var(--ink-faint); }
+.mono { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+
+/* 减少动态效果偏好：全局关停过渡与动画 */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -1,0 +1,92 @@
+/*
+ * BoleHunter 珍珠玻璃 · 材质层（materials.css）
+ * 五种玻璃材质：m-rail 导航轨 / m-pill 玻璃块 / m-float 浮层 / m-surface 阅读面 / m-groove 凹槽
+ * 玻璃效果只用于材质层级，不降低表格与正文可读性。
+ */
+
+/* 导航轨：接近实色，承载菜单 */
+.m-rail {
+  background: var(--rail-bg, rgba(255, 255, 255, 0.86));
+  border-right: 1px solid var(--glass-line);
+  backdrop-filter: blur(18px) saturate(1.15);
+  -webkit-backdrop-filter: blur(18px) saturate(1.15);
+}
+[data-theme='dark'] .m-rail {
+  --rail-bg: rgba(26, 30, 40, 0.88);
+}
+
+/* 玻璃块：选中导航、次级按钮、分段滑块的高亮底 */
+.m-pill {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-line);
+  border-radius: var(--r-sm);
+  backdrop-filter: blur(14px) saturate(1.1);
+  -webkit-backdrop-filter: blur(14px) saturate(1.1);
+}
+
+/* 浮层：下拉、命令面板、提示（最高层级） */
+.m-float {
+  background: var(--pearl-solid);
+  border: 1px solid var(--glass-line);
+  border-radius: var(--r-md);
+  box-shadow: var(--e3);
+}
+[data-theme='dark'] .m-float {
+  background: #232834;
+}
+
+/* 阅读面：表格、卡片、弹窗（接近实色，保证可读性） */
+.m-surface {
+  background: var(--pearl);
+  border: 1px solid var(--glass-line);
+  border-radius: var(--r-md);
+  box-shadow: var(--e1);
+  backdrop-filter: blur(20px) saturate(1.12);
+  -webkit-backdrop-filter: blur(20px) saturate(1.12);
+}
+
+/* 凹槽：分段控件底座、导入列表 */
+.m-groove {
+  background: var(--paper-deep);
+  border: 1px solid var(--glass-line);
+  border-radius: var(--r-sm);
+  box-shadow: inset 0 1px 3px rgba(31, 36, 48, 0.06);
+}
+[data-theme='dark'] .m-groove {
+  background: rgba(0, 0, 0, 0.25);
+}
+
+/* 深色规格铭牌：两种主题均为深色玻璃面，承载等宽读数与元信息 */
+.m-plate {
+  background: var(--plate-bg);
+  color: var(--plate-ink);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: var(--r-sm);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+.m-plate .soft { color: var(--plate-soft); }
+
+/* 珍珠球：图谱舞台/装饰位中心的珠光渐变球 */
+.pearl-ball {
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 30% 28%, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0) 42%),
+    radial-gradient(circle at 70% 80%, var(--ambient-a), transparent 55%),
+    radial-gradient(circle at 50% 50%, var(--pearl-solid), var(--paper-deep));
+  box-shadow:
+    inset 0 -6px 16px rgba(35, 109, 233, 0.08),
+    inset 0 4px 12px rgba(255, 255, 255, 0.8),
+    var(--e2);
+}
+
+/* 玻璃面板通用内距与标题 */
+.m-panel {
+  padding: 16px;
+}
+.m-panel-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-muted);
+  margin: 0 0 12px;
+}
