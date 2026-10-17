@@ -30,6 +30,21 @@ const instance = axios.create({
   baseURL: '',
   timeout: 15000,
   validateStatus: status => status >= 200 && status < 500,
+  // 迭代28 实战修复：网关异常页等场景返回 text/html 时 axios 跳过 JSON 解析，
+  // 页面拿到字符串引发 "forEach/reduce is not a function" 连锁报错。
+  // 强制尝试解析：字符串一律尝试 JSON.parse，失败原样返回
+  transformResponse: [
+    (data) => {
+      if (typeof data === 'string' && data) {
+        try {
+          return JSON.parse(data)
+        } catch (e) {
+          return data
+        }
+      }
+      return data
+    },
+  ],
 })
 
 export const TOKEN_ACCESS = 'access_token'
