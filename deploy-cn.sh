@@ -22,6 +22,21 @@ die() { printf '\033[1;31m✗ %s\033[0m\n' "$*" >&2; exit 1; }
 # ---------- 0. 镜像源（国内 ACR；换源改 .env 的四个 *_IMAGE 变量即可） ----------
 ACR_BASE="crpi-c5nat53ormajywmc.cn-hangzhou.personal.cr.aliyuncs.com/bolehunter"
 
+# ---------- 公网 IP 探测（写入 CORS 白名单，普通用户无需手工编辑） ----------
+# 云厂商元数据服务内网直连最快最稳；公网服务兜底；全失败回落 localhost 并提示
+detect_public_ip() {
+  local ip
+  ip=$(curl -s --max-time 2 http://metadata.tencentyun.com/latest/meta-data/public-ipv4 2>/dev/null)
+  case "$ip" in *[0-9].*[0-9]) printf '%s' "$ip"; return;; esac
+  ip=$(curl -s --max-time 2 http://100.100.100.200/latest/meta-data/eipv4 2>/dev/null)
+  case "$ip" in *[0-9].*[0-9]) printf '%s' "$ip"; return;; esac
+  for svc in https://api.ipify.org https://ifconfig.me; do
+    ip=$(curl -s --max-time 3 "$svc" 2>/dev/null)
+    case "$ip" in *[0-9].*[0-9]) printf '%s' "$ip"; return;; esac
+  done
+  printf ''
+}
+
 # ---------- 1. Docker 检查与国内源安装引导 ----------
 if ! command -v docker >/dev/null 2>&1; then
   say "未检测到 Docker，尝试用国内源自动安装（Ubuntu/Debian）"
@@ -67,19 +82,30 @@ if ! docker ps >/dev/null 2>&1; then
 fi
 ok "Docker $(docker --version | awk '{print $3}' | tr -d ,) / compose 就绪（当前用户有 daemon 权限）"
 
-# ---------- 3. 生成 .env（镜像源指向 ACR + 随机密钥；已存在则复用） ----------
+# ---------- 3. 生成 .env（镜像源指向 ACR + 随机密钥 + 自动 CORS 白名单；已存在则复用） ----------
+# CORS 白名单自动探测公网 IP（普通用户无需手工编辑）；
+# 旧版 .env 里脚本默认生成的 localhost 白名单也会自动升级为公网 IP（手动改过的值不覆盖）
 if [ ! -f .env ]; then
-  say "生成 .env（镜像走国内 ACR 源 + 随机 DB_PASSWORD/JWT_SECRET）"
+  say "生成 .env（镜像走国内 ACR 源 + 随机 DB_PASSWORD/JWT_SECRET + 自动 CORS）"
   rand_hex() {
     if command -v openssl >/dev/null 2>&1; then openssl rand -hex 32
     else head -c 32 /dev/urandom | od -An -tx1 | tr -d ' \n'; fi
   }
+  PORT_DEFAULT=8080
+  PUB_IP=$(detect_public_ip)
+  if [ -n "$PUB_IP" ]; then
+    CORS_LINE="CORS_ORIGINS=http://${PUB_IP}:${PORT_DEFAULT},http://localhost:${PORT_DEFAULT}"
+    ok "探测到公网 IP: ${PUB_IP}（已写入 CORS 白名单）"
+  else
+    CORS_LINE="CORS_ORIGINS=http://localhost:${PORT_DEFAULT}"
+    warn "未能探测公网 IP——从外部访问前请编辑 .env 的 CORS_ORIGINS 加上 http://<服务器IP>:${PORT_DEFAULT}"
+  fi
   {
     echo "# 由 deploy-cn.sh 自动生成于 $(date '+%Y-%m-%d %H:%M:%S')（国内版：镜像走阿里云 ACR）"
     echo "DB_PASSWORD=bh_$(rand_hex | cut -c1-16)"
     echo "JWT_SECRET=$(rand_hex)$(rand_hex)"
-    echo "CORS_ORIGINS=http://localhost:8080"
-    echo "FRONTEND_PORT=8080"
+    echo "$CORS_LINE"
+    echo "FRONTEND_PORT=${PORT_DEFAULT}"
     echo "# 镜像源（国内 ACR）；换源改这四行即可"
     echo "BACKEND_IMAGE=${ACR_BASE}/bolehunter-backend:latest"
     echo "FRONTEND_IMAGE=${ACR_BASE}/bolehunter-frontend:latest"
@@ -90,6 +116,14 @@ if [ ! -f .env ]; then
   ok ".env 已生成（含随机密钥，权限 600，镜像走国内源）"
 else
   ok ".env 已存在，沿用现有配置"
+  # 升级场景：仍为脚本默认的 localhost 白名单且探测到公网 IP → 自动升级（用户手动改过的值不动）
+  if grep -q '^CORS_ORIGINS=http://localhost:8080$' .env 2>/dev/null; then
+    PUB_IP=$(detect_public_ip)
+    if [ -n "$PUB_IP" ]; then
+      sed -i "s|^CORS_ORIGINS=.*|CORS_ORIGINS=http://${PUB_IP}:8080,http://localhost:8080|" .env
+      ok "CORS 白名单已自动升级为公网 IP: ${PUB_IP}（backend 将随 up -d 自动重建生效）"
+    fi
+  fi
 fi
 
 # ---------- 4. 拉镜像并启动（全部走 ACR，无需登录） ----------
