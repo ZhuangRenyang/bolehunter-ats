@@ -41,4 +41,6 @@ EXPOSE 5000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
     CMD curl -fsS http://127.0.0.1:5000/recruit/health || exit 1
 
-ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar app.jar --spring.profiles.active=prod"]
+# 迭代28：jar 用绝对路径 /app/app.jar——实测镜像经 GHCR→ACR 同步链路后 WorkingDir
+# 配置可能丢失（frontend 不依赖 WorkingDir 故无恙），相对路径会报 Unable to access jarfile
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar /app/app.jar --spring.profiles.active=prod"]

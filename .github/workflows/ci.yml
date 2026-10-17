@@ -126,8 +126,17 @@ jobs:
             docker pull "$1"
             docker tag  "$1" "$2"
             docker push "$2"
+            # 同步后回拉验证元数据完整（迭代28 实测：ACR 链路可能丢 WorkingDir 配置）
+            docker pull "$2" > /dev/null
+            echo "   验证 WorkingDir=[$(docker image inspect "$2" --format '{{.Config.WorkingDir}}')]"
           }
           sync ghcr.io/zhuangrenyang/bolehunter-backend:latest   "$REG/$NS/bolehunter-backend:latest"
           sync ghcr.io/zhuangrenyang/bolehunter-frontend:latest  "$REG/$NS/bolehunter-frontend:latest"
           sync mysql:8.4      "$REG/$NS/mysql:8.4"
           sync redis:7-alpine "$REG/$NS/redis:7-alpine"
+          # backend 关键文件存在性校验（防 jar 丢失的启动崩溃循环）
+          if ! docker run --rm --entrypoint sh "$REG/$NS/bolehunter-backend:latest" -c 'test -f /app/app.jar'; then
+            echo "::error::同步后的 backend 镜像缺少 /app/app.jar"
+            exit 1
+          fi
+          echo "backend /app/app.jar 校验通过"
