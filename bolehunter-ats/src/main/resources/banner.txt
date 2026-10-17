@@ -1,20 +1,14 @@
-                               _
-                            _ooOoo_
-                           o8888888o
-                           88" . "88      佛祖保佑
-                           (| -_- |)      永不宕机
-                           O\  =  /O      永无BUG
-                        ____/`---'\____   答辩顺利
-                      .'  \\|     |//  `.
-                     /  \\|||  :  |||//  \
-                    /  _||||| -:- |||||_  \
-                    |   | \\\  -  /'| |   |
-                    | \_|  `\`---'//  |_/ |
-                    \  .-\__ `-. -'__/-.  /
-                  ___`. .'  /--.--\  `. .'___
-               ."" '<  `.___\_<|>_/___.' _> \"".
-              | | :  `- \`. ;`. _/; .'/ /  .' ; |
-              \  \ `-.   \_\_`. _.'_/_/  -' _.' /
-================-.`___`-.__\ \___  /__.-'_.'_.-'================
-                              `=--=-'
-  @毕设作品:校企招聘网        @作者: eval 小组
+${AnsiColor.BLUE}
+ :: BoleHunter 伯乐猎 · 开源猎头 ATS + CRM ::${AnsiColor.DEFAULT}
+
+     ____  _        _    _   _             _   _
+    | __ )| |      / \  | | | | ___ _ __  | |_| |__   ___ _ __ ___   ___
+    |  _ \| |     / _ \ | |_| |/ _ \ '__| | __| '_ \ / _ \ '_ ` _ \ / _ \
+    | |_) | |___ / ___ \|  _  |  __/ |    | |_| | | |  __/ | | | | |  __/
+    |____/|_____/_/   \_\_| |_|\___|_|     \__|_| |_|\___|_| |_| |_|\___|
+
+  ${AnsiColor.GREEN}Running BoleHunter ${application.version}${AnsiColor.DEFAULT}
+  Spring Boot ${spring-boot.version} · Vue 3 · MySQL 8 · Redis 7
+  GitHub   https://github.com/ZhuangRenyang/bolehunter-ats
+  Gitee    https://gitee.com/ZhuangRenyang/bolehunter-ats
+  License  AGPL-3.0-or-later · Copyright (C) 2026 ZhuangRenyang
