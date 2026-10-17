@@ -38,7 +38,10 @@ RUN apt-get update \
 ENV TZ=Asia/Shanghai \
     JAVA_OPTS=""
 
-COPY --from=build /app/target/bolehunter-ats-*.jar app.jar
+# 迭代28 实测：pom 的 finalName 曾遗留毕设名 smart-recruit，导致旧通配符 bolehunter-ats-*.jar
+# 零匹配且 BuildKit 静默跳过 COPY（不报错），镜像 /app 为空、运行时崩溃循环。
+# 现产物名归位为 bolehunter-ats（见 pom finalName），通配符兼容带/不带版本号两种形态
+COPY --from=build /app/target/bolehunter-ats*.jar app.jar
 # 构建自证：jar 必须存在且非空（test -s），否则构建阶段直接失败而非运行时崩溃循环
 RUN ls -la /app/app.jar && test -s /app/app.jar && echo "app.jar OK ($(du -h /app/app.jar | cut -f1))"
 
