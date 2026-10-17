@@ -30,10 +30,11 @@ export default defineConfig({
     rollupOptions: {
       output: {
         // 第三方库拆分独立 chunk，业务代码更新时缓存不受影响
+        // 迭代28：vue-i18n 并入 vendor-vue——曾单独拆 vendor-i18n，@intlify/* 与业务 chunk
+        // 间的求值顺序问题疑似参与 TDZ 白屏（Cannot access 'Po' before initialization），
+        // 合并后由 Rollup 保证单 chunk 内模块顺序
         manualChunks: {
-          'vendor-vue': ['vue', 'vue-router', 'pinia'],
-          // vue-i18n 单独成 chunk（迭代 27 国际化骨架），与 vue 生态解耦缓存
-          'vendor-i18n': ['vue-i18n'],
+          'vendor-vue': ['vue', 'vue-router', 'pinia', 'vue-i18n'],
           'echarts': ['echarts'],
         },
       },

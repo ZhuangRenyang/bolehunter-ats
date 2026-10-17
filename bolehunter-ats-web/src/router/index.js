@@ -9,8 +9,18 @@
  * 以任何网络服务形式提供本程序（含 SaaS 托管）同样必须遵守 AGPL-3.0 开源。
  */
 import { createRouter, createWebHistory } from 'vue-router'
-import { getToken, TOKEN_ACCESS } from '@/api/request'
+import Cookies from 'js-cookie'
 import Layout from '@/layout/index.vue'
+
+/**
+ * 迭代28 修复：此处不再 import { getToken } from '@/api/request'——
+ * request.js 顶部 import router 用于 401 跳转，二者构成模块循环依赖；
+ * 迭代 27 新增 i18n 改变 Rollup 模块求值顺序后，循环内绑定在初始化前被访问，
+ * 浏览器报 "Cannot access 'Po' before initialization" 白屏。
+ * 守卫里只需读 access_token cookie，直接用 js-cookie 内联，环解除
+ * （request.js → router 仍为单向依赖）。
+ */
+const TOKEN_ACCESS = 'access_token'
 
 const routes = [
   {
@@ -159,7 +169,7 @@ router.beforeEach(to => {
   if (to.meta.public) {
     return true
   }
-  const token = getToken(TOKEN_ACCESS)
+  const token = Cookies.get(TOKEN_ACCESS)
   if (!token) {
     return { path: '/login', query: to.path === '/login' ? {} : { redirect: to.path } }
   }
