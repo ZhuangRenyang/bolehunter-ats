@@ -96,3 +96,38 @@ jobs:
           tags: |
             ghcr.io/zhuangrenyang/bolehunter-frontend:latest
             ghcr.io/zhuangrenyang/bolehunter-frontend:${{ github.sha }}
+
+  publish-cn:
+    name: Sync to Aliyun ACR (China)
+    # 迭代28 国内一键部署：把业务镜像 + 官方 mysql/redis 同步一份到阿里云 ACR，
+    # 供国内服务器 deploy-cn.sh 从单一国内源拉取（ghcr.io / Docker Hub 国内直连不可靠）。
+    # 前置配置（仓库 Settings → Secrets and variables → Actions）：
+    #   Variables: ACR_REGISTRY（如 crpi-xxx.cn-hangzhou.personal.cr.aliyuncs.com，非敏感）
+    #   Secrets:   ACR_USERNAME / ACR_PASSWORD（ACR 固定密码）
+    # 未配置 ACR_REGISTRY 时本 job 自动跳过，不影响其余 CI。
+    if: github.event_name == 'push' && vars.ACR_REGISTRY != ''
+    needs: publish
+    runs-on: ubuntu-latest
+    steps:
+      - name: 登录阿里云 ACR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ vars.ACR_REGISTRY }}
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+      - name: 同步镜像到 ACR（业务镜像 + 基础镜像）
+        env:
+          REG: ${{ vars.ACR_REGISTRY }}
+        run: |
+          set -e
+          NS=bolehunter
+          sync() {
+            echo ">> $1  →  $2"
+            docker pull "$1"
+            docker tag  "$1" "$2"
+            docker push "$2"
+          }
+          sync ghcr.io/zhuangrenyang/bolehunter-backend:latest   "$REG/$NS/bolehunter-backend:latest"
+          sync ghcr.io/zhuangrenyang/bolehunter-frontend:latest  "$REG/$NS/bolehunter-frontend:latest"
+          sync mysql:8.4      "$REG/$NS/mysql:8.4"
+          sync redis:7-alpine "$REG/$NS/redis:7-alpine"

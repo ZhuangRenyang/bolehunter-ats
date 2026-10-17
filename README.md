@@ -42,7 +42,7 @@
 | 认证 | JWT 双令牌（access + refresh），自研轻量权限层（RBAC 注解扫描） |
 | AI | OpenAI 兼容协议（DeepSeek/通义/Kimi…），chat + embeddings，后台可视化配置 |
 | 实时协作 | WebSocket（JWT 握手鉴权）——站内通知即时到达 + 内部单聊 |
-| 工程 | GitHub Actions CI（版权头检查/单测/构建/镜像发布 GHCR）、Docker Compose、springdoc 接口文档、44 个单测 |
+| 工程 | GitHub Actions CI（版权头检查/单测/构建/镜像发布 GHCR+阿里云ACR 双源）、Docker Compose、springdoc 接口文档、44 个单测 |
 
 ## 快速开始
 
@@ -50,11 +50,13 @@
 
 ```bash
 git clone https://github.com/ZhuangRenyang/bolehunter-ats.git && cd bolehunter-ats
-bash deploy.sh            # 自动生成 .env（随机密钥）→ 拉 GHCR 镜像 → 起服务 → 健康检查
+bash deploy.sh            # 国际网络环境：自动生成 .env（随机密钥）→ 拉 GHCR 镜像 → 起服务 → 健康检查
+bash deploy-cn.sh         # 国内服务器：自动装 Docker（国内源）→ 镜像全部走阿里云 ACR 国内源 → 起服务
 # 打开 http://localhost:8080，默认账号 root / 123456（首次登录立即修改）
 ```
 
-- **免构建**：默认直接使用 CI 自动发布的 GHCR 公开镜像，服务器无需 JDK/Node/MySQL 任何构建环境
+- **免构建**：默认直接使用 CI 自动发布的公开镜像，服务器无需 JDK/Node/MySQL 任何构建环境
+- **国内版（迭代28）**：`deploy-cn.sh` 未装 Docker 时自动用国内源安装；四个镜像（含 mysql/redis）全部由 CI 同步到阿里云 ACR，单一国内源拉取，不碰 ghcr.io / Docker Hub
 - **自动运行**：全部容器带 `restart: unless-stopped`，服务器重启或进程崩溃自动拉起
 - 手动等价：`cp .env.example .env && docker compose up -d`；本地源码构建见 `docker-compose.build.yml`
 

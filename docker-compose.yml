@@ -6,7 +6,9 @@
 
 services:
   mysql:
-    image: mysql:8.4
+    # 镜像源参数化（迭代28 国内一键部署）：默认 Docker Hub，deploy-cn.sh 生成的 .env 会
+    # 写入 MYSQL_IMAGE 等四个变量指向阿里云 ACR，国内服务器全部镜像从单一国内源拉取
+    image: ${MYSQL_IMAGE:-mysql:8.4}
     container_name: bolehunter-mysql
     # 业务时间统一东八区；utf8mb4 支持表情与生僻字
     command: >
@@ -29,7 +31,7 @@ services:
     restart: unless-stopped
 
   redis:
-    image: redis:7-alpine
+    image: ${REDIS_IMAGE:-redis:7-alpine}
     container_name: bolehunter-redis
     # 登录限流/验证码等轻量使用，AOF 每 60 秒落盘足够
     command: redis-server --appendonly yes
@@ -44,8 +46,9 @@ services:
 
   # 默认直接使用 GHCR 公开镜像（迭代18 起 CI 自动发布），服务器无需任何构建环境；
   # 本地没有该镜像时 up 会自动拉取。要源码构建见 docker-compose.build.yml
+  # 国内部署：deploy-cn.sh 生成的 .env 将 BACKEND_IMAGE/FRONTEND_IMAGE 指向阿里云 ACR
   backend:
-    image: ghcr.io/zhuangrenyang/bolehunter-backend:latest
+    image: ${BACKEND_IMAGE:-ghcr.io/zhuangrenyang/bolehunter-backend:latest}
     container_name: bolehunter-backend
     environment:
       SPRING_PROFILES_ACTIVE: prod
@@ -78,7 +81,7 @@ services:
     restart: unless-stopped
 
   frontend:
-    image: ghcr.io/zhuangrenyang/bolehunter-frontend:latest
+    image: ${FRONTEND_IMAGE:-ghcr.io/zhuangrenyang/bolehunter-frontend:latest}
     container_name: bolehunter-frontend
     ports:
       - "${FRONTEND_PORT:-8080}:80"
