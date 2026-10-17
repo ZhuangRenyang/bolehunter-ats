@@ -24,6 +24,9 @@ export default defineConfig({
     },
   },
   build: {
+    // 迭代28 实测：Vite 产物默认在 /assets/，与后端静态资源路径（简历/头像，nginx 反代 /assets/**）
+    // 冲突——前端 JS/CSS 被 nginx 反代到 backend 导致 404 白屏。产物移至 /static/ 彻底解耦
+    assetsDir: 'static',
     rollupOptions: {
       output: {
         // 第三方库拆分独立 chunk，业务代码更新时缓存不受影响
