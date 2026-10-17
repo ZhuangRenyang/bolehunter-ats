@@ -10,7 +10,10 @@ COPY pom.xml .
 RUN mvn -B -q dependency:go-offline
 
 COPY src ./src
-RUN mvn -B -DskipTests package
+# 迭代28 实测踩坑：曾出现"构建成功但运行时缺 jar"的盲区（GHCR/ACR 镜像均缺 /app/app.jar，
+# 而 docker build 验证一直是绿的）。此处显式列出打包产物，让 jar 缺失在构建阶段现形
+RUN mvn -B -DskipTests package \
+    && ls -la target/*.jar
 
 # ---------- 运行阶段：仅 JRE ----------
 FROM eclipse-temurin:17-jre
@@ -36,6 +39,8 @@ ENV TZ=Asia/Shanghai \
     JAVA_OPTS=""
 
 COPY --from=build /app/target/bolehunter-ats-*.jar app.jar
+# 构建自证：jar 必须存在且非空（test -s），否则构建阶段直接失败而非运行时崩溃循环
+RUN ls -la /app/app.jar && test -s /app/app.jar && echo "app.jar OK ($(du -h /app/app.jar | cut -f1))"
 
 EXPOSE 5000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
