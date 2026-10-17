@@ -10,7 +10,6 @@
  */
 import { createRouter, createWebHistory } from 'vue-router'
 import Cookies from 'js-cookie'
-import Layout from '@/layout/index.vue'
 
 /**
  * 迭代28 修复：此处不再 import { getToken } from '@/api/request'——
@@ -39,7 +38,7 @@ const routes = [
   },
   {
     path: '/',
-    component: Layout,
+    component: () => import('@/layout/index.vue'), // 懒加载布局：router 求值图不再包含 layout 及其依赖链
     redirect: '/workbench',
     children: [
       {

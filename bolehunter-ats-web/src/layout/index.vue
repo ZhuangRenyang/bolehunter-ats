@@ -107,7 +107,7 @@
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useUserStore } from '@/stores/user'
@@ -118,7 +118,9 @@ import { getImUnreadTotal } from '@/api/im'
 import { useWsStore } from '@/stores/ws'
 // i18n（迭代 27）：SUPPORTED_LOCALES 供切换菜单、setLocale 完成持久化切换
 import { setLocale, SUPPORTED_LOCALES } from '@/locales'
-import ImDrawer from './im-drawer.vue'
+// 迭代28：ImDrawer 改异步组件——静态引用使 layout→im-drawer→api/im→request→router→layout
+// 形成模块循环，是 TDZ 白屏环链的一环
+const ImDrawer = defineAsyncComponent(() => import('./im-drawer.vue'))
 
 const { t, locale } = useI18n()
 const route = useRoute()
