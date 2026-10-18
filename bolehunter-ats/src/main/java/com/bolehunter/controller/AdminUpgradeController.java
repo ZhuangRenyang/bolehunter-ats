@@ -14,13 +14,20 @@ import com.bolehunter.core.annotation.AdminRequired;
 import com.bolehunter.core.annotation.Logger;
 import com.bolehunter.core.annotation.PermissionMeta;
 import com.bolehunter.core.migration.DbMigrationService;
+import com.bolehunter.core.upgrade.DbBackupService;
 import com.bolehunter.core.upgrade.SelfUpgradeService;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
 
@@ -40,6 +47,9 @@ public class AdminUpgradeController {
 
     @Autowired
     private SelfUpgradeService selfUpgradeService;
+
+    @Autowired
+    private DbBackupService dbBackupService;
 
     /**
      * 迁移状态：待执行脚本列表 + 执行历史
@@ -85,5 +95,40 @@ public class AdminUpgradeController {
     @PermissionMeta(value = "触发系统升级")
     public Map<String, Object> run() {
         return selfUpgradeService.trigger();
+    }
+
+    /**
+     * 数据库备份（迭代 30）：整库 mysqldump 流式下载。
+     * 供管理员从旧系统/历史备份整库迁移，或升级前手动留存快照。
+     */
+    @Logger(template = "导出数据库备份")
+    @GetMapping("/db/export")
+    @AdminRequired
+    @PermissionMeta(value = "导出数据库备份")
+    public void exportDb(HttpServletResponse response) throws IOException, InterruptedException {
+        String filename = "bolehunter-db-" + DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss").format(LocalDateTime.now()) + ".sql";
+        response.setContentType(MediaType.APPLICATION_OCTET_STREAM_VALUE);
+        response.setHeader("Content-Disposition", "attachment; filename=" + filename);
+        dbBackupService.exportTo(response.getOutputStream());
+    }
+
+    /**
+     * 数据库恢复（迭代 30，危险操作）：上传 .sql 整库覆盖。
+     * 采用 raw 流式上传（application/octet-stream）而非 multipart——不受
+     * multipart 体积上限约束，大体积备份亦可恢复。
+     * 恢复前自动将当前库完整备份（可回滚）；仅 .sql 文件且内容校验通过。
+     */
+    @Logger(template = "恢复数据库")
+    @PostMapping(value = "/db/import", consumes = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    @AdminRequired
+    @PermissionMeta(value = "恢复数据库")
+    public Map<String, Object> importDb(jakarta.servlet.http.HttpServletRequest request) throws IOException, InterruptedException {
+        String filename = request.getHeader("X-Filename");
+        try (InputStream in = request.getInputStream()) {
+            dbBackupService.validate(filename, in);
+        }
+        try (InputStream in = request.getInputStream()) {
+            return dbBackupService.importFrom(in);
+        }
     }
 }

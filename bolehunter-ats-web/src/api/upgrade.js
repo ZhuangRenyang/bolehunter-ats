@@ -27,3 +27,9 @@ export const runMigration = () => post('recruit/admin/upgrade/migration/run')
 
 /** 触发自升级（异步：立即返回，服务随后可能重启） */
 export const triggerUpgrade = () => post('recruit/admin/upgrade/run')
+
+// 迭代 30：数据库备份与恢复（整库 .sql，raw 流式上传不受 multipart 限制）
+export const exportDb = () => defaultAxios.get('recruit/admin/upgrade/db/export', { responseType: 'blob' })
+export const importDb = (file, filename) => defaultAxios.post('recruit/admin/upgrade/db/import', file, {
+  headers: { 'Content-Type': 'application/octet-stream', 'X-Filename': encodeURIComponent(filename) },
+})

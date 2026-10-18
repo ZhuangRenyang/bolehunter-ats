@@ -68,6 +68,17 @@
     <!-- 升级日志 -->
     <div class="section-title">{{ t('upgrade.logSection') }}</div>
     <pre class="upgrade-log">{{ (upgrade.logTail || []).join('\n') || t('upgrade.logEmpty') }}</pre>
+
+    <!-- 数据备份与恢复（迭代 30）：整库 .sql 导出/导入，管理员从旧系统或历史备份迁移 -->
+    <div class="section-title">{{ t('upgrade.dbSection') }}</div>
+    <el-alert type="warning" :closable="false" style="margin-bottom: 12px" :title="t('upgrade.dbWarning')" />
+    <div class="db-actions">
+      <el-button type="primary" plain icon="Download" :loading="exporting" @click="handleExportDb">{{ t('upgrade.dbExport') }}</el-button>
+      <el-upload :show-file-list="false" accept=".sql" :before-upload="beforeImportDb">
+        <el-button type="danger" plain icon="Upload" :loading="importing">{{ t('upgrade.dbImport') }}</el-button>
+      </el-upload>
+      <span class="db-hint">{{ t('upgrade.dbHint') }}</span>
+    </div>
   </el-card>
 </template>
 
@@ -76,6 +87,7 @@ import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useI18n } from 'vue-i18n'
 import { getMigrationStatus, getUpgradeStatus, runMigration, triggerUpgrade } from '@/api/upgrade'
+import { exportDb, importDb } from '@/api/upgrade'
 
 const { t, locale } = useI18n()
 const loading = ref(false)
@@ -86,6 +98,53 @@ const migration = reactive({ pending: [], executed: [], pendingCount: 0 })
 
 // 强确认词跟随语言（中文"升级" / 英文 UPGRADE），防误触机制不绑定单一语言
 const confirmWord = computed(() => (locale.value === 'en-US' ? 'UPGRADE' : '升级'))
+
+const exporting = ref(false)
+const importing = ref(false)
+
+// 迭代 30：整库备份下载（blob 流式）
+async function handleExportDb() {
+  exporting.value = true
+  try {
+    const res = await exportDb()
+    const url = URL.createObjectURL(new Blob([res.data], { type: 'application/octet-stream' }))
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'bolehunter-db-' + new Date().toISOString().slice(0, 10).replace(/-/g, '') + '.sql'
+    a.click()
+    URL.revokeObjectURL(url)
+    ElMessage.success(t('upgrade.dbExportOk'))
+  } catch (e) {
+    // 错误提示由请求层统一处理
+  } finally {
+    exporting.value = false
+  }
+}
+
+// 迭代 30：整库恢复（危险操作——输入"恢复"强确认，后端自动先备份当前库）
+function beforeImportDb(file) {
+  if (!file.name.toLowerCase().endsWith('.sql')) {
+    ElMessage.error(t('upgrade.dbSqlOnly'))
+    return false
+  }
+  ElMessageBox.prompt(t('upgrade.dbConfirmPrompt'), t('upgrade.dbConfirmTitle'), {
+    inputPattern: /^恢复$/,
+    inputErrorMessage: t('upgrade.dbConfirmInput'),
+    type: 'warning',
+  }).then(async () => {
+    importing.value = true
+    try {
+      const res = await importDb(file, file.name)
+      ElMessage.success(t('upgrade.dbImportOk', { backup: res.data.backupFile }))
+      await loadAll()
+    } catch (e) {
+      // 错误提示由请求层统一处理
+    } finally {
+      importing.value = false
+    }
+  }).catch(() => {})
+  return false
+}
 
 async function loadAll() {
   loading.value = true
@@ -219,5 +278,15 @@ onBeforeUnmount(() => { /* 轮询循环有上限，页面离开自然结束 */ }
   overflow: auto;
   white-space: pre-wrap;
   word-break: break-all;
+}
+.db-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.db-hint {
+  font-size: 12px;
+  color: var(--ink-faint);
 }
 </style>
