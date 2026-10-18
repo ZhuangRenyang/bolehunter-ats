@@ -27,7 +27,12 @@ function t(key) {
  */
 
 const instance = axios.create({
-  baseURL: '',
+  // 迭代 29 实战修复：baseURL 必须为 '/'——API 路径为无前导斜杠的相对路径
+  // （'recruit/...'），baseURL 为空时浏览器基于当前页面路径解析，
+  // 在 /setting/upgrade、/client/list 等嵌套路由页面下会错误拼成
+  // /setting/recruit/...（nginx SPA fallback 返回 HTML，页面拿到字符串
+  // 引发按钮失效/表格报错/显示未登录的全链路问题）
+  baseURL: '/',
   timeout: 15000,
   validateStatus: status => status >= 200 && status < 500,
   // 迭代28 实战修复：网关异常页等场景返回 text/html 时 axios 跳过 JSON 解析，
