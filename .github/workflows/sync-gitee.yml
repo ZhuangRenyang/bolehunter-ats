@@ -27,6 +27,6 @@ jobs:
           fetch-depth: 0
       - name: Push to Gitee
         run: |
-          git remote add gitee "https://oauth2:${{ secrets.GITEE_TOKEN }}@gitee.com/ZhuangRenyang/bolehunter-ats.git"
+          git remote add gitee "https://ZhuangRenyang:${{ secrets.GITEE_TOKEN }}@gitee.com/ZhuangRenyang/bolehunter-ats.git"
           git push gitee main --force
           git push gitee --tags --force
