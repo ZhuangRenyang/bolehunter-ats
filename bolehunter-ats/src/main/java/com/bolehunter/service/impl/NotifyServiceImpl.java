@@ -98,19 +98,22 @@ public class NotifyServiceImpl extends ServiceImpl<NotifyMapper, NotifyDO> imple
         return view;
     }
 
+    /**
+     * 迭代 29 修复：原实现把前端传入的用户名（username）误当作昵称（nickname）去查用户，
+     * 昵称查不到时 userDO 为 null 直接空指针（生产 500 白屏级问题）。
+     * notify 表的 user_name 列存的就是登录用户名，直接按列查询即可。
+     */
     @Override
     public List<NotifyDO> get(String userName, String isRead) {
-        UserDO userDO = userService.getUserByNickname(userName);
         QueryWrapper<NotifyDO> wrapper = new QueryWrapper<>();
-        wrapper.eq("user_name", userDO.getUsername()).eq("is_read", isRead);
+        wrapper.eq("user_name", userName).eq("is_read", isRead);
         return notifyMapper.selectList(wrapper);
     }
 
     @Override
     public List<NotifyDO> getAll(String userName) {
-        UserDO userDO = userService.getUserByNickname(userName);
         QueryWrapper<NotifyDO> wrapper = new QueryWrapper<>();
-        wrapper.eq("user_name", userDO.getUsername());
+        wrapper.eq("user_name", userName);
         return notifyMapper.selectList(wrapper);
     }
 
