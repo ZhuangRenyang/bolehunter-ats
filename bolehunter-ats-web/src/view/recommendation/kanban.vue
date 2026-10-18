@@ -9,10 +9,10 @@
  * 以任何网络服务形式提供本程序（含 SaaS 托管）同样必须遵守 AGPL-3.0 开源。
  -->
 <template>
-  <el-card shadow="never" v-loading="loading">
-    <div class="toolbar">
-      <span class="page-title">{{ t('kanban.title') }}</span>
-      <el-button type="primary" plain size="small" icon="Plus" @click="handleCreate">{{ t('kanban.create') }}</el-button>
+  <div>
+    <div class="page-header">
+      <h2>{{ t('kanban.title') }}</h2>
+      <el-button type="primary" icon="Plus" @click="handleCreate">{{ t('kanban.create') }}</el-button>
     </div>
     <div class="filters">
       <el-select v-model="filters.job_id" :placeholder="t('kanban.filterJob')" clearable filterable style="width: 280px" @change="getAll">
@@ -24,11 +24,11 @@
       </el-select>
     </div>
     <div class="kanban">
-      <div v-for="stage in stages" :key="stage" class="kanban-column"
-        @dragover.prevent @drop.prevent="onDrop(stage)">
+      <div v-for="stage in stages" :key="stage" class="kanban-column" :class="[stageCatClass(stage), { 'drag-over': dragStage === stage }]"
+        @dragover.prevent="dragStage = stage" @dragleave.prevent="dragStage === stage && (dragStage = '')" @drop.prevent="onDrop(stage)">
         <div class="column-header">
           <span class="column-title">{{ stageLabel(stage) }}</span>
-          <span class="column-count">{{ groupItems(stage).length }}</span>
+          <span class="column-count num">{{ groupItems(stage).length }}</span>
         </div>
         <div class="column-body">
           <div v-for="item in groupItems(stage)" :key="item.id" class="card" draggable="true"
@@ -37,7 +37,7 @@
             <div class="card-sub">{{ item.candidate_company || '—' }} · {{ item.candidate_position || '—' }}</div>
             <div class="card-sub">{{ item.job_title || '—' }}</div>
             <div class="card-footer">
-              <span>{{ formatDate(item.stage_time) }}</span>
+              <span class="num">{{ formatDate(item.stage_time) }}</span>
               <span class="footer-badges">
                 <el-tooltip :content="t('kanban.urgentTip')" placement="top">
                   <span v-if="urgentCounts[item.id]" class="task-dot">⏰ {{ urgentCounts[item.id] }}</span>
@@ -143,7 +143,7 @@
         <el-button @click="detailDialogVisible = false">{{ t('common.cancel') }}</el-button>
       </template>
     </el-dialog>
-  </el-card>
+  </div>
 </template>
 
 <script setup>
@@ -165,6 +165,16 @@ const { t } = useI18n()
 // STAGES 现为枚举值数组（保序），显示文案统一经 stageLabel 走语言包 stage.*
 const stages = STAGES
 
+// 看板列分类色（迭代 29d 珍珠玻璃）：只区分类别不表达状态，低饱和浅底深字
+const STAGE_CAT = {
+  PENDING: 'c2', RECOMMENDED: 'c1', CLIENT_READ: 'c3', INTERVIEW_PENDING: 'c4',
+  INTERVIEWING: 'c5', OFFER_PENDING: 'c2', OFFERED: 'c1', ONBOARDED: 'c3',
+  PAID: 'c5', ARCHIVED: 'c4',
+}
+function stageCatClass(stage) {
+  return STAGE_CAT[stage] || 'c2'
+}
+
 function stageLabel(stage) {
   const translated = t(`stage.${stage}`)
   return translated === `stage.${stage}` ? stage : translated
@@ -181,6 +191,7 @@ const candidateOptions = ref([])
 const owners = ref([])
 const filters = reactive({ job_id: '', owner_id: '' })
 const dragging = ref(null)
+const dragStage = ref('')
 const createDialogVisible = ref(false)
 const createFormRef = ref()
 const createForm = reactive({ jobId: null, candidateId: null, ownerId: null, remark: '' })
@@ -275,6 +286,7 @@ function onDragStart(item, event) {
 }
 
 function onDrop(stage) {
+  dragStage.value = ''
   const item = dragging.value
   dragging.value = null
   if (!item || item.current_stage === stage) return
@@ -409,15 +421,18 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.toolbar {
+.page-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   margin-bottom: 14px;
 }
-.page-title {
-  font-size: 15px;
-  font-weight: 500;
+.page-header h2 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ink);
 }
 .filters {
   display: flex;
@@ -431,66 +446,89 @@ onMounted(async () => {
   padding-bottom: 15px;
 }
 .kanban-column {
-  flex: 0 0 178px;
+  flex: 0 0 184px;
   margin-right: 10px;
-  background: #f5f7fa;
-  border-radius: 8px;
-  border: 1px solid #e4e7ed;
+  background: var(--paper-deep);
+  border-radius: var(--r-md);
+  border: 1px solid var(--glass-line);
+  border-top: 3px solid var(--cat-color, var(--blue));
+  transition: border-color 0.2s, background 0.2s;
 }
+/* 拖拽悬停高亮：目标列蓝色描边 + 浅蓝底 */
+.kanban-column.drag-over {
+  border-color: var(--blue);
+  background: var(--blue-soft);
+  box-shadow: var(--e2);
+}
+/* 分类色注入列顶色条与卡片色条（c1~c5 见 instruments/tokens） */
+.kanban-column.c1 { --cat-color: var(--cat-1); }
+.kanban-column.c2 { --cat-color: var(--cat-2); }
+.kanban-column.c3 { --cat-color: var(--cat-3); }
+.kanban-column.c4 { --cat-color: var(--cat-4); }
+.kanban-column.c5 { --cat-color: var(--cat-5); }
 .column-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 8px 10px;
+  padding: 9px 10px 6px;
 }
 .column-title {
   font-size: 13px;
-  font-weight: 500;
-  color: #303133;
+  font-weight: 600;
+  color: var(--ink);
 }
 .column-count {
-  font-size: 12px;
-  color: #909399;
-  background: #e4e7ed;
-  border-radius: 8px;
-  padding: 0 7px;
+  font-size: 11px;
+  color: var(--blue);
+  background: var(--blue-soft);
+  border-radius: 999px;
+  padding: 1px 8px;
+  font-weight: 600;
 }
 .column-body {
-  padding: 0 6px 8px;
+  padding: 0 7px 10px;
   min-height: 120px;
 }
 .card {
-  background: #ffffff;
-  border: 1px solid #e4e7ed;
-  border-radius: 6px;
-  padding: 8px 10px;
+  background: var(--pearl-solid);
+  border: 1px solid var(--glass-line);
+  border-left: 3px solid var(--cat-color, var(--blue));
+  border-radius: var(--r-sm);
+  padding: 9px 11px;
   margin-bottom: 8px;
   cursor: grab;
+  box-shadow: var(--e1);
+  transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
 }
 .card:hover {
-  border-color: #409eff;
+  transform: translateY(-1px);
+  box-shadow: var(--e2);
+  border-color: var(--blue);
+}
+.card:active {
+  cursor: grabbing;
 }
 .card-name {
   font-size: 13px;
-  font-weight: 500;
-  color: #303133;
+  font-weight: 600;
+  color: var(--ink);
   margin-bottom: 3px;
 }
 .card-sub {
   font-size: 12px;
-  color: #909399;
+  color: var(--ink-soft);
   line-height: 1.5;
 }
 .card-footer {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 5px;
+  margin-top: 6px;
   font-size: 12px;
-  color: #c0c4cc;
+  color: var(--ink-faint);
 }
 .feedback-dot {
-  color: #e6a23c;
+  color: #d99a26;
 }
 .footer-badges {
   display: inline-flex;
@@ -498,12 +536,12 @@ onMounted(async () => {
   align-items: center;
 }
 .task-dot {
-  color: #f56c6c;
+  color: var(--red-text);
   font-weight: 600;
 }
 .empty-column {
   font-size: 12px;
-  color: #c0c4cc;
+  color: var(--ink-faint);
   text-align: center;
   padding: 16px 0;
 }
@@ -517,7 +555,7 @@ onMounted(async () => {
   align-items: flex-start;
   gap: 8px;
   padding: 6px 0;
-  border-bottom: 1px solid #f0f2f5;
+  border-bottom: 1px solid var(--glass-line);
   font-size: 12px;
 }
 .comm-type {
@@ -525,15 +563,15 @@ onMounted(async () => {
 }
 .comm-content {
   flex: 1;
-  color: #303133;
+  color: var(--ink);
   line-height: 1.5;
 }
 .comm-meta {
   flex-shrink: 0;
-  color: #c0c4cc;
+  color: var(--ink-faint);
 }
 .history-operator {
-  color: #909399;
+  color: var(--ink-soft);
   font-size: 12px;
 }
 .task-line {
@@ -541,26 +579,26 @@ onMounted(async () => {
   align-items: center;
   gap: 8px;
   padding: 6px 0;
-  border-bottom: 1px solid #f0f2f5;
+  border-bottom: 1px solid var(--glass-line);
   font-size: 12px;
 }
 .task-line-title {
   flex: 1;
-  color: #303133;
+  color: var(--ink);
 }
 .task-line-title.done {
-  color: #909399;
+  color: var(--ink-faint);
   text-decoration: line-through;
 }
 .task-line-meta {
-  color: #c0c4cc;
+  color: var(--ink-faint);
 }
 .history-feedback {
   font-size: 12px;
-  color: #606266;
+  color: var(--ink-muted);
   margin-top: 2px;
-  background: #f5f7fa;
-  border-radius: 4px;
+  background: var(--paper-deep);
+  border-radius: var(--r-xs);
   padding: 4px 8px;
 }
 </style>

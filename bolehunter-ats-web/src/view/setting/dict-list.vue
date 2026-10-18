@@ -15,18 +15,23 @@
       <el-button type="primary" plain size="small" icon="Plus" @click="handleTypeCreate">{{ t('dict.createType') }}</el-button>
     </div>
     <el-row :gutter="16">
-      <!-- 左：类型 -->
+      <!-- 左：类型（迭代 29d 样本册：每类型一卡，点击选中） -->
       <el-col :span="9">
-        <el-table :data="typeData" border highlight-current-row v-loading="loading" @current-change="handleTypeSelect">
-          <el-table-column prop="dict_name" :label="t('dict.colDictName')" min-width="110" />
-          <el-table-column prop="dict_type" :label="t('dict.colDictType')" min-width="130" />
-          <el-table-column :label="t('common.operation')" width="130" align="center">
-            <template #default="scope">
-              <el-button size="small" type="primary" plain @click.stop="handleTypeEdit(scope.row)">{{ t('common.edit') }}</el-button>
-              <el-button size="small" type="danger" plain @click.stop="handleTypeDelete(scope.row)">{{ t('common.delete') }}</el-button>
-            </template>
-          </el-table-column>
-        </el-table>
+        <div class="section-label">{{ t('dict.typeSection') }}</div>
+        <div class="type-grid" v-loading="loading">
+          <div v-for="td in typeData" :key="td.id" class="type-card"
+            :class="{ active: currentType && currentType.id === td.id }" @click="handleTypeSelect(td)">
+            <div class="type-card-main">
+              <div class="type-card-name">{{ td.dict_name }}</div>
+              <div class="type-card-key mono">{{ td.dict_type }}</div>
+            </div>
+            <div class="type-card-ops">
+              <el-button size="small" text type="primary" @click.stop="handleTypeEdit(td)">{{ t('common.edit') }}</el-button>
+              <el-button size="small" text type="danger" @click.stop="handleTypeDelete(td)">{{ t('common.delete') }}</el-button>
+            </div>
+          </div>
+          <el-empty v-if="typeData.length === 0" :description="t('dict.selectTypeFirst')" :image-size="50" />
+        </div>
         <div class="pagination">
           <el-pagination background layout="prev, pager, next" :total="typeTotal" :page-size="10"
             :current-page="typePage" @current-change="handleTypePage" />
@@ -34,8 +39,9 @@
       </el-col>
       <!-- 右：数据 -->
       <el-col :span="15">
+        <div class="section-label">{{ currentType ? t('dict.dataHeader', { name: currentType.dict_name }) : t('dict.selectTypeFirst') }}</div>
         <div class="data-header">
-          <span>{{ currentType ? t('dict.dataHeader', { name: currentType.dict_name }) : t('dict.selectTypeFirst') }}</span>
+          <span></span>
           <el-button type="primary" plain size="small" icon="Plus" :disabled="!currentType"
             @click="handleDataCreate">{{ t('dict.createData') }}</el-button>
         </div>
@@ -252,23 +258,60 @@ onMounted(getTypes)
 </script>
 
 <style scoped>
-.toolbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 14px;
-}
-.page-title {
-  font-size: 15px;
-  font-weight: 500;
-}
 .data-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 10px;
   font-size: 13px;
-  color: #606266;
+  color: var(--ink-soft);
+}
+/* 样本册：字典类型卡片（迭代 29d） */
+.type-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 200px;
+}
+.type-card {
+  background: var(--pearl);
+  border: 1px solid var(--glass-line);
+  border-left: 3px solid var(--cat-color, var(--ink-faint));
+  border-radius: var(--r-sm);
+  padding: 10px 12px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+}
+.type-card:nth-child(5n + 1) { --cat-color: var(--cat-1); }
+.type-card:nth-child(5n + 2) { --cat-color: var(--cat-2); }
+.type-card:nth-child(5n + 3) { --cat-color: var(--cat-3); }
+.type-card:nth-child(5n + 4) { --cat-color: var(--cat-4); }
+.type-card:nth-child(5n + 5) { --cat-color: var(--cat-5); }
+.type-card:hover {
+  box-shadow: var(--e2);
+  transform: translateY(-1px);
+}
+.type-card.active {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 1px var(--blue) inset, var(--e2);
+}
+.type-card-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink);
+}
+.type-card-key {
+  font-size: 11px;
+  color: var(--ink-soft);
+  margin-top: 2px;
+}
+.type-card-ops {
+  flex-shrink: 0;
+  display: flex;
 }
 .pagination {
   display: flex;

@@ -10,12 +10,14 @@
 -->
 <template>
   <el-card shadow="never">
-    <div class="toolbar">
-      <span class="page-title">{{ t('log.title') }}</span>
+    <div class="page-header">
+      <h2>{{ t('log.title') }}</h2>
     </div>
 
-    <!-- 审计流水筛选（迭代24）：操作人模糊 / 状态码 / 时间范围 -->
-    <el-form inline class="filter-bar" @submit.prevent>
+    <!-- 审计流水筛选（迭代24）：操作人模糊 / 状态码 / 时间范围 —— 迭代 29d 横带分层：筛选面板 -->
+    <div class="m-surface filter-panel">
+      <div class="section-label">{{ t('log.filterSection') }}</div>
+      <el-form inline class="filter-bar" @submit.prevent>
       <el-form-item :label="t('log.filterUser')">
         <el-input v-model="filter.username" :placeholder="t('log.filterUserPlaceholder')" clearable style="width: 140px"
           @keyup.enter="handleSearch" @clear="handleSearch" />
@@ -35,8 +37,11 @@
         <el-button plain @click="handleReset">{{ t('log.reset') }}</el-button>
       </el-form-item>
     </el-form>
+    </div>
 
-    <el-table :data="tableData" border v-loading="loading">
+    <div class="m-surface table-panel">
+      <div class="section-label">{{ t('log.detailSection') }}</div>
+      <el-table :data="tableData" border v-loading="loading">
       <el-table-column prop="create_time" :label="t('log.colTime')" width="170" align="center">
         <template #default="scope">{{ formatTime(scope.row.create_time) }}</template>
       </el-table-column>
@@ -54,6 +59,7 @@
     <div class="pagination">
       <el-pagination background layout="prev, pager, next" :total="total" :page-size="pageCount"
         :current-page="currentPage" @current-change="handlePageChange" />
+    </div>
     </div>
   </el-card>
 </template>
@@ -130,15 +136,15 @@ onMounted(getAll)
 </script>
 
 <style scoped>
-.toolbar {
-  margin-bottom: 14px;
-}
-.page-title {
-  font-size: 15px;
-  font-weight: 500;
+.filter-panel {
+  padding: 14px 16px 2px;
+  margin-bottom: 16px;
 }
 .filter-bar {
   margin-bottom: 6px;
+}
+.table-panel {
+  padding: 14px 16px;
 }
 .pagination {
   display: flex;

@@ -432,6 +432,8 @@ export default {
     confirmDelete: '是否删除该角色？',
   },
   log: {
+    filterSection: '筛选条件',
+    detailSection: '操作明细',
     title: '操作审计',
     filterUser: '操作人',
     filterUserPlaceholder: '模糊匹配，如：张',
@@ -453,6 +455,8 @@ export default {
   dict: {
     title: '字典管理',
     createType: '新增字典类型',
+    typeSection: '字典类型',
+    dataSection: '字典数据',
     colDictName: '字典名称',
     colDictType: '类型键',
     dataHeader: '字典数据：{name}',

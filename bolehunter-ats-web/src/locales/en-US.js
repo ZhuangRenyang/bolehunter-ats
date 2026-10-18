@@ -424,6 +424,8 @@ export default {
     confirmDelete: 'Delete this role?',
   },
   log: {
+    filterSection: 'Filters',
+    detailSection: 'Operation Details',
     title: 'Audit Logs',
     filterUser: 'Operator',
     filterUserPlaceholder: 'Fuzzy match, e.g. Zhang',
@@ -445,6 +447,8 @@ export default {
   dict: {
     title: 'Dictionaries',
     createType: 'New Dictionary Type',
+    typeSection: 'Dictionary Types',
+    dataSection: 'Dictionary Data',
     colDictName: 'Dictionary Name',
     colDictType: 'Type Key',
     dataHeader: 'Dictionary data: {name}',

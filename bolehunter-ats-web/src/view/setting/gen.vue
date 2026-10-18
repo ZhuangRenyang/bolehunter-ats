@@ -7,7 +7,9 @@
 -->
 <template>
   <div class="page">
-    <div class="page-title">{{ t('gen.title') }}</div>
+    <div class="page-header">
+      <h2>{{ t('gen.title') }}</h2>
+    </div>
 
     <el-card shadow="never" style="margin-bottom: 14px">
       <el-form label-width="110px" style="max-width: 640px">
