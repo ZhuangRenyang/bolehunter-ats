@@ -102,12 +102,18 @@ public class SelfUpgradeService {
         running.set(true);
         worker.submit(() -> {
             try {
-                // 迭代 29：只拉取镜像，不再执行 up -d——backend 容器内的升级进程会在
-                // up -d 重建自身时被终止（实测退出码 1/序列中断风险）。容器滚动重建
-                // 交给 watchtower sidecar（检测镜像变化后自动 recreate，约 1 分钟内完成）
+                // 迭代 29：两段式升级——①本服务只做 compose pull + 写标记文件
+                // （拉镜像不触碰运行中的容器，进程安全）；②容器滚动重建由独立的
+                // upgrader 容器（docker:cli）检测标记后执行，彻底规避
+                // "backend 升级自己时升级进程随容器被杀"的架构缺陷
                 runComposeCommand("docker compose pull");
-                appendLog("\n[upgrade] 最新镜像已拉取。容器将由 watchtower 自动滚动重启" +
-                    "（约 1 分钟内完成，期间服务短暂中断，页面将自动恢复）。\n");
+                Files.writeString(Paths.get(composeDir, ".upgrade-requested"),
+                    String.valueOf(System.currentTimeMillis()),
+                    java.nio.file.StandardOpenOption.CREATE,
+                    java.nio.file.StandardOpenOption.TRUNCATE_EXISTING,
+                    java.nio.file.StandardOpenOption.WRITE);
+                appendLog("\n[upgrade] 最新镜像已拉取，滚动更新请求已发出。" +
+                    "upgrader 将在 30 秒内执行容器滚动重启（期间服务短暂中断，页面将自动恢复）。\n");
             } catch (Exception e) {
                 appendLog("\n[upgrade] 升级失败：" + e.getMessage() + "\n");
                 log.error("[upgrade] 自升级失败", e);

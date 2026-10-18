@@ -93,15 +93,17 @@ services:
       - backend
     restart: unless-stopped
 
-  # 看护塔（迭代 29）：后台一键升级只做 compose pull（拉镜像不触碰运行中的容器），
-  # 容器滚动重建由本服务检测镜像变化后自动完成——解决"backend 升级自己时
-  # 升级进程随容器被杀"的架构缺陷（退出码 1/序列中断）
-  watchtower:
-    image: ${WATCHTOWER_IMAGE:-containrrr/watchtower:latest}
-    container_name: bolehunter-watchtower
+  # 升级代理（迭代 29）：后台一键升级只做 compose pull + 写标记文件，容器滚动重建
+  # 由本服务执行——up -d 在独立容器内运行，不存在"backend 升级自己时进程被杀"的问题。
+  # 标记文件 .upgrade-requested 由 SelfUpgradeService 写入（挂载的 compose 目录内）
+  upgrader:
+    image: ${UPGRADER_IMAGE:-docker:27-cli}
+    container_name: bolehunter-upgrader
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-    command: --interval 60 --label-enable --cleanup
+      - .:/deploy
+    working_dir: /deploy
+    command: sh -c 'while true; do if [ -f /deploy/.upgrade-requested ]; then echo "[upgrader] 检测到升级请求，执行滚动更新"; docker compose pull && docker compose up -d --remove-orphans && rm -f /deploy/.upgrade-requested && echo "[upgrader] 升级完成"; fi; sleep 30; done'
     restart: unless-stopped
 
 volumes:
