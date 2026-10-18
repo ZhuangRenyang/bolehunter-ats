@@ -50,11 +50,24 @@ const instance = axios.create({
 export const TOKEN_ACCESS = 'access_token'
 export const TOKEN_REFRESH = 'refresh_token'
 
+/**
+ * 迭代 29c 加固：token 双存储（localStorage + Cookie）。
+ * 手机浏览器（微信内置/QQ/UC 等）常在会话结束时清理 Cookie，导致刷新丢登录态；
+ * localStorage 不受该策略影响，读取时优先取 localStorage，Cookie 作为兼容回退。
+ */
 export function getToken(key) {
+  const fromLocal = localStorage.getItem(key)
+  if (fromLocal) return fromLocal
   return Cookies.get(key)
 }
 
 export function saveTokens(accessToken, refreshToken) {
+  try {
+    localStorage.setItem(TOKEN_ACCESS, accessToken)
+    if (refreshToken) localStorage.setItem(TOKEN_REFRESH, refreshToken)
+  } catch (e) {
+    /* localStorage 不可用时仅用 Cookie */
+  }
   Cookies.set(TOKEN_ACCESS, accessToken, { expires: 1 })
   if (refreshToken) {
     Cookies.set(TOKEN_REFRESH, refreshToken, { expires: 30 })
@@ -62,6 +75,10 @@ export function saveTokens(accessToken, refreshToken) {
 }
 
 export function clearTokens() {
+  try {
+    localStorage.removeItem(TOKEN_ACCESS)
+    localStorage.removeItem(TOKEN_REFRESH)
+  } catch (e) {}
   Cookies.remove(TOKEN_ACCESS)
   Cookies.remove(TOKEN_REFRESH)
 }
