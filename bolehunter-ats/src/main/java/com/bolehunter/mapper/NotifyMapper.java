@@ -18,7 +18,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
  *  Mapper 接口
  * </p>
  *
- * @author Eval
+ * @author ZhuangRenyang
  * @since 2022-04-16
  */
 public interface NotifyMapper extends BaseMapper<NotifyDO> {

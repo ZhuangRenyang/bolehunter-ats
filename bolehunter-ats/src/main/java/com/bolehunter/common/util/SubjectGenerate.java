@@ -22,7 +22,7 @@ import freemarker.template.Configuration;
 import freemarker.template.Template;
 
 /**
- * @author Eval
+ * @author ZhuangRenyang
  * @create 2021/4/11 2:00
  */
 public class SubjectGenerate {

@@ -28,7 +28,7 @@ import java.io.ByteArrayInputStream;
 
 /**
  * 文件上传服务实现，上传到七牛
- * @author Eval
+ * @author ZhuangRenyang
  */
 @Slf4j
 public class QiniuUploader  {

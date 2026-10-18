@@ -21,7 +21,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
  *  Mapper 接口
  * </p>
  *
- * @author Eval
+ * @author ZhuangRenyang
  * @since 2022-04-04
  */
 public interface ApplicationMapper extends BaseMapper<ApplicationDO> {

@@ -21,7 +21,7 @@ import java.util.List;
  *  Mapper 接口
  * </p>
  *
- * @author Eval
+ * @author ZhuangRenyang
  * @since 2022-03-31
  */
 public interface FollowMapper extends BaseMapper<FollowDO> {

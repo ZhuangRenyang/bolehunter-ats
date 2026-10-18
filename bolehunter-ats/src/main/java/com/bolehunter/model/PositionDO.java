@@ -18,7 +18,7 @@ import lombok.experimental.Accessors;
 
 /**
  * 招聘职位实体
- * @author Eval
+ * @author ZhuangRenyang
  * @since 2022-04-02
  */
 @Data

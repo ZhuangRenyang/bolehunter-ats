@@ -21,7 +21,7 @@ import java.util.List;
  *  Mapper 接口
  * </p>
  *
- * @author Eval
+ * @author ZhuangRenyang
  * @since 2022-04-02
  */
 public interface FavorMapper extends BaseMapper<FavorDO> {

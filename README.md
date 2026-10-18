@@ -18,8 +18,6 @@
 >
 > **关键词**：招聘软件 / 猎头管理系统 / ATS / 候选人追踪 / recruitment software / headhunter CRM / recruiting / talent acquisition
 
-> 项目溯源：前身为 2022 年校企招聘网毕业设计（v1.0.1，Vue2 + Spring Boot 2 + Lin CMS），2026-10 起全面转型为猎头 ATS 并完成技术栈现代化（详见 `doc/开发记录日志.md`）。
-
 ## 定位
 
 **企业是客户，不是用户；HR 是联系人，不是登录账号。** 系统账号只发给猎头团队内部成员（管理员 / 顾问），企业与客户 HR 作为数据对象管理，客户反馈由顾问代录。完整客户 HR 门户、多租户 SaaS、AI 增强属商业版能力（Open Core 模式）。

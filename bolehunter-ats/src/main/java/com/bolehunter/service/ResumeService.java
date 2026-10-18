@@ -20,7 +20,7 @@ import com.bolehunter.vo.ResumeVO;
  *  服务类
  * </p>
  *
- * @author Eval
+ * @author ZhuangRenyang
  * @since 2022-03-14
  */
 public interface ResumeService extends IService<ResumeDO> {

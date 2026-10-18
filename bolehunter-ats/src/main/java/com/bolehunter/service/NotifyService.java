@@ -20,7 +20,7 @@ import java.util.List;
  *  服务类
  * </p>
  *
- * @author Eval
+ * @author ZhuangRenyang
  * @since 2022-04-16
  */
 public interface NotifyService extends IService<NotifyDO> {

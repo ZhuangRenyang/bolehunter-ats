@@ -14,7 +14,7 @@ import com.bolehunter.model.InterviewDO;
 import lombok.Data;
 
 /**
- * @author Eval
+ * @author ZhuangRenyang
  */
 @Data
 public class InterviewResultDO extends InterviewDO {

@@ -19,7 +19,7 @@ import org.apache.ibatis.annotations.Param;
  *  Mapper 接口
  * </p>
  *
- * @author Eval
+ * @author ZhuangRenyang
  * @since 2022-03-14
  */
 public interface ResumeMapper extends BaseMapper<ResumeDO> {

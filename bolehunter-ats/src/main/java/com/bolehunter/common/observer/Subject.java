@@ -16,7 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * @author Eval
+ * @author ZhuangRenyang
  * @create 2021/4/10 23:26
  *
  * 被观察者抽象类

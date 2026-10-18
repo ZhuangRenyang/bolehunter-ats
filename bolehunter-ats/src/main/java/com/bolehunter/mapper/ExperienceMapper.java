@@ -17,7 +17,7 @@ import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 
 /**
  * Mapper
- * @author Eval
+ * @author ZhuangRenyang
  * @date 2022-03-24
  */
 public interface ExperienceMapper extends BaseMapper<ExperienceDO> {

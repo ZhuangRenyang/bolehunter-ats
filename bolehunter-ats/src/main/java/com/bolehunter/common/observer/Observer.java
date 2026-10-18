@@ -11,7 +11,7 @@
 package com.bolehunter.common.observer;
 
 /**
- * @author Eval
+ * @author ZhuangRenyang
  * @create 2021/4/10 23:27
  *
  * 观察者基类

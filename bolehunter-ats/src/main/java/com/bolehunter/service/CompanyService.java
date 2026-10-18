@@ -21,7 +21,7 @@ import java.util.List;
  *  服务类
  * </p>
  *
- * @author Eval
+ * @author ZhuangRenyang
  * @since 2022-04-01
  */
 public interface CompanyService extends IService<CompanyDO> {

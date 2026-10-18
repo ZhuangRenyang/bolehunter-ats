@@ -20,7 +20,7 @@ import java.util.List;
  *  Mapper 接口
  * </p>
  *
- * @author Eval
+ * @author ZhuangRenyang
  * @since 2022-04-04
  */
 public interface CategoryMapper extends BaseMapper<CategoryDO> {

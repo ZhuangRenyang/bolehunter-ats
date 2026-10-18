@@ -22,7 +22,7 @@ import java.io.Serializable;
 
 /**
  * 教育经历实体
- * @author Eval
+ * @author ZhuangRenyang
  * @date 2022-03-24
  */
 @Data

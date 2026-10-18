@@ -15,7 +15,7 @@ import com.bolehunter.common.observer.Subject;
 import lombok.Data;
 
 /**
-* @author Eval
+* @author ZhuangRenyang
 *
 * 被观察者子类——作业帮公司
 */

@@ -15,7 +15,7 @@ import com.bolehunter.common.util.SingleUtil;
 import lombok.Data;
 
 /**
-* @author Eval
+* @author ZhuangRenyang
 *
 * 观察者子类——user用户
 */
