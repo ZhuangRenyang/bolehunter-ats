@@ -19,7 +19,6 @@ import com.bolehunter.core.annotation.PermissionModule;
 import com.bolehunter.common.mybatis.Page;
 import com.bolehunter.core.exception.NotFoundException;
 import com.bolehunter.common.util.PageUtil;
-import com.bolehunter.common.util.SubjectGenerate;
 import com.bolehunter.dto.company.CreateOrUpdateCompanyDTO;
 import com.bolehunter.service.CompanyService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -58,7 +57,6 @@ public class CompanyController {
     public CreatedVO create(@RequestBody @Validated CreateOrUpdateCompanyDTO validator) {
         companyService.createCompany(validator);
         // 新增企业成功，创建一个该企业对应的被观察者类
-        SubjectGenerate.generate(validator.getForeignName(), validator.getName());
         return new CreatedVO(3200);
     }
 

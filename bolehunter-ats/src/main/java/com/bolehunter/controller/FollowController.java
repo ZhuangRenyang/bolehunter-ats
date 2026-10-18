@@ -11,28 +11,36 @@
 package com.bolehunter.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
-import com.bolehunter.core.exception.NotFoundException;
 import com.bolehunter.core.annotation.GroupRequired;
 import com.bolehunter.core.annotation.PermissionMeta;
 import com.bolehunter.core.annotation.PermissionModule;
-import com.bolehunter.common.observer.Observer;
-import com.bolehunter.common.observer.Subject;
-import com.bolehunter.common.util.SingleUtil;
+import com.bolehunter.core.exception.NotFoundException;
 import com.bolehunter.model.CompanyDO;
-import com.bolehunter.service.CompanyService;
-import com.bolehunter.service.FollowService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.*;
 import com.bolehunter.model.FollowDO;
+import com.bolehunter.service.FollowService;
 import com.bolehunter.vo.CreatedVO;
 import com.bolehunter.vo.DeletedVO;
 import jakarta.validation.constraints.Positive;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
 import java.util.List;
 
 /**
-* @author ZhuangRenyang
-* @since 2022-03-31
-*/
+ * 关注公司（迭代 31 重构：纯 follow 表数据驱动。
+ * 原实现混合了观察者模式反射注册（SingleUtil 内存注册表 + 运行时生成类源码），
+ * backend 重启即丢失全部关注关系，且新公司需手动编译生成类——全部删除，
+ * 关注关系以 follow 表为唯一事实来源；职位发布通知见 PositionController）。
+ */
+@Slf4j
 @RestController
 @RequestMapping("/recruit/follow")
 @PermissionModule(value = "关注公司")
@@ -41,46 +49,8 @@ public class FollowController {
     @Autowired
     private FollowService followService;
 
-    @Autowired
-    private CompanyService companyService;
-
-    /**
-     * 反射创建对象
-     * （根据求职者的全限定类名反射创建观察者对象）
-     * @param className
-     * @return
-     */
-    public Observer createObserver(String className) {
-        try {
-            Class<?> cls = Class.forName("com.bolehunter.common.observer.user." + className);
-            Object o = cls.newInstance();
-            return (Observer)o;
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
-    /**
-     * 反射创建对象
-     * （根据企业的全限定类名反射创建被观察者对象）
-     * @param className
-     * @return
-     */
-    public Subject createSubject(String className) {
-        try {
-            Class<?> cls = Class.forName("com.bolehunter.common.observer.company." + className);
-            Object o = cls.newInstance();
-            return (Subject) o;
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
     /**
      * 添加关注
-     * @return
      */
     @PostMapping("/add")
     @GroupRequired
@@ -92,31 +62,13 @@ public class FollowController {
             // 已经关注过该公司
             throw new NotFoundException(24000);
         }
-        // 未关注过该公司，可以关注
+        // 未关注过该公司，写入 follow 表（职位发布时的通知按本表查询）
         followService.create(followDO);
-
-        // 新增关注成功后，将观察者添加到被观察者列表中来
-        // 1. 根据当前登录的求职者用户名反射创建对象
-        Observer o = createObserver(SingleUtil.userDO.getUsername());
-        // 2. 获取关注的公司外文名（根据关注的公司id查询公司信息）
-        CompanyDO company = companyService.getById(followDO.getCompanyId());
-        String foreignName = company.getForeignName();
-        if (!SingleUtil.map.containsKey(foreignName)) {
-            // 3. 根据关注的公司外文名反射创建对象
-            Subject subject = createSubject(foreignName);
-            // 4. 存放到SingleUtil里面的全局Map中
-            SingleUtil.map.put(foreignName, subject);
-        }
-        // 5. 添加到观察者列表中
-        SingleUtil.map.get(foreignName).addObserver(o);
         return new CreatedVO(1100);
     }
 
     /**
      * 根据用户id和公司id取消关注该公司
-     * @param userId
-     * @param companyId
-     * @return
      */
     @DeleteMapping("/cancel")
     @GroupRequired
@@ -128,27 +80,21 @@ public class FollowController {
 
     /**
      * 根据用户id查询该用户的所有关注
-     * @param userId
-     * @return
      */
     @GetMapping("/{userId}")
     @GroupRequired
     @PermissionMeta(value = "查看我的关注")
     public List<CompanyDO> getAllByUserId(@PathVariable(value = "userId") @Positive(message = "{id.positive}") Integer userId) {
-        List<CompanyDO> companyDOS = followService.getAllByUserId(userId);
-        return companyDOS;
+        return followService.getAllByUserId(userId);
     }
 
     /**
      * 根据用户id和公司id查询关注，避免重复关注同一公司
-     * @param userId
-     * @return
      */
     @GetMapping("/find")
     public FollowDO find(@RequestParam Integer userId, @RequestParam Integer companyId) {
         QueryWrapper<FollowDO> wrapper = new QueryWrapper<>();
         wrapper.eq("user_id", userId).eq("company_id", companyId);
-        FollowDO followDO = followService.getOne(wrapper);
-        return followDO;
+        return followService.getOne(wrapper, false);
     }
 }

@@ -12,7 +12,6 @@ package com.bolehunter.common.aop;
 
 import cn.hutool.core.util.StrUtil;
 import com.bolehunter.common.configuration.CodeMessageConfiguration;
-import com.bolehunter.common.util.SingleUtil;
 import com.bolehunter.model.LogDO;
 import com.bolehunter.service.LogService;
 import com.bolehunter.vo.UnifyResponseVO;

@@ -24,8 +24,6 @@ import com.bolehunter.core.token.DoubleJWT;
 import com.bolehunter.core.token.Tokens;
 import com.bolehunter.common.LocalUser;
 import com.bolehunter.common.util.LoginAttemptService;
-import com.bolehunter.common.util.ObserverGenerate;
-import com.bolehunter.common.util.SingleUtil;
 import com.bolehunter.dto.user.ChangePasswordDTO;
 import com.bolehunter.dto.user.LoginDTO;
 import com.bolehunter.dto.user.RegisterDTO;
@@ -75,8 +73,6 @@ public class UserController {
         CreatedVO result = userService.userDataCheck(validator);
         if(result.getCode()!=400){
             userService.createUser(validator);
-//            // 用户注册成功，创建一个该用户对应的观察者类
-            ObserverGenerate.generate(validator.getUsername());
         }
         return result;
     }
@@ -104,8 +100,6 @@ public class UserController {
             throw new ParameterException(10031);
         }
         loginAttemptService.clear(validator.getUsername(), ip);
-        // 保存当前登录用户到SingleUtil工具类中
-        SingleUtil.userDO = user;
         return jwt.generateTokens(user.getId());
     }
 

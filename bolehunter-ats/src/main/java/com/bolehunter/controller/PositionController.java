@@ -19,10 +19,11 @@ import com.bolehunter.core.annotation.PermissionMeta;
 import com.bolehunter.core.annotation.PermissionModule;
 import com.bolehunter.common.mybatis.Page;
 import com.bolehunter.common.util.PageUtil;
-import com.bolehunter.common.util.SingleUtil;
 import com.bolehunter.dto.position.CreateOrUpdatePositionDTO;
 import com.bolehunter.model.CompanyDO;
+import com.bolehunter.model.FollowDO;
 import com.bolehunter.model.NotifyDO;
+import com.bolehunter.model.UserDO;
 import com.bolehunter.model.result.PositionResultDO;
 import com.bolehunter.service.CompanyService;
 import com.bolehunter.service.NotifyService;
@@ -61,6 +62,12 @@ public class PositionController {
     @Autowired
     private NotifyService notifyService;
 
+    @Autowired
+    private com.bolehunter.service.FollowService followService;
+
+    @Autowired
+    private com.bolehunter.service.UserService userService;
+
     /**
      * 添加职位
      * @return
@@ -71,28 +78,26 @@ public class PositionController {
     @PermissionMeta(value = "发布职位")
     public CreatedVO create(@RequestBody @Validated CreateOrUpdatePositionDTO validator) {
         positionService.createPosition(validator);
-        // 职位发布成功后，通知对应的观察者
-        // 1. 获取到发布的职位所属的公司外文名
+        // 迭代 31：观察者模式重构——按 follow 表查询该公司的全部关注者，
+        // 经 NotifyService 逐个落库通知。原实现经 SingleUtil 内存注册表 +
+        // 反射类 + messageMap 中转（backend 重启即丢失全部关注关系，且运行时
+        // 生成 Java 源码需手动编译才能生效），observer 包已随本次重构删除。
         CompanyDO company = companyService.getById(validator.getCompanyId());
-        String foreignName = company.getForeignName();
-        // 判断全局map中是否存在对应的被观察者类
-        if (SingleUtil.map.containsKey(foreignName)) {
-            // 2. 通知所有观察者发布职位了
-            SingleUtil.map.get(foreignName).setState(1);
-            SingleUtil.map.get(foreignName).setPositionName(validator.getTitle());
-            SingleUtil.map.get(foreignName).notifyObservers();
-            // 3. 将工具类SingleUtil中的全局messageMap中的数据一一存放到通知表notify中
-            Set<String> set = SingleUtil.messageMap.keySet();
-            Iterator<String> iterator = set.iterator();
-            while (iterator.hasNext()) {
-                String key = iterator.next();
+        if (company != null) {
+            List<FollowDO> followers = followService.list(
+                new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<FollowDO>()
+                    .eq("company_id", company.getId()));
+            for (FollowDO follow : followers) {
+                UserDO user = userService.getById(follow.getUserId());
+                if (user == null) {
+                    continue;
+                }
                 NotifyDO notifyDO = new NotifyDO();
-                notifyDO.setUserName(key);
-                notifyDO.setContent(SingleUtil.messageMap.get(key));
+                notifyDO.setUserName(user.getUsername());
+                notifyDO.setContent("您关注的「" + company.getName() + "」发布了新职位——"
+                    + validator.getTitle() + "，快去看看吧！");
                 notifyService.create(notifyDO);
             }
-            // 4. 清空全局messageMap中的数据
-            SingleUtil.messageMap.clear();
         }
         return new CreatedVO(2100);
     }
@@ -170,28 +175,23 @@ public class PositionController {
             throw new NotFoundException(41000);
         }
         positionService.removeById(id);
-        // 职位下架成功后，通知对应的观察者
-        // 1. 获取到下架的职位所属的公司外文名
+        // 迭代 31：职位下架同样按 follow 表通知关注者（原观察者模式已重构删除）
         CompanyDO company = companyService.getById(positionDO.getCompanyId());
-        String foreignName = company.getForeignName();
-        // 判断全局map中是否存在对应的被观察者类
-        if (SingleUtil.map.containsKey(foreignName)) {
-            // 2. 通知所有观察者下架职位了
-            SingleUtil.map.get(foreignName).setState(0);
-            SingleUtil.map.get(foreignName).setPositionName(positionDO.getTitle());
-            SingleUtil.map.get(foreignName).notifyObservers();
-            // 3. 将工具类SingleUtil中的全局messageMap中的数据一一存放到通知表notify中
-            Set<String> set = SingleUtil.messageMap.keySet();
-            Iterator<String> iterator = set.iterator();
-            while (iterator.hasNext()) {
-                String key = iterator.next();
+        if (company != null) {
+            java.util.List<FollowDO> followers = followService.list(
+                new com.baomidou.mybatisplus.core.conditions.query.QueryWrapper<FollowDO>()
+                    .eq("company_id", company.getId()));
+            for (FollowDO follow : followers) {
+                UserDO user = userService.getById(follow.getUserId());
+                if (user == null) {
+                    continue;
+                }
                 NotifyDO notifyDO = new NotifyDO();
-                notifyDO.setUserName(key);
-                notifyDO.setContent(SingleUtil.messageMap.get(key));
+                notifyDO.setUserName(user.getUsername());
+                notifyDO.setContent("您关注的「" + company.getName() + "」下架了职位——"
+                    + positionDO.getTitle() + "。");
                 notifyService.create(notifyDO);
             }
-            // 4. 清空全局messageMap中的数据
-            SingleUtil.messageMap.clear();
         }
         return new DeletedVO(2000);
     }

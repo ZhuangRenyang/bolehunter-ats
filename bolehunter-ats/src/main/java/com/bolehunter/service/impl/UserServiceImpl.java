@@ -16,7 +16,6 @@ import com.alibaba.fastjson.JSONObject;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import com.bolehunter.common.observer.user.user;
 import com.bolehunter.service.*;
 import com.bolehunter.vo.CreatedVO;
 import com.bolehunter.core.exception.FailedException;
