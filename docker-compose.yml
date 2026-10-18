@@ -50,6 +50,8 @@ services:
   backend:
     image: ${BACKEND_IMAGE:-ghcr.io/zhuangrenyang/bolehunter-backend:latest}
     container_name: bolehunter-backend
+    labels:
+      com.centurylinklabs.watchtower.enable: "true"
     environment:
       SPRING_PROFILES_ACTIVE: prod
       DB_HOST: mysql
@@ -83,10 +85,23 @@ services:
   frontend:
     image: ${FRONTEND_IMAGE:-ghcr.io/zhuangrenyang/bolehunter-frontend:latest}
     container_name: bolehunter-frontend
+    labels:
+      com.centurylinklabs.watchtower.enable: "true"
     ports:
       - "${FRONTEND_PORT:-8080}:80"
     depends_on:
       - backend
+    restart: unless-stopped
+
+  # 看护塔（迭代 29）：后台一键升级只做 compose pull（拉镜像不触碰运行中的容器），
+  # 容器滚动重建由本服务检测镜像变化后自动完成——解决"backend 升级自己时
+  # 升级进程随容器被杀"的架构缺陷（退出码 1/序列中断）
+  watchtower:
+    image: ${WATCHTOWER_IMAGE:-containrrr/watchtower:latest}
+    container_name: bolehunter-watchtower
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: --interval 60 --label-enable --cleanup
     restart: unless-stopped
 
 volumes:

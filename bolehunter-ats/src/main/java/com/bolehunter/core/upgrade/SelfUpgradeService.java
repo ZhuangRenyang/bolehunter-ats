@@ -102,9 +102,12 @@ public class SelfUpgradeService {
         running.set(true);
         worker.submit(() -> {
             try {
+                // 迭代 29：只拉取镜像，不再执行 up -d——backend 容器内的升级进程会在
+                // up -d 重建自身时被终止（实测退出码 1/序列中断风险）。容器滚动重建
+                // 交给 watchtower sidecar（检测镜像变化后自动 recreate，约 1 分钟内完成）
                 runComposeCommand("docker compose pull");
-                runComposeCommand("docker compose up -d --remove-orphans");
-                appendLog("\n[upgrade] 升级命令执行完毕，若 backend 容器被重建，此 JVM 即将终止。\n");
+                appendLog("\n[upgrade] 最新镜像已拉取。容器将由 watchtower 自动滚动重启" +
+                    "（约 1 分钟内完成，期间服务短暂中断，页面将自动恢复）。\n");
             } catch (Exception e) {
                 appendLog("\n[upgrade] 升级失败：" + e.getMessage() + "\n");
                 log.error("[upgrade] 自升级失败", e);

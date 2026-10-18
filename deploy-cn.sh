@@ -111,6 +111,7 @@ if [ ! -f .env ]; then
     echo "FRONTEND_IMAGE=${ACR_BASE}/bolehunter-frontend:latest"
     echo "MYSQL_IMAGE=${ACR_BASE}/mysql:8.4"
     echo "REDIS_IMAGE=${ACR_BASE}/redis:7-alpine"
+    echo "WATCHTOWER_IMAGE=${ACR_BASE}/watchtower:latest"
   } > .env
   chmod 600 .env
   ok ".env 已生成（含随机密钥，权限 600，镜像走国内源）"

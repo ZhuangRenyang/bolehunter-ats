@@ -134,6 +134,7 @@ jobs:
           sync ghcr.io/zhuangrenyang/bolehunter-frontend:latest  "$REG/$NS/bolehunter-frontend:latest"
           sync mysql:8.4      "$REG/$NS/mysql:8.4"
           sync redis:7-alpine "$REG/$NS/redis:7-alpine"
+          sync containrrr/watchtower:latest "$REG/$NS/watchtower:latest"
           # backend 关键文件存在性校验（防 jar 丢失的启动崩溃循环）
           if ! docker run --rm --entrypoint sh "$REG/$NS/bolehunter-backend:latest" -c 'test -f /app/app.jar'; then
             echo "::error::同步后的 backend 镜像缺少 /app/app.jar"
