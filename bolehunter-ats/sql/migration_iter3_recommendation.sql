@@ -16,6 +16,8 @@
 -- 注意：本脚本只应执行一次。
 -- ============================================================================
 
+SET NAMES utf8mb4;
+
 USE bolehunter;
 
 DROP TABLE IF EXISTS `recommendation`;

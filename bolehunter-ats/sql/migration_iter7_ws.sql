@@ -1,6 +1,8 @@
 -- 迭代23：WebSocket 实时协作（路线图中期计划「WebSocket 聊天模块决策」→ 选择重建）
 -- 1) 清除老系统残留：chat 表为 2022 年旧求职项目的聊天表（utf8 字符集、timestamp 用 varchar、
 --    缺 read 状态字段），随一起 remove 的还有半成品 WebSocket 代码，全库已无引用。
+SET NAMES utf8mb4;
+
 DROP TABLE IF EXISTS `chat`;
 
 -- 2) 内部即时消息表（顾问之间的单聊）
