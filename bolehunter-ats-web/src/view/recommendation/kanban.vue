@@ -127,6 +127,8 @@
           <el-empty v-if="relatedTasks.length === 0" :description="t('kanban.tasksEmpty')" :image-size="50" />
         </el-tab-pane>
         <el-tab-pane :label="t('kanban.tabHistory')" name="history">
+          <!-- 迭代 29e：推荐溯源图谱（珍珠球舞台） -->
+          <StageTraceGraph v-if="stageHistory.length" :history="stageHistory" :current-stage="current ? current.current_stage : ''" />
           <el-timeline v-if="stageHistory.length" style="padding-left: 6px">
             <el-timeline-item v-for="h in stageHistory" :key="h.id" :timestamp="formatDateTime(h.create_time)">
               {{ h.from_stage ? stageLabel(h.from_stage) + ' → ' : t('kanban.historyCreate') }}{{ stageLabel(h.to_stage) }}
@@ -147,7 +149,7 @@
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, nextTick, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useI18n } from 'vue-i18n'
 import {
@@ -159,6 +161,8 @@ import { getClientOwners } from '@/api/client'
 import {
   createCommunication, createTask, doneTask, getCommunications, getRelatedTasks, getStageHistory,
 } from '@/api/workbench'
+import StageTraceGraph from './StageTraceGraph.vue'
+import { revealCascade } from '@/composables/motion'
 
 const { t } = useI18n()
 
@@ -191,6 +195,7 @@ const candidateOptions = ref([])
 const owners = ref([])
 const filters = reactive({ job_id: '', owner_id: '' })
 const dragging = ref(null)
+const firstLoad = ref(true)
 const dragStage = ref('')
 const createDialogVisible = ref(false)
 const createFormRef = ref()
@@ -244,6 +249,12 @@ async function getAll() {
     loading.value = false
   }
   await loadUrgentCounts()
+  // 迭代 29e：首次加载卡片级联落位（拖拽刷新不重复跑）
+  if (firstLoad.value) {
+    await nextTick()
+    revealCascade(document.querySelector('.kanban'), '.card')
+    firstLoad.value = false
+  }
 }
 
 /** 批量加载看板卡片的紧急任务数（今日到期/已逾期） */

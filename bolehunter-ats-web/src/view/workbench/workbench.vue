@@ -11,7 +11,7 @@
 <template>
   <div>
     <!-- 仪器化读数卡（迭代 29b 珍珠玻璃）：等宽大数字 + 单位上标 -->
-    <el-row :gutter="16">
+    <el-row :gutter="16" class="stat-row">
       <el-col :span="6">
         <div class="m-surface stat-card">
           <div class="metric-label">{{ t('workbench.metricClient') }}</div>
@@ -202,6 +202,7 @@ echarts.use([BarChart, FunnelChart, GridComponent, LegendComponent, TooltipCompo
 import { getWorkbenchSummary, getWorkbenchDashboard, exportClientConversionCsv, aiAskCandidate,
   getMyTasks, createTask, doneTask, deleteTask } from '@/api/workbench'
 import { get } from '@/api/request'
+import { countTo, revealCascade } from '@/composables/motion'
 import { getTheme } from '@/composables/appearance'
 
 const { t, locale } = useI18n()
@@ -285,6 +286,10 @@ async function getAll() {
   const overdue = res.overdueTasks || []
   tasks.value = [...overdue, ...today]
   await nextTick()
+  // 迭代 29e：读数滚动落定（'结'语态）+ 统计卡行级联进场
+  const vals = [summary.clientTotal || 0, summary.candidateTotal || 0, summary.recommendationTotal || 0, overdueCount.value]
+  document.querySelectorAll('.stat-card .metric-value').forEach((el, i) => countTo(el, vals[i]))
+  revealCascade(document.querySelector('.stat-row'), '.stat-card')
   renderFunnel()
   await loadDashboard()
 }
