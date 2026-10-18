@@ -1,0 +1,32 @@
+# Gitee 镜像自动同步（迭代 29）
+#
+# 作用：main 分支的每次 push（以及每日定时兜底）自动同步到 Gitee 镜像仓库，
+# 国内用户从 Gitee clone 到的代码与 GitHub 保持一致。
+#
+# 一次性配置（管理员）：
+# 1. Gitee → 设置 → 私人令牌 → 生成新令牌（勾选 projects 权限）
+# 2. GitHub 仓库 → Settings → Secrets and variables → Actions
+#    → New repository secret：名称 GITEE_TOKEN，值为该令牌
+# 配置完成后本工作流全自动，无需人工干预。
+name: Sync to Gitee
+
+on:
+  push:
+    branches: [main]
+  schedule:
+    - cron: '0 19 * * *' # 每天 UTC 19:00（北京时间 03:00）定时兜底
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    if: github.repository == 'ZhuangRenyang/bolehunter-ats'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Push to Gitee
+        run: |
+          git remote add gitee "https://oauth2:${{ secrets.GITEE_TOKEN }}@gitee.com/ZhuangRenyang/bolehunter-ats.git"
+          git push gitee main --force
+          git push gitee --tags --force

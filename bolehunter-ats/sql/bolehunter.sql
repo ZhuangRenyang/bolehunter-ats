@@ -119,19 +119,23 @@ INSERT INTO `category` VALUES (19, '学徒', '学徒', '没有具体的分类职
 INSERT INTO `category` VALUES (20, '医疗', '医疗', '没有具体的分类职位', '2021-05-02 00:35:49.622', '2021-05-02 00:35:49.622', NULL);
 
 -- ----------------------------
--- Table structure for chat
+-- Table structure for im_message（内部即时消息，迭代 23 重建；基线与最终态一致）
 -- ----------------------------
-DROP TABLE IF EXISTS `chat`;
-CREATE TABLE `chat`  (
-  `id` int(0) NOT NULL AUTO_INCREMENT COMMENT '主键id',
-  `content` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT '0' COMMENT '消息的内容',
-  `send_id` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT '0' COMMENT '发送者id',
-  `recv_id` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT '0' COMMENT '接收者id',
-  `self` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT '0' COMMENT '发送信息者的数据',
-  `target` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT '0' COMMENT '接收信息者的数据',
-  `timestamp` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT '0' COMMENT '发送信息的时间',
-  PRIMARY KEY (`id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 11 CHARACTER SET = utf8 COLLATE = utf8_general_ci ROW_FORMAT = Dynamic;
+DROP TABLE IF EXISTS `im_message`;
+CREATE TABLE `im_message`  (
+  `id`            int(0) NOT NULL AUTO_INCREMENT COMMENT '主键id',
+  `sender_id`     int(0) NOT NULL COMMENT '发送者用户id',
+  `receiver_id`   int(0) NOT NULL COMMENT '接收者用户id',
+  `content`       varchar(2000) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '消息正文',
+  `is_read`       tinyint(1) NOT NULL DEFAULT 0 COMMENT '是否已读：0未读 1已读',
+  `read_time`     datetime(3) NULL DEFAULT NULL COMMENT '已读时间',
+  `create_time`   datetime(3) NULL DEFAULT NULL COMMENT '创建时间',
+  `update_time`   datetime(3) NULL DEFAULT NULL COMMENT '更新时间',
+  `delete_time`   datetime(3) NULL DEFAULT NULL COMMENT '逻辑删除时间',
+  PRIMARY KEY (`id`) USING BTREE,
+  KEY `idx_im_conv` (`sender_id`, `receiver_id`, `create_time`) USING BTREE,
+  KEY `idx_im_recv_read` (`receiver_id`, `is_read`) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci COMMENT = '内部即时消息（单聊）' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
 -- Table structure for company
