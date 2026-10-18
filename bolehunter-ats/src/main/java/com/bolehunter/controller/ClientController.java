@@ -65,6 +65,9 @@ public class ClientController {
     private ClientService clientService;
 
     @Autowired
+    private com.bolehunter.service.DataChangeLogService dataChangeLogService;
+
+    @Autowired
     private ClientContactService clientContactService;
 
     /**
@@ -122,7 +125,12 @@ public class ClientController {
         if (company == null) {
             throw new NotFoundException(80140);
         }
+        // 迭代 32：更新前快照，更新后记录字段级变更
+        CompanyDO before = new CompanyDO();
+        org.springframework.beans.BeanUtils.copyProperties(company, before);
         clientService.updateClient(company, validator);
+        com.bolehunter.core.audit.DataChangeRecorder.record("company", id, before, company,
+            com.bolehunter.common.LocalUser.getLocalUser(), dataChangeLogService);
         return new UpdatedVO(8310);
     }
 

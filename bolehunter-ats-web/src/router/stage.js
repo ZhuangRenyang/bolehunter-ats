@@ -250,6 +250,17 @@ export const logStage = {
   permission: ['查询所有日志'],
 }
 
+export const loginLogStage = {
+  title: 'menu.loginLog',
+  type: 'view',
+  name: 'loginLog',
+  route: '/admin/login-log',
+  filePath: 'view/admin/login-log.vue',
+  inNav: true,
+  icon: 'Lock',
+  permission: ['查看登录日志'],
+}
+
 export const stageConfig = [
   workbenchStage,
   clientStage,
@@ -259,6 +270,7 @@ export const stageConfig = [
   positionStage,
   settingStage,
   logStage,
+  loginLogStage,
   clientDetailStage,
   candidateDetailStage,
 ]

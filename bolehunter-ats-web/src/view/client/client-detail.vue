@@ -18,7 +18,8 @@
           {{ dictMaps.client_status[company.client_status] || company.client_status }}
         </el-tag>
       </div>
-      <el-button type="primary" plain size="small" icon="Edit" @click="handleEditClient">{{ t('client.editClient') }}</el-button>
+      <el-button size="small" plain icon="Clock" @click="changeHistoryVisible = true">{{ t('changeLog.openBtn') }}</el-button>
+        <el-button type="primary" plain size="small" icon="Edit" @click="handleEditClient">{{ t('client.editClient') }}</el-button>
     </div>
 
     <div class="section" v-if="company">
@@ -145,6 +146,7 @@
       </template>
     </el-dialog>
   </el-card>
+  <DataChangeHistory v-model="changeHistoryVisible" table-name="company" :record-id="$route.params.id" />
 </template>
 
 <script setup>
@@ -152,6 +154,7 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useI18n } from 'vue-i18n'
+import DataChangeHistory from '@/components/DataChangeHistory.vue'
 import {
   createContact, deleteContact, getClientDetail, getClientOwners, updateClient, updateContact,
 } from '@/api/client'
@@ -160,6 +163,7 @@ import { getDictDataByType } from '@/api/setting'
 const { t } = useI18n()
 const route = useRoute()
 const loading = ref(false)
+const changeHistoryVisible = ref(false)
 const companyId = ref(null)
 const company = ref(null)
 const contacts = ref([])

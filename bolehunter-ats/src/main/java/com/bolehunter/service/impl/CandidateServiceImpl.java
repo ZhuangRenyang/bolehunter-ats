@@ -55,6 +55,9 @@ public class CandidateServiceImpl extends ServiceImpl<CandidateMapper, Candidate
     @Autowired
     private CandidateTagMapper candidateTagMapper;
 
+    @org.springframework.beans.factory.annotation.Autowired
+    private com.bolehunter.service.DataChangeLogService dataChangeLogService;
+
     @Autowired
     private TagMapper tagMapper;
 
@@ -143,6 +146,9 @@ public class CandidateServiceImpl extends ServiceImpl<CandidateMapper, Candidate
         if (candidate == null) {
             throw new NotFoundException(80170);
         }
+        // 迭代 32：更新前快照
+        CandidateDO before = new CandidateDO();
+        org.springframework.beans.BeanUtils.copyProperties(candidate, before);
         assertNotDuplicate(validator.getPhone(), validator.getEmail(), id);
         candidate.setName(validator.getName());
         candidate.setPhone(emptyToNull(validator.getPhone()));
@@ -160,7 +166,12 @@ public class CandidateServiceImpl extends ServiceImpl<CandidateMapper, Candidate
             candidate.setOwnerId(validator.getOwnerId());
         }
         candidate.setRemark(validator.getRemark());
+        // 迭代 32：字段级变更记录（before 快照在方法开头 getById 取得）
         boolean ok = this.updateById(candidate);
+        if (ok) {
+            com.bolehunter.core.audit.DataChangeRecorder.record("candidate", id, before, candidate,
+                com.bolehunter.common.LocalUser.getLocalUser(), dataChangeLogService);
+        }
         if (ok && validator.getTagIds() != null) {
             this.setTags(id, validator.getTagIds());
         }

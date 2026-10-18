@@ -24,6 +24,7 @@ import com.bolehunter.core.token.DoubleJWT;
 import com.bolehunter.core.token.Tokens;
 import com.bolehunter.common.LocalUser;
 import com.bolehunter.common.util.LoginAttemptService;
+import com.bolehunter.service.LoginLogService;
 import com.bolehunter.dto.user.ChangePasswordDTO;
 import com.bolehunter.dto.user.LoginDTO;
 import com.bolehunter.dto.user.RegisterDTO;
@@ -65,6 +66,9 @@ public class UserController {
     @Resource
     private LoginAttemptService loginAttemptService;
 
+    @Autowired
+    private LoginLogService loginLogService;
+
     /**
      * 用户注册
      */
@@ -82,13 +86,19 @@ public class UserController {
      */
     @PostMapping("/login")
     public Tokens login(@RequestBody @Validated LoginDTO validator, HttpServletRequest request) {
+        long start = System.currentTimeMillis();
         String ip = clientIp(request);
-        if (loginAttemptService.isBlocked(validator.getUsername(), ip)) {
+        String browser = LoginLogService.parseBrowser(request.getHeader("User-Agent"));
+        String os = LoginLogService.parseOs(request.getHeader("User-Agent"));
+        String username = validator.getUsername();
+        if (loginAttemptService.isBlocked(username, ip)) {
+            loginLogService.record(username, null, ip, browser, os, false, "已锁定（连续失败）", start);
             throw new ForbiddenException(4290);
         }
-        UserDO user = userService.getUserByUsername(validator.getUsername());
+        UserDO user = userService.getUserByUsername(username);
         if (user == null) {
-            loginAttemptService.recordFailure(validator.getUsername(), ip);
+            loginAttemptService.recordFailure(username, ip);
+            loginLogService.record(username, null, ip, browser, os, false, "用户不存在", start);
             throw new NotFoundException(10021);
         }
         boolean valid = userIdentityService.verifyUsernamePassword(
@@ -96,10 +106,12 @@ public class UserController {
                 user.getUsername(),
                 validator.getPassword());
         if (!valid) {
-            loginAttemptService.recordFailure(validator.getUsername(), ip);
+            loginAttemptService.recordFailure(username, ip);
+            loginLogService.record(username, user.getId(), ip, browser, os, false, "密码错误", start);
             throw new ParameterException(10031);
         }
-        loginAttemptService.clear(validator.getUsername(), ip);
+        loginAttemptService.clear(username, ip);
+        loginLogService.record(username, user.getId(), ip, browser, os, true, null, start);
         return jwt.generateTokens(user.getId());
     }
 

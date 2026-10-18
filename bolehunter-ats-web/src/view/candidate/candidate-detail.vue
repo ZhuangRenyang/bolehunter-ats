@@ -18,6 +18,7 @@
       </div>
       <div>
         <el-button size="small" plain icon="PriceTag" @click="openTagDialog">{{ t('candidate.editTags') }}</el-button>
+        <el-button size="small" plain icon="Clock" @click="changeHistoryVisible = true">{{ t('changeLog.openBtn') }}</el-button>
         <el-button type="primary" plain size="small" icon="Edit" @click="handleEdit">{{ t('common.edit') }}</el-button>
       </div>
     </div>
@@ -81,6 +82,7 @@
       </template>
     </el-dialog>
   </el-card>
+  <DataChangeHistory v-model="changeHistoryVisible" table-name="candidate" :record-id="$route.params.id" />
 </template>
 
 <script setup>
@@ -88,6 +90,7 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { useI18n } from 'vue-i18n'
+import DataChangeHistory from '@/components/DataChangeHistory.vue'
 import { getCandidateDetail, getTags, setCandidateTags, updateCandidate } from '@/api/candidate'
 import { getClientOwners } from '@/api/client'
 import { getDictDataByType } from '@/api/setting'
@@ -95,6 +98,7 @@ import { getDictDataByType } from '@/api/setting'
 const { t } = useI18n()
 const route = useRoute()
 const loading = ref(false)
+const changeHistoryVisible = ref(false)
 const candidateId = ref(null)
 const candidate = ref(null)
 const owners = ref([])
