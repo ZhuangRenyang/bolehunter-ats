@@ -10,12 +10,12 @@
  -->
 <template>
   <el-card shadow="never">
-    <div class="toolbar">
-      <span class="page-title">{{ t('candidate.title') }}</span>
+    <div class="page-header">
+      <h2>{{ t('candidate.title') }}</h2>
       <el-space>
-        <el-button plain size="small" icon="PriceTag" @click="tagDialogVisible = true">{{ t('candidate.tagMgmt') }}</el-button>
-        <el-button type="primary" plain size="small" icon="Upload" @click="importDialogVisible = true">{{ t('candidate.import') }}</el-button>
-        <el-button type="primary" plain size="small" icon="Plus" @click="handleCreate">{{ t('candidate.create') }}</el-button>
+        <el-button plain icon="PriceTag" @click="tagDialogVisible = true">{{ t('candidate.tagMgmt') }}</el-button>
+        <el-button type="primary" plain icon="Upload" @click="importDialogVisible = true">{{ t('candidate.import') }}</el-button>
+        <el-button type="primary" icon="Plus" @click="handleCreate">{{ t('candidate.create') }}</el-button>
       </el-space>
     </div>
     <div class="filters">

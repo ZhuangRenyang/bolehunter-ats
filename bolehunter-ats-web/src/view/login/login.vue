@@ -10,8 +10,9 @@
 -->
 <template>
   <div class="login-shell">
-    <!-- 左：深色画布（神经网络节点 Canvas 于迭代 29e 接入，本期静态渐变 + 网格 + 服务铭牌） -->
+    <!-- 左：深色画布（神经网络节点脉冲，迭代 29c） -->
     <div class="login-canvas">
+      <canvas ref="netCanvas" class="net-canvas"></canvas>
       <div class="brand-line">
         <div class="brand-logo">伯</div>
         <span>BoleHunter 伯乐猎</span>
@@ -61,18 +62,33 @@
 </template>
 
 <script setup>
-import { computed, reactive, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { useI18n } from 'vue-i18n'
 import { saveTokens } from '@/api/request'
 import { login } from '@/api/user'
 import { useUserStore } from '@/stores/user'
+// 神经网络背景（迭代 29c）：节点呼吸 + 连线脉冲，页面隐藏自动暂停
+import { createNeuralNet } from '@/composables/neural'
 
 const { t } = useI18n()
 const router = useRouter()
 const route = useRoute()
 const userStore = useUserStore()
+
+const netCanvas = ref()
+let neural = null
+onMounted(() => {
+  if (netCanvas.value) {
+    neural = createNeuralNet(netCanvas.value, {
+      colors: { pulse: '#9db9f7' },
+    })
+  }
+})
+onBeforeUnmount(() => {
+  if (neural) neural.destroy()
+})
 
 const formRef = ref()
 const loading = ref(false)

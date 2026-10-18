@@ -10,9 +10,9 @@
  -->
 <template>
   <el-card shadow="never">
-    <div class="toolbar">
-      <span class="page-title">{{ t('client.title') }}</span>
-      <el-button type="primary" plain size="small" icon="Plus" @click="handleCreate">{{ t('client.create') }}</el-button>
+    <div class="page-header">
+      <h2>{{ t('client.title') }}</h2>
+      <el-button type="primary" icon="Plus" @click="handleCreate">{{ t('client.create') }}</el-button>
     </div>
     <div class="filters">
       <el-input v-model="filters.keyword" :placeholder="t('client.filterKeyword')" clearable style="width: 180px" @keyup.enter="handleSearch" />

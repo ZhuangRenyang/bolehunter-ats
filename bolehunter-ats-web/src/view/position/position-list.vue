@@ -9,6 +9,9 @@
   <div class="page">
     <div class="page-title">{{ t('position.title') }}</div>
 
+    <div class="page-header">
+      <h2>{{ t('menu.positionList') }}</h2>
+    </div>
     <el-card shadow="never">
       <div class="search-bar">
         <el-input v-model="keyword" :placeholder="t('position.searchPlaceholder')" clearable style="width: 220px" @keyup.enter="loadPage(0)" />
