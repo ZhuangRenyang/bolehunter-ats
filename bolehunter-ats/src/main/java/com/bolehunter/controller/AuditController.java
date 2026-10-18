@@ -41,6 +41,12 @@ public class AuditController {
     @Autowired
     private DataChangeLogService dataChangeLogService;
 
+    @Autowired
+    private com.bolehunter.core.monitor.HeartbeatService heartbeatService;
+
+    @Autowired
+    private com.bolehunter.service.FileCenterService fileCenterService;
+
     /**
      * 登录日志分页（用户名模糊筛选 + 结果筛选）
      */
@@ -66,6 +72,26 @@ public class AuditController {
         wrapper.orderByDesc("create_time");
         IPage<LoginLogDO> iPage = loginLogService.page(new Page<>(page, count), wrapper);
         return iPage;
+    }
+
+    /**
+     * 服务器心跳快照（迭代 35）：最近 1 小时 CPU/内存/JVM 曲线点
+     */
+    @GetMapping("/heartbeat")
+    @AdminRequired
+    @PermissionMeta(value = "查看服务器心跳")
+    public java.util.List<java.util.Map<String, Object>> heartbeat() {
+        return heartbeatService.snapshot();
+    }
+
+    /**
+     * 文件中心（迭代 35）：已上传简历文件的候选人清单
+     */
+    @GetMapping("/files")
+    @AdminRequired
+    @PermissionMeta(value = "查看文件中心")
+    public java.util.List<java.util.Map<String, Object>> files() {
+        return fileCenterService.listResumeFiles();
     }
 
     /**

@@ -122,9 +122,9 @@
             <el-button type="primary" size="small" plain icon="Plus" @click="confirmFollowTask">{{ t('kanban.followTaskBtn') }}</el-button>
           </div>
           <div v-for="task in relatedTasks" :key="task.id" class="task-line">
-            <span class="task-line-title" :class="{ done: task.status === 1 }">{{ task.title }}</span>
-            <span class="task-line-meta">{{ formatDateTime(task.due_time) }} · {{ task.status === 1 ? t('kanban.taskDone') : t('kanban.taskTodo') }}</span>
-            <el-button v-if="task.status === 0" size="small" type="success" plain @click="handleDoneTask(task)">{{ t('workbench.done') }}</el-button>
+            <span class="task-line-title" :class="{ done: task.status === TASK_STATUS.DONE }">{{ task.title }}</span>
+            <span class="task-line-meta">{{ formatDateTime(task.due_time) }} · {{ task.status === TASK_STATUS.DONE ? t('kanban.taskDone') : t('kanban.taskTodo') }}</span>
+            <el-button v-if="task.status === TASK_STATUS.TODO" size="small" type="success" plain @click="handleDoneTask(task)">{{ t('workbench.done') }}</el-button>
           </div>
           <el-empty v-if="relatedTasks.length === 0" :description="t('kanban.tasksEmpty')" :image-size="50" />
         </el-tab-pane>
@@ -154,6 +154,7 @@
 import { computed, nextTick, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useI18n } from 'vue-i18n'
+import { TASK_STATUS } from '@/constants'
 import {
   STAGES, createRecommendation, generateConfirmToken, getJobOptions, getKanban, getUrgentTaskCounts,
   updateRecommendationFeedback, updateRecommendationStage,

@@ -15,3 +15,5 @@ import { get } from './request'
  */
 export const getLoginLogPage = params => get('recruit/admin/audit/login-log/page', params)
 export const getChangeLog = (tableName, recordId) => get('recruit/admin/audit/change-log/list', { tableName, recordId })
+export const getHeartbeat = () => get('recruit/admin/audit/heartbeat')
+export const getFiles = () => get('recruit/admin/audit/files')
