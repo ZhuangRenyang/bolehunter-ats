@@ -133,6 +133,15 @@ export const settingStage = {
       icon: 'Open',
       permission: ['查看系统升级状态'],
     },
+    {
+      title: 'menu.changelog',
+      type: 'view',
+      name: 'changelog',
+      route: '/setting/changelog',
+      filePath: 'view/setting/changelog.vue',
+      inNav: true,
+      icon: 'Collection',
+    },
   ],
 }
 

@@ -58,6 +58,13 @@
           <span class="current">{{ route.meta.title ? t(route.meta.title) : '' }}</span>
         </div>
         <div class="topbar-actions">
+          <!-- 帮助与反馈（迭代 34） -->
+          <button v-if="userStore.user?.username" class="topbar-icon-btn" :title="t('help.title')" @click="helpVisible = true">
+            <el-icon><QuestionFilled /></el-icon>
+          </button>
+          <button v-if="userStore.user?.username" class="topbar-icon-btn" :title="t('feedback.entry')" @click="feedbackVisible = true">
+            <el-icon><ChatDotRound /></el-icon>
+          </button>
           <!-- 通知中心 -->
           <el-badge v-if="userStore.user?.username" :value="unreadCount" :hidden="unreadCount === 0" :max="99">
             <button class="topbar-icon-btn" :title="t('layout.noticeCenter')" @click="noticeDrawer = true">
@@ -138,12 +145,16 @@
   </el-drawer>
   <!-- 内部消息（迭代23） -->
   <ImDrawer v-model="imDrawer" />
+  <HelpPanel v-model="helpVisible" />
+  <FeedbackDialog v-model="feedbackVisible" />
 </template>
 
 <script setup>
 import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import HelpPanel from '@/components/HelpPanel.vue'
+import FeedbackDialog from '@/components/FeedbackDialog.vue'
 import WatermarkOverlay from '@/components/WatermarkOverlay.vue'
 import { useUserStore } from '@/stores/user'
 // getToken 此前被使用却未导入，导致 mounted 里抛 ReferenceError —— 通知从未真正加载过
@@ -191,6 +202,8 @@ function switchLocale(value) {
 const noticeDrawer = ref(false)
 const notices = ref([])
 const unreadCount = ref(0)
+const helpVisible = ref(false)
+const feedbackVisible = ref(false)
 
 /* ===== 内部消息（迭代23）===== */
 const imDrawer = ref(false)
