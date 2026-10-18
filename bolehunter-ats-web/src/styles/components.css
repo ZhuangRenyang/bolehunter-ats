@@ -137,6 +137,10 @@
 
 /* ---------- 菜单（侧栏导航轨内） ---------- */
 .el-menu {
+  /* 迭代 31 修复：EP 子菜单嵌套规则的激活色（--el-menu-active-color 默认=主色蓝）
+     会压过我们的 color:#fff，导致激活菜单项"蓝字蓝底"不可见（文字像被屏蔽）。
+     在 el-menu 作用域把激活色定为白色，并显式覆盖子菜单内激活项颜色 */
+  --el-menu-active-color: #ffffff;
   border-right: none;
   background: transparent;
 }
@@ -158,7 +162,16 @@
   color: #fff;
   font-weight: 600;
 }
+/* 子菜单内的激活项：EP 嵌套选择器具体性更高，需同级压制 */
+.el-sub-menu .el-menu-item.is-active,
+.el-menu--inline .el-menu-item.is-active {
+  color: #fff;
+}
 .el-menu-item .el-icon,
 .el-sub-menu__title .el-icon {
   color: inherit;
+}
+/* 子菜单内激活项的图标同步白色 */
+.el-sub-menu .el-menu-item.is-active .el-icon {
+  color: #fff;
 }
