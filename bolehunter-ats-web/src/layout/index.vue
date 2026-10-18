@@ -9,6 +9,7 @@
  * 以任何网络服务形式提供本程序（含 SaaS 托管）同样必须遵守 AGPL-3.0 开源。
  -->
 <template>
+  <WatermarkOverlay />
   <div class="shell">
     <!-- 左：导航轨（820px 以下转抽屉） -->
     <aside class="shell-rail m-rail" :class="{ 'is-open': railOpen }">
@@ -143,6 +144,7 @@
 import { computed, defineAsyncComponent, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import WatermarkOverlay from '@/components/WatermarkOverlay.vue'
 import { useUserStore } from '@/stores/user'
 // getToken 此前被使用却未导入，导致 mounted 里抛 ReferenceError —— 通知从未真正加载过
 import { clearTokens, get, getToken, TOKEN_ACCESS, TOKEN_REFRESH } from '@/api/request'

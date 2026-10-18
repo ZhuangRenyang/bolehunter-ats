@@ -95,6 +95,11 @@ public class RecommendationServiceImpl extends ServiceImpl<RecommendationMapper,
                 .build();
         boolean saved = this.save(recommendation);
         if (saved) {
+            // 迭代 33：推荐单号 REC-yyyyMMdd-id（id 全局唯一保证单号唯一，日期为创建标识）
+            String orderNo = "REC-" + java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd")
+                .format(java.time.LocalDate.now()) + "-" + String.format("%04d", recommendation.getId());
+            recommendation.setOrderNo(orderNo);
+            this.updateById(recommendation);
             recordHistory(recommendation.getId(), null, "PENDING", null, currentUserId);
         }
         return saved;

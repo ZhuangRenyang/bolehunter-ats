@@ -61,6 +61,9 @@ public class CandidateController {
     private CandidateService candidateService;
 
     @Autowired
+    private com.bolehunter.core.audit.DataMaskingService dataMaskingService;
+
+    @Autowired
     private CandidateExcelHelper candidateExcelHelper;
 
     /**
@@ -127,6 +130,13 @@ public class CandidateController {
             @Min(value = 0, message = "{page.number.min}") Integer page) {
         IPage<CandidateDO> iPage = candidateService.getCandidatePage(keyword, education, city,
                 ownerId, source, tagIds, page, count);
+        // 迭代 33：数据脱敏（feature_flag data_masking 开启且操作人非管理员时，列表手机号/邮箱脱敏）
+        if (dataMaskingService.shouldMask(com.bolehunter.common.LocalUser.getLocalUser())) {
+            iPage.getRecords().forEach(c -> {
+                c.setPhone(com.bolehunter.core.audit.DataMaskingService.maskPhone(c.getPhone()));
+                c.setEmail(com.bolehunter.core.audit.DataMaskingService.maskEmail(c.getEmail()));
+            });
+        }
         return PageUtil.build(iPage);
     }
 

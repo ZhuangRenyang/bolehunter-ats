@@ -291,6 +291,8 @@ export default {
     tabComm: '沟通记录',
     tabTasks: '跟进任务',
     tabHistory: '流转历史',
+    fieldOrderNo: '推荐单号',
+    fieldOrderNo: '推荐单号',
     commPlaceholder: '记录与客户 HR 的沟通内容',
     commAdd: '添加',
     commType: {

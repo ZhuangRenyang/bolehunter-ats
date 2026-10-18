@@ -34,6 +34,9 @@ public class RecommendationDO extends BaseModel implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
+    /** 推荐单号（REC-yyyyMMdd-id，迭代 33） */
+    private String orderNo;
+
     /**
      * 职位id
      */

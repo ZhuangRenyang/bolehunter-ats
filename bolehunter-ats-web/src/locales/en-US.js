@@ -283,6 +283,8 @@ export default {
     tabComm: 'Communications',
     tabTasks: 'Follow-up Tasks',
     tabHistory: 'Stage History',
+    fieldOrderNo: 'Order No.',
+    fieldOrderNo: 'Order No.',
     commPlaceholder: 'Record the communication with client HR',
     commAdd: 'Add',
     commType: {

@@ -86,6 +86,8 @@
         <el-form-item :label="t('kanban.fieldCandidate')">{{ current.candidate_name || '#' + current.candidate_id }}
           （{{ current.candidate_company || '—' }} · {{ current.candidate_position || '—' }}）</el-form-item>
         <el-form-item :label="t('kanban.fieldJob')">{{ current.job_title || '—' }}</el-form-item>
+        <el-form-item :label="t('kanban.fieldOrderNo')"><span class="mono">{{ current.order_no || '—' }}</span></el-form-item>
+        <el-form-item :label="t('kanban.fieldOrderNo')"><span class="mono">{{ current.order_no || '—' }}</span></el-form-item>
         <el-form-item :label="t('kanban.fieldClient')">{{ current.client_name || '—' }}</el-form-item>
         <el-form-item :label="t('common.owner')">{{ current.owner_name || t('common.notAssigned') }}</el-form-item>
         <el-form-item :label="t('kanban.fieldStage')">
