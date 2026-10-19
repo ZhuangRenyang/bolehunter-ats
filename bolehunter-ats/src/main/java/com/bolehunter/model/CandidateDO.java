@@ -84,6 +84,9 @@ public class CandidateDO extends BaseModel implements Serializable {
      */
     private String resumeFile;
 
+    /** 审核状态：0 待审核（自助提交） / 1 已入库（迭代 36） */
+    private Integer auditStatus;
+
     /**
      * 简历全文文本（AI 检索语料，迭代20）
      */

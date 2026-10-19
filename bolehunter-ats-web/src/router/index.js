@@ -37,6 +37,13 @@ const routes = [
     meta: { public: true, title: 'menu.confirm' },
   },
   {
+    // 候选人自助信息收集页（免登录，迭代 36）
+    path: '/collect/:token',
+    name: 'collectForm',
+    component: () => import('@/view/collect/collect-form.vue'),
+    meta: { public: true, title: 'menu.collect' },
+  },
+  {
     path: '/',
     component: () => import('@/layout/index.vue'), // 懒加载布局：router 求值图不再包含 layout 及其依赖链
     redirect: '/workbench',

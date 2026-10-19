@@ -13,6 +13,7 @@
     <div class="page-header">
       <h2>{{ t('candidate.title') }}</h2>
       <el-space>
+        <el-button plain icon="Link" @click="openCollectDialog">{{ t('collect.linkBtn') }}</el-button>
         <el-button plain icon="PriceTag" @click="tagDialogVisible = true">{{ t('candidate.tagMgmt') }}</el-button>
         <el-button type="primary" plain icon="Upload" @click="importDialogVisible = true">{{ t('candidate.import') }}</el-button>
         <el-button type="primary" icon="Plus" @click="handleCreate">{{ t('candidate.create') }}</el-button>
@@ -59,8 +60,15 @@
       <el-table-column :label="t('common.owner')" width="100" align="center">
         <template #default="scope">{{ ownerMap[scope.row.owner_id] || t('common.notAssigned') }}</template>
       </el-table-column>
-      <el-table-column :label="t('common.operation')" width="210" align="center">
+      <el-table-column :label="t('collect.auditCol')" width="92" align="center">
         <template #default="scope">
+          <el-tag v-if="scope.row.audit_status === 0" size="small" type="warning">{{ t('collect.pendingTag') }}</el-tag>
+          <span v-else style="color: var(--ink-faint)">—</span>
+        </template>
+      </el-table-column>
+      <el-table-column :label="t('common.operation')" width="280" align="center">
+        <template #default="scope">
+          <el-button v-if="scope.row.audit_status === 0" size="small" type="success" plain @click="handleAudit(scope.row)">{{ t('collect.auditBtn') }}</el-button>
           <el-button size="small" type="primary" plain @click="handleDetail(scope.row)">{{ t('common.detail') }}</el-button>
           <el-button size="small" type="primary" plain @click="handleEdit(scope.row)">{{ t('common.edit') }}</el-button>
           <el-button size="small" type="danger" plain @click="handleDeleteCandidate(scope.row)">{{ t('common.delete') }}</el-button>
@@ -191,6 +199,39 @@
       </el-table>
     </el-dialog>
   </el-card>
+    <!-- 收集链接管理（迭代 36） -->
+    <el-dialog v-model="collectVisible" :title="t('collect.linkTitle')" width="680px">
+      <div class="collect-create">
+        <el-input v-model="collectTitle" :placeholder="t('collect.titlePlaceholder')" style="width: 320px" maxlength="100" />
+        <el-button type="primary" plain icon="Link" :loading="creating" @click="createCollectLink">{{ t('collect.createBtn') }}</el-button>
+      </div>
+      <el-table :data="collectLinks" size="small" max-height="300" v-loading="collectLoading">
+        <el-table-column prop="title" :label="t('collect.colTitle')" min-width="120" show-overflow-tooltip />
+        <el-table-column :label="t('collect.colLink')" min-width="220">
+          <template #default="scope">
+            <a class="collect-link" :href="`${origin}/collect/${scope.row.token}`" target="_blank" rel="noopener">
+              {{ origin }}/collect/{{ scope.row.token.slice(0, 12) }}…
+            </a>
+          </template>
+        </el-table-column>
+        <el-table-column :label="t('common.status')" width="90" align="center">
+          <template #default="scope">
+            <el-tag size="small" :type="scope.row.status === 1 ? 'success' : 'info'">
+              {{ scope.row.status === 1 ? t('collect.statusOpen') : t('collect.statusClosed') }}
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column :label="t('common.operation')" width="170" align="center">
+          <template #default="scope">
+            <el-button size="small" type="primary" plain @click="copyCollectLink(scope.row)">{{ t('collect.copy') }}</el-button>
+            <el-button size="small" :type="scope.row.status === 1 ? 'danger' : 'success'" plain @click="toggleCollectLink(scope.row)">
+              {{ scope.row.status === 1 ? t('collect.close') : t('collect.reopen') }}
+            </el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+      <p class="collect-tip">{{ t('collect.dialogTip') }}</p>
+    </el-dialog>
 </template>
 
 <script setup>
@@ -198,6 +239,7 @@ import { computed, onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useI18n } from 'vue-i18n'
+import { getCollectLinks, createCollectLink, toggleCollectLink, auditCandidate } from '@/api/audit'
 import {
   createCandidate, createTag, deleteCandidate, deleteTag, duplicateCheck, getCandidatePage,
   getTags, importExcel, importResume, updateCandidate, updateTag,
@@ -270,6 +312,74 @@ function handleReset() {
 async function handlePageChange(val) {
   currentPage.value = val
   await getAll()
+}
+
+// ===== 候选人自助收集（迭代 36） =====
+const collectVisible = ref(false)
+const collectLoading = ref(false)
+const creating = ref(false)
+const collectLinks = ref([])
+const collectTitle = ref('')
+const origin = window.location.origin
+
+function openCollectDialog() {
+  collectVisible.value = true
+  loadCollectLinks()
+}
+
+async function loadCollectLinks() {
+  collectLoading.value = true
+  try {
+    collectLinks.value = await getCollectLinks()
+  } catch (e) {
+    collectLinks.value = []
+  } finally {
+    collectLoading.value = false
+  }
+}
+
+async function createCollectLink() {
+  creating.value = true
+  try {
+    await createCollectLink(collectTitle.value.trim())
+    ElMessage.success(t('collect.createOk'))
+    collectTitle.value = ''
+    await loadCollectLinks()
+  } catch (e) {
+    // 请求层统一提示
+  } finally {
+    creating.value = false
+  }
+}
+
+async function toggleCollectLink(row) {
+  try {
+    await toggleCollectLink(row.id, row.status === 1 ? 0 : 1)
+    await loadCollectLinks()
+  } catch (e) {
+    // 请求层统一提示
+  }
+}
+
+async function copyCollectLink(row) {
+  const link = `${origin}/collect/${row.token}`
+  try {
+    await navigator.clipboard.writeText(link)
+    ElMessage.success(t('collect.copyOk'))
+  } catch (e) {
+    ElMessage.warning(link)
+  }
+}
+
+async function handleAudit(row) {
+  try {
+    await ElMessageBox.confirm(t('collect.auditConfirm', { name: row.name }), t('common.tip'), { type: 'warning' })
+    await auditCandidate(row.id, 1)
+    ElMessage.success(t('collect.auditOk'))
+    await loadPage(currentPage.value)
+  } catch (e) {
+    // 取消或请求层提示
+  }
 }
 
 function handleDetail(row) {
@@ -478,5 +588,21 @@ onMounted(async () => {
   display: flex;
   justify-content: space-between;
   margin-bottom: 10px;
+}
+.collect-create {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.collect-link {
+  color: var(--blue);
+  text-decoration: none;
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+.collect-tip {
+  font-size: 12px;
+  color: var(--ink-faint);
+  margin: 10px 0 0;
 }
 </style>

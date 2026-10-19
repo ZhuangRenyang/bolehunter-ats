@@ -47,6 +47,7 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Positive;
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 /**
  * 候选人管理（带认证的 REST API：读接口需登录，写接口需权限）
@@ -138,6 +139,26 @@ public class CandidateController {
             });
         }
         return PageUtil.build(iPage);
+    }
+
+    /**
+     * 审核自助提交的候选人（迭代 36）：0 待审核 → 1 已入库
+     */
+    @Logger(template = "审核候选人")
+    @PutMapping("/{id}/audit")
+    @PermissionMeta(value = "审核候选人")
+    public UpdatedVO audit(@PathVariable @Positive(message = "{id.positive}") Integer id,
+                           @RequestBody Map<String, Object> body) {
+        CandidateDO candidate = candidateService.getById(id);
+        if (candidate == null) {
+            throw new NotFoundException(80170);
+        }
+        Object status = body.get("auditStatus");
+        if (status != null) {
+            candidate.setAuditStatus(Integer.valueOf(String.valueOf(status)));
+            candidateService.updateById(candidate);
+        }
+        return new UpdatedVO();
     }
 
     /**
