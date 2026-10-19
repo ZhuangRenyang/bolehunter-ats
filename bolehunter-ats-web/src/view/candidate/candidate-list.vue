@@ -203,7 +203,7 @@
     <el-dialog v-model="collectVisible" :title="t('collect.linkTitle')" width="680px">
       <div class="collect-create">
         <el-input v-model="collectTitle" :placeholder="t('collect.titlePlaceholder')" style="width: 320px" maxlength="100" />
-        <el-button type="primary" plain icon="Link" :loading="creating" @click="createCollectLink">{{ t('collect.createBtn') }}</el-button>
+        <el-button type="primary" plain icon="Link" :loading="creating" @click="handleCreateCollectLink">{{ t('collect.createBtn') }}</el-button>
       </div>
       <el-table :data="collectLinks" size="small" max-height="300" v-loading="collectLoading">
         <el-table-column prop="title" :label="t('collect.colTitle')" min-width="120" show-overflow-tooltip />
@@ -224,7 +224,7 @@
         <el-table-column :label="t('common.operation')" width="170" align="center">
           <template #default="scope">
             <el-button size="small" type="primary" plain @click="copyCollectLink(scope.row)">{{ t('collect.copy') }}</el-button>
-            <el-button size="small" :type="scope.row.status === 1 ? 'danger' : 'success'" plain @click="toggleCollectLink(scope.row)">
+            <el-button size="small" :type="scope.row.status === 1 ? 'danger' : 'success'" plain @click="handleToggleCollectLink(scope.row)">
               {{ scope.row.status === 1 ? t('collect.close') : t('collect.reopen') }}
             </el-button>
           </template>
@@ -338,7 +338,7 @@ async function loadCollectLinks() {
   }
 }
 
-async function createCollectLink() {
+async function handleCreateCollectLink() {
   creating.value = true
   try {
     await createCollectLink(collectTitle.value.trim())
@@ -352,7 +352,7 @@ async function createCollectLink() {
   }
 }
 
-async function toggleCollectLink(row) {
+async function handleToggleCollectLink(row) {
   try {
     await toggleCollectLink(row.id, row.status === 1 ? 0 : 1)
     await loadCollectLinks()
