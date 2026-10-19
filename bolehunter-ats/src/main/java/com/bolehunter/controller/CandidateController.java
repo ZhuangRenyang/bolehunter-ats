@@ -27,6 +27,7 @@ import com.bolehunter.vo.UpdatedVO;
 import com.bolehunter.core.annotation.LoginRequired;
 import com.bolehunter.core.annotation.Logger;
 import com.bolehunter.core.annotation.PermissionMeta;
+import com.bolehunter.core.exception.NotFoundException;
 import com.bolehunter.core.annotation.PermissionModule;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;

@@ -32,7 +32,8 @@ public class DataMaskingService {
 
     /** 当前操作人是否应看到脱敏数据：开关开启 且 操作人非 ADMIN */
     public boolean shouldMask(UserDO operator) {
-        if (operator != null && Boolean.TRUE.equals(operator.getAdmin())) {
+        // ADMIN（含 root）始终全量；开关开启时其余角色脱敏
+        if (operator != null && "ADMIN".equals(operator.getUserType())) {
             return false;
         }
         return isFlagEnabled("data_masking");

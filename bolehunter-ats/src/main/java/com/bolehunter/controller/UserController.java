@@ -23,6 +23,7 @@ import com.bolehunter.core.annotation.*;
 import com.bolehunter.core.token.DoubleJWT;
 import com.bolehunter.core.token.Tokens;
 import com.bolehunter.common.LocalUser;
+import org.springframework.beans.factory.annotation.Autowired;
 import com.bolehunter.common.util.LoginAttemptService;
 import com.bolehunter.service.LoginLogService;
 import com.bolehunter.dto.user.ChangePasswordDTO;
