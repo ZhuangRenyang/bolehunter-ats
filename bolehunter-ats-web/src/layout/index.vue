@@ -58,11 +58,11 @@
           <span class="current">{{ route.meta.title ? t(route.meta.title) : '' }}</span>
         </div>
         <div class="topbar-actions">
-          <!-- 帮助与反馈（迭代 34） -->
-          <button v-if="userStore.user?.username" class="topbar-icon-btn" :title="t('help.title')" @click="helpVisible = true">
+          <!-- 帮助与反馈（迭代 34；窄屏隐藏，避免顶栏溢出） -->
+          <button v-if="userStore.user?.username" class="topbar-icon-btn hide-sm" :title="t('help.title')" @click="helpVisible = true">
             <el-icon><QuestionFilled /></el-icon>
           </button>
-          <button v-if="userStore.user?.username" class="topbar-icon-btn" :title="t('feedback.entry')" @click="feedbackVisible = true">
+          <button v-if="userStore.user?.username" class="topbar-icon-btn hide-sm" :title="t('feedback.entry')" @click="feedbackVisible = true">
             <el-icon><ChatDotRound /></el-icon>
           </button>
           <!-- 通知中心 -->
@@ -94,7 +94,7 @@
           </el-dropdown>
           <!-- 语言切换（迭代 27 国际化骨架） -->
           <el-dropdown v-if="userStore.user?.username" @command="switchLocale">
-            <button class="topbar-icon-btn" :title="currentLocaleLabel">
+            <button class="topbar-icon-btn topbar-locale" :title="currentLocaleLabel">
               {{ currentLocaleLabel }}
             </button>
             <template #dropdown>

@@ -165,6 +165,16 @@
   :root {
     --page-px: 14px;
   }
+
+  /* 顶栏收敛：窄屏下隐藏次要入口与昵称，避免操作区溢出被裁切 */
+  .shell-topbar { gap: 8px; }
+  .topbar-actions { gap: 4px; }
+  .topbar-icon-btn { width: 30px; height: 30px; }
+  .topbar-breadcrumb .current { font-size: 14px; }
+  .hide-sm { display: none !important; }
+  .topbar-locale { width: auto !important; padding: 0 6px; font-size: 12px; white-space: nowrap; }
+  .user-nickname { display: none; }
+  .user-info { gap: 2px; }
 }
 .shell-drawer-btn {
   display: none;
