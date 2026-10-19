@@ -562,7 +562,8 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
 }
-.row-gap > :deep(.el-card > .el-card__body) {
+/* 后代选择器：el-card__body 与 .row-gap 之间隔着 .el-col，不能用子选择器 */
+.row-gap :deep(.el-card__body) {
   flex: 1;
 }
 .row-gap {
