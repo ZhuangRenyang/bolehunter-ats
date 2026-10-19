@@ -73,6 +73,13 @@ const routes = [
         meta: { title: 'menu.log' },
       },
       {
+        // 登录日志（此前仅存在于 stage.js 菜单与 view 文件，路由漏注册 → 点击/直链一律 404）
+        path: '/admin/login-log',
+        name: 'loginLog',
+        component: () => import('@/view/admin/login-log.vue'),
+        meta: { title: 'menu.loginLog' },
+      },
+      {
         path: '/setting/dept/list',
         name: 'deptList',
         component: () => import('@/view/setting/dept-list.vue'),
@@ -107,6 +114,25 @@ const routes = [
         name: 'systemUpgrade',
         component: () => import('@/view/setting/upgrade.vue'),
         meta: { title: 'menu.upgrade' },
+      },
+      {
+        // 以下三页同样漏注册（菜单有入口、文件存在、路由缺失）：服务器心跳 / 文件中心 / 版本记录
+        path: '/setting/heartbeat',
+        name: 'heartbeat',
+        component: () => import('@/view/setting/heartbeat.vue'),
+        meta: { title: 'menu.heartbeat' },
+      },
+      {
+        path: '/setting/file-center',
+        name: 'fileCenter',
+        component: () => import('@/view/setting/file-center.vue'),
+        meta: { title: 'menu.fileCenter' },
+      },
+      {
+        path: '/setting/changelog',
+        name: 'changelog',
+        component: () => import('@/view/setting/changelog.vue'),
+        meta: { title: 'menu.changelog' },
       },
       {
         path: '/position/list',
