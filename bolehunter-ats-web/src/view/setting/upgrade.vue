@@ -25,7 +25,7 @@
       <el-tag v-else-if="versionStatus === 'checking'" type="info" size="small">
         {{ t('upgrade.versionChecking') }}
       </el-tag>
-      <el-tag v-else type="info" size="small">
+      <el-tag v-else type="info" size="small" style="cursor: pointer" @click="checkVersion">
         {{ t('upgrade.versionUnknown') }}
       </el-tag>
     </div>
@@ -99,7 +99,7 @@
 import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useI18n } from 'vue-i18n'
-import { getMigrationStatus, getUpgradeStatus, runMigration, triggerUpgrade } from '@/api/upgrade'
+import { getMigrationStatus, getUpgradeStatus, runMigration, triggerUpgrade, getVersion } from '@/api/upgrade'
 import { exportDb, importDb } from '@/api/upgrade'
 
 const { t, locale } = useI18n()
@@ -273,7 +273,10 @@ function fmtTime(v) {
   return v ? String(v).slice(0, 19).replace('T', ' ') : ''
 }
 
-onMounted(loadAll)
+onMounted(() => {
+  loadAll()
+  checkVersion()
+})
 onBeforeUnmount(() => { /* 轮询循环有上限，页面离开自然结束 */ })
 </script>
 
