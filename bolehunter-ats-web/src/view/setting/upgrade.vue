@@ -22,8 +22,11 @@
       <el-tag v-else-if="versionStatus === 'update-available'" type="warning" size="small" effect="dark">
         {{ t('upgrade.versionUpdate') }}
       </el-tag>
-      <el-tag v-else-if="versionStatus === 'offline'" type="info" size="small">
-        {{ t('upgrade.versionOffline') }}
+      <el-tag v-else-if="versionStatus === 'checking'" type="info" size="small">
+        {{ t('upgrade.versionChecking') }}
+      </el-tag>
+      <el-tag v-else type="info" size="small">
+        {{ t('upgrade.versionUnknown') }}
       </el-tag>
     </div>
 
@@ -156,32 +159,25 @@ function beforeImportDb(file) {
   return false
 }
 
-// ===== 版本比对（迭代 37） =====
-const localSha = ref('')
-const remoteSha = ref('')
-const remoteError = ref(false)
+// ===== 版本比对（迭代 37，方案 B）：compose pull 前后镜像 ID 对比 =====
+const hasUpdate = ref(null)
+const checking = ref(false)
 const versionStatus = computed(() => {
-  if (!localSha.value || localSha.value === 'unknown') return 'unknown'
-  if (remoteError.value || !remoteSha.value) return 'offline'
-  // 本地 sha 与远端一致（远端可能更长，前缀比对）
-  return remoteSha.value.startsWith(localSha.value) ? 'latest' : 'update-available'
+  if (checking.value) return 'checking'
+  if (hasUpdate.value === null) return 'unknown'
+  return hasUpdate.value ? 'update-available' : 'latest'
 })
 
 async function checkVersion() {
+  if (checking.value) return
+  checking.value = true
   try {
     const res = await getVersion()
-    localSha.value = res.localSha || ''
+    hasUpdate.value = !!res.hasUpdate
   } catch (e) {
-    localSha.value = ''
-  }
-  try {
-    const res = await fetch('https://api.github.com/repos/ZhuangRenyang/bolehunter-ats/commits/main')
-    if (!res.ok) throw new Error('http ' + res.status)
-    const data = await res.json()
-    remoteSha.value = data.sha || ''
-    remoteError.value = false
-  } catch (e) {
-    remoteError.value = true
+    hasUpdate.value = null
+  } finally {
+    checking.value = false
   }
 }
 

@@ -23,6 +23,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -125,6 +126,57 @@ public class SelfUpgradeService {
         result.put("triggered", true);
         result.put("hint", "升级流程已启动；若包含后端更新，服务会短暂重启，页面稍后自动恢复");
         return result;
+    }
+
+    /**
+     * 检查更新（迭代 37）：记录当前 latest 镜像 ID → compose pull（只拉不启）→ 对比镜像 ID。
+     * 拉取不会重启容器（旧容器继续用旧镜像运行），确认有更新后再点「检查并升级」。
+     * 完全基于 docker 原生能力，不依赖任何构建时版本注入。
+     */
+    public Map<String, Object> checkForUpdates() {
+        ensureDockerAvailable();
+        appendLog("\n===== 检查更新 =====\n");
+        Map<String, String> before = latestImageIds();
+        try {
+            runComposeCommand("docker compose pull");
+        } catch (Exception e) {
+            throw new IllegalStateException("拉取最新镜像失败：" + e.getMessage());
+        }
+        Map<String, String> after = latestImageIds();
+        boolean hasUpdate = !before.equals(after);
+        appendLog("检查结果：" + (hasUpdate ? "有新版本（镜像 ID 已变化）" : "已是最新版") + "\n");
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("hasUpdate", hasUpdate);
+        result.put("checkedAt", LocalDateTime.now().toString().replace('T', ' ').substring(0, 19));
+        return result;
+    }
+
+    /**
+     * 当前本地 backend/frontend 的 latest 镜像 ID 表
+     */
+    private Map<String, String> latestImageIds() {
+        Map<String, String> ids = new LinkedHashMap<>();
+        try {
+            Process p = new ProcessBuilder("sh", "-c",
+                "docker images --format '{{.Repository}}:{{.Tag}} {{.ID}}'")
+                .directory(Paths.get(composeDir).toFile())
+                .start();
+            List<String> lines = new java.io.BufferedReader(
+                new java.io.InputStreamReader(p.getInputStream(), StandardCharsets.UTF_8))
+                .lines().toList();
+            p.waitFor();
+            for (String line : lines) {
+                if (line.contains("bolehunter") && (line.contains("backend:latest") || line.contains("frontend:latest"))) {
+                    String[] parts = line.trim().split("\\s+");
+                    if (parts.length >= 2) {
+                        ids.put(parts[0], parts[1]);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.warn("[upgrade] 查询本地镜像 ID 失败：{}", e.getMessage());
+        }
+        return ids;
     }
 
     /** docker CLI 可用性预检（给出可操作的报错，而不是让 compose 半路失败） */

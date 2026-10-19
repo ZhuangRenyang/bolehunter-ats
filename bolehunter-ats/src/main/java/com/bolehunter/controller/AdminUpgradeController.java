@@ -77,17 +77,14 @@ public class AdminUpgradeController {
     }
 
     /**
-     * 本地构建版本（迭代 37）：CI 构建时注入的 git commit sha，
-     * 前端与 GitHub 主分支最新 commit 比对，展示"已是最新/有新版本"状态。
+     * 检查更新（迭代 37）：compose pull 拉取最新镜像并对比本地镜像 ID，
+     * 返回 { hasUpdate, checkedAt }。拉取不重启容器，确认后再升级。
      */
-    @org.springframework.beans.factory.annotation.Value("${GIT_SHA:}")
-    private String localGitSha;
-
     @GetMapping("/version")
     @AdminRequired
     @PermissionMeta(value = "查看系统升级状态")
-    public Map<String, Object> version() {
-        return Map.of("localSha", localGitSha == null ? "" : localGitSha);
+    public Map<String, Object> version() throws java.io.IOException, InterruptedException {
+        return selfUpgradeService.checkForUpdates();
     }
 
     /**
