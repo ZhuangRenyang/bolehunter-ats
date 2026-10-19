@@ -48,7 +48,7 @@
 
     <el-row :gutter="16" class="row-gap">
       <!-- 今日/逾期任务 -->
-      <el-col :span="13">
+      <el-col :span="12" :xs="24">
         <el-card shadow="never">
           <template #header>
             <div class="card-head">
@@ -74,7 +74,7 @@
         </el-card>
       </el-col>
       <!-- 阶段分布漏斗 -->
-      <el-col :span="11">
+      <el-col :span="12" :xs="24">
         <el-card shadow="never">
           <template #header>{{ t('workbench.funnel') }}</template>
           <div ref="funnelRef" class="funnel-chart"></div>
@@ -373,6 +373,7 @@ async function handleAiAsk() {
 // ---------- 漏斗图 ----------
 const funnelRef = ref()
 let chart = null
+const funnelEmpty = ref(false)
 
 function renderFunnel() {
   if (!funnelRef.value) return
@@ -385,6 +386,13 @@ function renderFunnel() {
     const item = stats.find(x => x.stage === stage)
     return { name: stageLabel(stage), value: item ? item.count : 0 }
   })
+  // 迭代 35 修复：全 0 数据时 echarts 漏斗会渲染成等宽满条——切换为空态展示
+  const total = data.reduce((acc, d) => acc + d.value, 0)
+  funnelEmpty.value = total === 0
+  if (funnelEmpty.value) {
+    chart.clear()
+    return
+  }
   chart.setOption({
     tooltip: { trigger: 'item', formatter: '{b}: {c}' },
     series: [{
@@ -543,6 +551,8 @@ onMounted(() => {
   box-shadow: 0 0 6px var(--leaf);
 }
 
+.row-gap > :deep(.el-col) { display: flex; }
+.row-gap > :deep(.el-col) > .m-surface { width: 100%; }
 .row-gap {
   margin-top: 16px;
 }

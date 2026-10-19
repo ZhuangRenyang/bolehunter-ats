@@ -18,7 +18,7 @@
       <el-table-column prop="id" label="ID" width="70" />
       <el-table-column prop="name" :label="t('role.colRoleName')" min-width="180" />
       <el-table-column prop="info" :label="t('role.colDesc')" min-width="240" show-overflow-tooltip />
-      <el-table-column :label="t('common.operation')" width="220" align="center">
+      <el-table-column :label="t('common.operation')" width="280" align="center">
         <template #default="scope">
           <el-button size="small" type="primary" plain @click="handlePermission(scope.row)">{{ t('role.permBtn') }}</el-button>
           <el-button size="small" type="primary" plain @click="handleEdit(scope.row)">{{ t('common.edit') }}</el-button>

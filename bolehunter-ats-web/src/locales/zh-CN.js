@@ -139,6 +139,7 @@ export default {
     back: '回到工作台',
   },
   workbench: {
+    funnelEmpty: '暂无推荐数据，去推荐看板创建第一条推荐吧',
     metricClient: '客户公司',
     metricCandidate: '候选人库',
     metricRecommendation: '推荐记录',

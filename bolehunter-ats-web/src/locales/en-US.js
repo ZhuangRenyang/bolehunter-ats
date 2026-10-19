@@ -131,6 +131,7 @@ export default {
     back: 'Back to Workbench',
   },
   workbench: {
+    funnelEmpty: 'No recommendation data yet - create your first one in the Kanban',
     metricClient: 'Client Companies',
     metricCandidate: 'Talent Pool',
     metricRecommendation: 'Recommendations',
