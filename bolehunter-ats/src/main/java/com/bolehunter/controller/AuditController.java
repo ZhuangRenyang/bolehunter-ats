@@ -53,7 +53,7 @@ public class AuditController {
     @GetMapping("/login-log/page")
     @AdminRequired
     @PermissionMeta(value = "查看登录日志")
-    public IPage<LoginLogDO> loginLogPage(
+    public com.bolehunter.vo.PageResponseVO<LoginLogDO> loginLogPage(
             @RequestParam(name = "page", required = false, defaultValue = "1")
             Integer page,
             @RequestParam(name = "count", required = false, defaultValue = "10")
@@ -71,7 +71,9 @@ public class AuditController {
         }
         wrapper.orderByDesc("create_time");
         IPage<LoginLogDO> iPage = loginLogService.page(new Page<>(page, count), wrapper);
-        return iPage;
+        // 迭代 38 修复：原先直接返回 IPage，序列化为 records/current/size；
+        // 前端（与其余分页页一致）读 items/total —— 统一走 PageResponseVO
+        return PageUtil.build(iPage);
     }
 
     /**
