@@ -11,7 +11,6 @@
 <template>
   <el-card shadow="never">
     <div class="toolbar">
-      <span class="page-title">{{ t('user.title') }}</span>
       <el-select v-model="groupId" :placeholder="t('user.filterRole')" clearable filterable style="width: 200px" @change="getAll">
         <el-option v-for="g in groups" :key="g.id" :label="g.name" :value="g.id" />
       </el-select>

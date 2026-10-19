@@ -11,7 +11,6 @@
 <template>
   <el-card shadow="never">
     <div class="page-header">
-      <h2>{{ t('log.title') }}</h2>
     </div>
 
     <!-- 审计流水筛选（迭代24）：操作人模糊 / 状态码 / 时间范围 —— 迭代 29d 横带分层：筛选面板 -->

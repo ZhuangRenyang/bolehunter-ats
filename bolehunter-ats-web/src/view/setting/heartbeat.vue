@@ -11,7 +11,6 @@
 <template>
   <el-card shadow="never">
     <div class="page-header">
-      <h2>{{ t('heartbeat.title') }}</h2>
       <el-tag size="small" type="info">{{ t('heartbeat.window') }}</el-tag>
     </div>
     <div class="m-surface chart-panel">

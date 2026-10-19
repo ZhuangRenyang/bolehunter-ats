@@ -8,7 +8,6 @@
 <template>
   <div class="page">
     <div class="page-header">
-      <h2>{{ t('gen.title') }}</h2>
     </div>
 
     <el-card shadow="never" style="margin-bottom: 14px">

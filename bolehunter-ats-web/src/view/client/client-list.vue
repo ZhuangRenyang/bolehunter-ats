@@ -11,7 +11,6 @@
 <template>
   <el-card shadow="never">
     <div class="page-header">
-      <h2>{{ t('client.title') }}</h2>
       <el-button type="primary" icon="Plus" @click="handleCreate">{{ t('client.create') }}</el-button>
     </div>
     <div class="filters">

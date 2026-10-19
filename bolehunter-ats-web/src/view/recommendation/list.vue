@@ -11,7 +11,6 @@
 <template>
   <el-card shadow="never">
     <div class="toolbar">
-      <span class="page-title">{{ t('rlist.title') }}</span>
     </div>
     <div class="filters">
       <el-select v-model="filters.job_id" :placeholder="t('rlist.filterJob')" clearable filterable style="width: 260px" @change="handleSearch">

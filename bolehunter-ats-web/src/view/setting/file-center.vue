@@ -11,7 +11,6 @@
 <template>
   <el-card shadow="never">
     <div class="page-header">
-      <h2>{{ t('fileCenter.title') }}</h2>
     </div>
     <div class="m-surface table-panel">
       <div class="section-label">{{ t('fileCenter.section') }}</div>

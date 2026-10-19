@@ -11,7 +11,6 @@
 <template>
   <el-card shadow="never">
     <div class="toolbar">
-      <span class="page-title">{{ t('dict.title') }}</span>
       <el-button type="primary" plain size="small" icon="Plus" @click="handleTypeCreate">{{ t('dict.createType') }}</el-button>
     </div>
     <el-row :gutter="16">

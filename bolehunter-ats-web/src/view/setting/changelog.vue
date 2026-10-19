@@ -11,7 +11,6 @@
 <template>
   <el-card shadow="never">
     <div class="page-header">
-      <h2>{{ t('changelog.title') }}</h2>
     </div>
     <div class="m-surface table-panel">
       <div class="section-label">{{ t('changelog.section') }}</div>

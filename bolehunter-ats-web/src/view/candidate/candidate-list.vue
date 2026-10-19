@@ -11,7 +11,6 @@
 <template>
   <el-card shadow="never">
     <div class="page-header">
-      <h2>{{ t('candidate.title') }}</h2>
       <el-space>
         <el-button plain icon="Link" @click="openCollectDialog">{{ t('collect.linkBtn') }}</el-button>
         <el-button plain icon="PriceTag" @click="tagDialogVisible = true">{{ t('candidate.tagMgmt') }}</el-button>

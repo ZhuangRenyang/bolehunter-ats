@@ -11,7 +11,6 @@
 <template>
   <div>
     <div class="page-header">
-      <h2>{{ t('kanban.title') }}</h2>
       <el-button type="primary" icon="Plus" @click="handleCreate">{{ t('kanban.create') }}</el-button>
     </div>
     <div class="filters">

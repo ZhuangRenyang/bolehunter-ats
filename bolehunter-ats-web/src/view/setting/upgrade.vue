@@ -11,7 +11,6 @@
 <template>
   <el-card shadow="never">
     <div class="toolbar">
-      <span class="page-title">{{ t('upgrade.title') }}</span>
       <el-tag :type="upgrade.enabled ? 'success' : 'info'" size="small">
         {{ upgrade.enabled ? t('upgrade.enabledTag') : t('upgrade.disabledTag') }}
       </el-tag>

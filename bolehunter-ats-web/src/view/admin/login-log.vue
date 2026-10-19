@@ -11,7 +11,6 @@
 <template>
   <el-card shadow="never">
     <div class="page-header">
-      <h2>{{ t('loginLog.title') }}</h2>
     </div>
 
     <!-- 筛选面板 -->

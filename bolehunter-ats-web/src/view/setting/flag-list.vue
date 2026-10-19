@@ -11,7 +11,6 @@
 <template>
   <el-card shadow="never">
     <div class="toolbar">
-      <span class="page-title">{{ t('flag.title') }}</span>
       <el-button type="primary" plain size="small" icon="Plus" @click="handleCreate">{{ t('flag.create') }}</el-button>
     </div>
     <el-table :data="tableData" border v-loading="loading">

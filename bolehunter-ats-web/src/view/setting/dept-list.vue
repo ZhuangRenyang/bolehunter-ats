@@ -11,7 +11,6 @@
 <template>
   <el-card shadow="never">
     <div class="toolbar">
-      <span class="page-title">{{ t('dept.title') }}</span>
       <el-button type="primary" plain size="small" icon="Plus" @click="handleCreate(0)">{{ t('dept.create') }}</el-button>
     </div>
     <el-table :data="tableData" border row-key="id" default-expand-all
