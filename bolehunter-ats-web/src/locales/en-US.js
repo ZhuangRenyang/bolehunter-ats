@@ -32,6 +32,7 @@ export default {
     owner: 'Owner',
     all: 'All',
     loading: 'Loading…',
+    noData: 'No data',
     notAssigned: 'Unassigned',
     enabled: 'Enabled',
     disabled: 'Disabled',

@@ -40,6 +40,7 @@ export default {
     owner: '负责人',
     all: '全部',
     loading: '加载中…',
+    noData: '暂无数据',
     notAssigned: '未分配',
     enabled: '已开启',
     disabled: '已关闭',

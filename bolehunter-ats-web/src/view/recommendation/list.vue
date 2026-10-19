@@ -25,7 +25,7 @@
       </el-select>
       <el-button @click="handleReset">{{ t('rlist.reset') }}</el-button>
     </div>
-    <el-table :data="tableData" border v-loading="loading">
+    <el-table v-if="!isMobile" :data="tableData" border v-loading="loading">
       <el-table-column :label="t('rlist.colCandidate')" width="120">
         <template #default="scope">
           <div>{{ scope.row.candidate_name || '#' + scope.row.candidate_id }}</div>
@@ -60,6 +60,23 @@
         </template>
       </el-table-column>
     </el-table>
+    <!-- 移动端：卡片流替代表格，避免 9 列必须横向滚动 -->
+    <div v-else class="m-list" v-loading="loading">
+      <div v-for="row in tableData" :key="row.id" class="m-item">
+        <div class="m-item__head">
+          <span class="m-item__title">{{ row.candidate_name || '#' + row.candidate_id }}</span>
+          <el-tag size="small" :type="stageTagType(row.current_stage)">{{ stageLabel(row.current_stage) }}</el-tag>
+        </div>
+        <div class="m-item__meta">{{ [row.job_title, row.client_name].filter(Boolean).join(' · ') || '—' }}</div>
+        <div class="m-item__meta">负责人：{{ row.owner_name || t('common.notAssigned') }}</div>
+        <div v-if="row.feedback" class="m-item__meta">{{ row.feedback }}</div>
+        <div class="m-item__ops">
+          <el-button size="small" type="primary" plain @click="handleEdit(row)">{{ t('rlist.edit') }}</el-button>
+          <el-button size="small" type="danger" plain @click="handleDelete(row)">{{ t('common.delete') }}</el-button>
+        </div>
+      </div>
+      <el-empty v-if="tableData.length === 0" :description="t('common.noData')" :image-size="50" />
+    </div>
     <div class="pagination">
       <el-pagination background layout="prev, pager, next, jumper" :total="total" :page-size="pageCount"
         :current-page="currentPage" @current-change="handlePageChange" />
@@ -94,9 +111,12 @@ import {
   STAGES, deleteRecommendation, exportCsv, getJobOptions, getRecommendationPage, updateRecommendationStage,
 } from '@/api/recommendation'
 import { getClientOwners } from '@/api/client'
+import { useIsMobile } from '@/composables/useIsMobile'
 import moment from 'moment'
 
 const { t } = useI18n()
+// 窄屏改卡片流（无需横向滚动），宽屏保持表格
+const isMobile = useIsMobile()
 
 // STAGES 现为枚举值数组（保序），显示文案统一经 stageLabel 走语言包 stage.*
 const stages = STAGES

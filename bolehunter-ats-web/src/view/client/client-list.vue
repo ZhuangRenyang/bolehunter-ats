@@ -30,7 +30,7 @@
       <el-button type="primary" icon="Search" @click="handleSearch">{{ t('common.search') }}</el-button>
       <el-button @click="handleReset">{{ t('client.reset') }}</el-button>
     </div>
-    <el-table :data="tableData" border v-loading="loading">
+    <el-table v-if="!isMobile" :data="tableData" border v-loading="loading">
       <el-table-column prop="name" :label="t('client.colName')" min-width="160" show-overflow-tooltip />
       <el-table-column prop="city" :label="t('client.colCity')" width="110" />
       <el-table-column :label="t('client.colIndustry')" width="140">
@@ -62,6 +62,27 @@
         </template>
       </el-table-column>
     </el-table>
+    <!-- 移动端：卡片流替代表格，避免 7 列必须横向滚动 -->
+    <div v-else class="m-list" v-loading="loading">
+      <div v-for="row in tableData" :key="row.id" class="m-item" @click="handleDetail(row)">
+        <div class="m-item__head">
+          <span class="m-item__title">{{ row.name }}</span>
+          <el-tag size="small" :type="statusTagType(row.client_status)">
+            {{ dictMaps.client_status[row.client_status] || row.client_status }}
+          </el-tag>
+        </div>
+        <div class="m-item__meta">
+          {{ [row.city, dictMaps.industry[row.industry], dictMaps.client_level[row.level]].filter(Boolean).join(' · ') || '—' }}
+        </div>
+        <div class="m-item__meta">{{ t('common.owner') }}：{{ ownerMap[row.owner_id] || t('common.notAssigned') }}</div>
+        <div class="m-item__ops" @click.stop>
+          <el-button size="small" type="primary" plain @click="handleDetail(row)">{{ t('common.detail') }}</el-button>
+          <el-button size="small" type="primary" plain @click="handleEdit(row)">{{ t('common.edit') }}</el-button>
+          <el-button size="small" type="danger" plain @click="handleDelete(row)">{{ t('common.delete') }}</el-button>
+        </div>
+      </div>
+      <el-empty v-if="tableData.length === 0" :description="t('common.noData')" :image-size="50" />
+    </div>
     <div class="pagination">
       <el-pagination background layout="prev, pager, next, jumper" :total="total" :page-size="pageCount"
         :current-page="currentPage" @current-change="handlePageChange" />
@@ -117,9 +138,12 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { useI18n } from 'vue-i18n'
 import { createClient, deleteClient, getClientOwners, getClientPage, updateClient } from '@/api/client'
 import { getDictDataByType } from '@/api/setting'
+import { useIsMobile } from '@/composables/useIsMobile'
 
 const { t } = useI18n()
 const router = useRouter()
+// 窄屏改卡片流（无需横向滚动），宽屏保持表格
+const isMobile = useIsMobile()
 const loading = ref(false)
 const tableData = ref([])
 const total = ref(0)

@@ -211,3 +211,59 @@
   .el-pagination { flex-wrap: wrap; row-gap: 6px; }
   .el-pagination__jump { display: none !important; }
 }
+
+/* ---------- 移动端列表卡片（≤820px）----------
+ * 列表页在窄屏改用卡片流：一条记录一张卡，主信息 + 状态同行，
+ * 操作按钮在卡内并排（高度 44px 满足触控），彻底去掉表格横向滚动。
+ */
+.m-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.m-item {
+  border: 1px solid var(--glass-line);
+  border-radius: var(--r-sm);
+  background: var(--glass-bg);
+  padding: 12px;
+  transition: background 0.15s;
+}
+.m-item:active {
+  background: var(--blue-soft);
+}
+.m-item__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+.m-item__title {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink);
+  line-height: 1.4;
+  word-break: break-all;
+}
+.m-item__meta {
+  margin-top: 4px;
+  font-size: 12px;
+  color: var(--ink-soft);
+  line-height: 1.6;
+  word-break: break-all;
+}
+.m-item__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+}
+.m-item__ops {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+.m-item__ops .el-button {
+  flex: 1;
+  min-height: 44px;
+  margin-left: 0 !important;
+}

@@ -36,7 +36,7 @@
       <el-button type="primary" icon="Search" @click="handleSearch">{{ t('common.search') }}</el-button>
       <el-button @click="handleReset">{{ t('candidate.reset') }}</el-button>
     </div>
-    <el-table :data="tableData" border v-loading="loading">
+    <el-table v-if="!isMobile" :data="tableData" border v-loading="loading">
       <el-table-column :label="t('candidate.colName')" width="110">
         <template #default="scope">
           <el-link type="primary" :underline="false" @click="handleDetail(scope.row)">{{ scope.row.name }}</el-link>
@@ -74,6 +74,32 @@
         </template>
       </el-table-column>
     </el-table>
+    <!-- 移动端：卡片流替代表格，避免 11 列必须横向滚动 -->
+    <div v-else class="m-list" v-loading="loading">
+      <div v-for="row in tableData" :key="row.id" class="m-item" @click="handleDetail(row)">
+        <div class="m-item__head">
+          <span class="m-item__title">{{ row.name }}</span>
+          <el-tag v-if="row.audit_status === 0" size="small" type="warning">{{ t('collect.pendingTag') }}</el-tag>
+        </div>
+        <div class="m-item__meta">
+          {{ [row.current_company, row.current_position].filter(Boolean).join(' · ') || '—' }}
+        </div>
+        <div class="m-item__meta">
+          {{ [row.city, row.phone, dictMaps.education[row.education]].filter(Boolean).join(' · ') || '—' }}
+        </div>
+        <div class="m-item__meta">{{ t('common.owner') }}：{{ ownerMap[row.owner_id] || t('common.notAssigned') }}</div>
+        <div v-if="row.tag_names && row.tag_names.length" class="m-item__tags">
+          <el-tag v-for="tagName in row.tag_names" :key="tagName" size="small">{{ tagName }}</el-tag>
+        </div>
+        <div class="m-item__ops" @click.stop>
+          <el-button v-if="row.audit_status === 0" size="small" type="success" plain @click="handleAudit(row)">{{ t('collect.auditBtn') }}</el-button>
+          <el-button size="small" type="primary" plain @click="handleDetail(row)">{{ t('common.detail') }}</el-button>
+          <el-button size="small" type="primary" plain @click="handleEdit(row)">{{ t('common.edit') }}</el-button>
+          <el-button size="small" type="danger" plain @click="handleDeleteCandidate(row)">{{ t('common.delete') }}</el-button>
+        </div>
+      </div>
+      <el-empty v-if="tableData.length === 0" :description="t('common.noData')" :image-size="50" />
+    </div>
     <div class="pagination">
       <el-pagination background layout="prev, pager, next, jumper" :total="total" :page-size="pageCount"
         :current-page="currentPage" @current-change="handlePageChange" />
@@ -246,9 +272,12 @@ import {
 import { getClientOwners } from '@/api/client'
 import { getDictDataByType } from '@/api/setting'
 import defaultAxios from '@/api/request'
+import { useIsMobile } from '@/composables/useIsMobile'
 
 const { t } = useI18n()
 const router = useRouter()
+// 窄屏改卡片流（无需横向滚动），宽屏保持表格
+const isMobile = useIsMobile()
 const loading = ref(false)
 const tableData = ref([])
 const total = ref(0)

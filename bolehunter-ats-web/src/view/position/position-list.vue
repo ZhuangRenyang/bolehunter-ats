@@ -19,7 +19,7 @@
         <el-button type="primary" icon="Search" @click="loadPage(0)">{{ t('common.search') }}</el-button>
       </div>
 
-      <el-table :data="items" border stripe v-loading="loading">
+      <el-table v-if="!isMobile" :data="items" border stripe v-loading="loading">
         <el-table-column :label="t('position.colTitle')" min-width="180" show-overflow-tooltip>
           <template #default="scope">
             <el-link type="primary" @click="goDetail(scope.row)">{{ scope.row.title }}</el-link>
@@ -51,6 +51,23 @@
           </template>
         </el-table-column>
       </el-table>
+      <!-- 移动端：卡片流替代表格，避免 9 列必须横向滚动 -->
+      <div v-else class="m-list" v-loading="loading">
+        <div v-for="row in items" :key="row.id" class="m-item" @click="goDetail(row)">
+          <div class="m-item__head">
+            <span class="m-item__title">{{ row.title }}</span>
+            <el-tag :type="stateTag(row.state)" size="small">{{ stateText(row.state) }}</el-tag>
+          </div>
+          <div class="m-item__meta">
+            {{ [row.company_name, row.city, row.category_name].filter(Boolean).join(' · ') || '—' }}
+          </div>
+          <div class="m-item__meta">{{ salaryText(row) }} · {{ t('position.colQuantity') }} {{ row.quantity || 1 }}</div>
+          <div class="m-item__ops" @click.stop>
+            <el-button size="small" type="primary" plain @click="goDetail(row)">{{ t('common.detail') }}</el-button>
+          </div>
+        </div>
+        <el-empty v-if="items.length === 0" :description="t('common.noData')" :image-size="50" />
+      </div>
 
       <el-pagination layout="total, prev, pager, next" :total="total" :page-size="count"
         :current-page="page + 1" @current-change="p => loadPage(p - 1)" style="margin-top: 12px; justify-content: flex-end" />
@@ -61,11 +78,14 @@
 <script setup>
 import { onMounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { useIsMobile } from '@/composables/useIsMobile'
 import { useI18n } from 'vue-i18n'
 import { getPositionsAdmin, POSITION_STATES } from '@/api/position'
 
 const { t } = useI18n()
 const router = useRouter()
+// 窄屏改卡片流（无需横向滚动），宽屏保持表格
+const isMobile = useIsMobile()
 const items = ref([])
 const total = ref(0)
 const page = ref(0)
