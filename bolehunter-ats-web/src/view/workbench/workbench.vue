@@ -84,13 +84,13 @@
 
     <!-- 数据看板增强：漏斗时间对比 / 顾问业绩 / 客户转化 -->
     <el-row :gutter="16" class="row-gap">
-      <el-col :span="11">
+      <el-col :span="12">
         <el-card shadow="never">
           <template #header>{{ t('workbench.trend') }}</template>
           <div ref="trendRef" class="funnel-chart"></div>
         </el-card>
       </el-col>
-      <el-col :span="13">
+      <el-col :span="12">
         <el-card shadow="never">
           <template #header>{{ t('workbench.ranking') }}</template>
           <el-table :data="ranking" size="small" :empty-text="t('workbench.rankingEmpty')">
@@ -551,8 +551,20 @@ onMounted(() => {
   box-shadow: 0 0 6px var(--leaf);
 }
 
+/* 卡片等宽等高对齐：列内子项一律撑满列宽；el-card 纵向 flex 让 body 撑满剩余高度，
+   同一行卡片顶边/底边对齐（修复卡片收缩为内容宽度导致的参差问题） */
 .row-gap > :deep(.el-col) { display: flex; }
-.row-gap > :deep(.el-col) > .m-surface { width: 100%; }
+.row-gap > :deep(.el-col) > .el-card,
+.row-gap > :deep(.el-col) > .m-surface {
+  width: 100%;
+}
+.row-gap > :deep(.el-col) > .el-card {
+  display: flex;
+  flex-direction: column;
+}
+.row-gap > :deep(.el-card > .el-card__body) {
+  flex: 1;
+}
 .row-gap {
   margin-top: 16px;
 }
