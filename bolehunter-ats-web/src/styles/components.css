@@ -79,11 +79,32 @@
 }
 
 /* ---------- 弹窗/下拉/消息：浮层材质 ---------- */
+/* 弹窗自适应视口：高度受限于视口，超高时表单区内部滚动，
+   header 与 footer（确定/取消）始终可见——修复矮屏下按钮被推到屏幕外点不到 */
+.el-overlay-dialog {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+}
 .el-dialog {
   --el-dialog-border-radius: var(--r-lg);
   background: var(--pearl-solid);
   border: 1px solid var(--glass-line);
   box-shadow: var(--e3);
+  margin: 0 auto !important;
+  max-height: calc(100vh - 48px);
+  display: flex;
+  flex-direction: column;
+}
+.el-dialog__header,
+.el-dialog__footer {
+  flex: 0 0 auto;
+}
+.el-dialog__body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
 }
 .el-popper.is-light,
 .el-dropdown-menu,
