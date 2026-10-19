@@ -43,7 +43,6 @@ public class FileCenterService {
             m.put("name", c.getName());
             m.put("phone", c.getPhone());
             m.put("file", c.getResumeFile());
-            m.put("time", c.getUpdateTime());
             return m;
         }).toList();
     }

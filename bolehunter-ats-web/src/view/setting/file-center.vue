@@ -23,9 +23,6 @@
             <a class="file-link" :href="row.file" target="_blank" rel="noopener">{{ row.file }}</a>
           </template>
         </el-table-column>
-        <el-table-column prop="time" :label="t('fileCenter.colTime')" width="170" align="center">
-          <template #default="{ row }">{{ String(row.time || '').replace('T', ' ').slice(0, 19) }}</template>
-        </el-table-column>
         <el-table-column :label="t('common.operation')" width="120" align="center">
           <template #default="{ row }">
             <el-button size="small" type="primary" plain @click="$router.push(`/candidate/detail/${row.candidateId}`)">
