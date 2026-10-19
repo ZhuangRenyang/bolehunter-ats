@@ -17,6 +17,9 @@ RUN mvn -B -DskipTests package \
 
 # ---------- 运行阶段：仅 JRE ----------
 FROM eclipse-temurin:17-jre
+# 迭代 37：CI 构建时注入 git commit sha，供升级页做"本地 vs 仓库"版本比对
+ARG GIT_SHA=unknown
+ENV GIT_SHA=${GIT_SHA}
 WORKDIR /app
 
 # curl 供容器健康检查；docker CLI + compose 插件供后台一键升级（迭代26：经挂载的

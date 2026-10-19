@@ -15,6 +15,16 @@
       <el-tag :type="upgrade.enabled ? 'success' : 'info'" size="small">
         {{ upgrade.enabled ? t('upgrade.enabledTag') : t('upgrade.disabledTag') }}
       </el-tag>
+      <!-- 版本状态（迭代 37）：本地构建 sha vs GitHub 主分支最新 sha -->
+      <el-tag v-if="versionStatus === 'latest'" type="success" size="small" effect="dark">
+        {{ t('upgrade.versionLatest') }}
+      </el-tag>
+      <el-tag v-else-if="versionStatus === 'update-available'" type="warning" size="small" effect="dark">
+        {{ t('upgrade.versionUpdate') }}
+      </el-tag>
+      <el-tag v-else-if="versionStatus === 'offline'" type="info" size="small">
+        {{ t('upgrade.versionOffline') }}
+      </el-tag>
     </div>
 
     <el-alert type="warning" :closable="false" class="hint">
@@ -144,6 +154,35 @@ function beforeImportDb(file) {
     }
   }).catch(() => {})
   return false
+}
+
+// ===== 版本比对（迭代 37） =====
+const localSha = ref('')
+const remoteSha = ref('')
+const remoteError = ref(false)
+const versionStatus = computed(() => {
+  if (!localSha.value || localSha.value === 'unknown') return 'unknown'
+  if (remoteError.value || !remoteSha.value) return 'offline'
+  // 本地 sha 与远端一致（远端可能更长，前缀比对）
+  return remoteSha.value.startsWith(localSha.value) ? 'latest' : 'update-available'
+})
+
+async function checkVersion() {
+  try {
+    const res = await getVersion()
+    localSha.value = res.localSha || ''
+  } catch (e) {
+    localSha.value = ''
+  }
+  try {
+    const res = await fetch('https://api.github.com/repos/ZhuangRenyang/bolehunter-ats/commits/main')
+    if (!res.ok) throw new Error('http ' + res.status)
+    const data = await res.json()
+    remoteSha.value = data.sha || ''
+    remoteError.value = false
+  } catch (e) {
+    remoteError.value = true
+  }
 }
 
 async function loadAll() {

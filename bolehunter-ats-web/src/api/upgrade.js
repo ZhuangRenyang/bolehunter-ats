@@ -17,6 +17,7 @@ import { get, post } from './request'
  */
 
 /** 自升级状态：enabled / running / logTail */
+export const getVersion = () => get('recruit/admin/upgrade/version')
 export const getUpgradeStatus = () => get('recruit/admin/upgrade/status')
 
 /** 数据库迁移状态：待执行脚本 + 已执行历史 */

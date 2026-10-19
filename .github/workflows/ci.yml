@@ -61,7 +61,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: 构建后端镜像
-        run: docker build -t bolehunter-backend ./bolehunter-ats
+        run: docker build --build-arg GIT_SHA=${{ github.sha }} -t bolehunter-backend ./bolehunter-ats
       - name: 构建前端镜像
         run: docker build -t bolehunter-frontend ./bolehunter-ats-web
       - name: 校验 compose 配置
