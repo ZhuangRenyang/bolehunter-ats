@@ -64,13 +64,22 @@ public class DbMigrationService {
     /** 迁移脚本目录：本地默认工作目录下的 sql；容器经 volume 挂载并由 MIGRATION_DIR 指向 */
     private final String migrationDir;
 
+    /**
+     * 镜像内置迁移目录（迭代 38 修复）：宿主机挂载目录可能与镜像版本脱节
+     * （发版只 pull 镜像、没同步源码时，新迁移文件永远到不了服务器，接口静默 500）。
+     * 这里与挂载目录合并扫描，文件名重复时以挂载目录为准（允许运维热修单脚本）。
+     */
+    private final String bundledMigrationDir;
+
     private final boolean autoRun;
 
     public DbMigrationService(JdbcTemplate jdbcTemplate,
                               @Value("${app.migration.dir:sql}") String migrationDir,
+                              @Value("${app.migration.bundled-dir:/app/sql-bundled}") String bundledMigrationDir,
                               @Value("${app.migration.auto-run:true}") boolean autoRun) {
         this.jdbcTemplate = jdbcTemplate;
         this.migrationDir = migrationDir;
+        this.bundledMigrationDir = bundledMigrationDir;
         this.autoRun = autoRun;
     }
 
@@ -120,6 +129,7 @@ public class DbMigrationService {
 
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("migrationDir", migrationDir);
+        result.put("bundledMigrationDir", bundledMigrationDir);
         result.put("pendingCount", pending.size());
         result.put("pending", pending);
         result.put("executed", executed);
@@ -231,17 +241,30 @@ public class DbMigrationService {
     }
 
     private List<Path> scanScripts() {
-        Path dir = Paths.get(migrationDir);
+        // 先收镜像内置目录，再用挂载目录覆盖同名项（挂载目录优先），按文件名排序执行
+        Map<String, Path> byName = new LinkedHashMap<>();
+        collectScripts(bundledMigrationDir, byName);
+        collectScripts(migrationDir, byName);
+        return byName.values().stream()
+            .sorted(Comparator.comparing(p -> p.getFileName().toString()))
+            .toList();
+    }
+
+    /** 把目录下符合前缀/后缀的脚本收进 map；目录不存在仅告警（本地无内置目录属正常） */
+    private void collectScripts(String dirPath, Map<String, Path> byName) {
+        if (dirPath == null || dirPath.isBlank()) {
+            return;
+        }
+        Path dir = Paths.get(dirPath);
         if (!Files.isDirectory(dir)) {
-            log.warn("[migration] 迁移目录不存在：{}", dir.toAbsolutePath());
-            return List.of();
+            log.debug("[migration] 迁移目录不存在（跳过）：{}", dir.toAbsolutePath());
+            return;
         }
         try (Stream<Path> stream = Files.list(dir)) {
-            return stream
-                .filter(p -> p.getFileName().toString().startsWith(SCRIPT_PREFIX)
+            stream.filter(p -> p.getFileName().toString().startsWith(SCRIPT_PREFIX)
                     && p.getFileName().toString().endsWith(".sql"))
                 .sorted(Comparator.comparing(p -> p.getFileName().toString()))
-                .toList();
+                .forEach(p -> byName.put(p.getFileName().toString(), p));
         } catch (IOException e) {
             throw new IllegalStateException("扫描迁移目录失败：" + e.getMessage(), e);
         }

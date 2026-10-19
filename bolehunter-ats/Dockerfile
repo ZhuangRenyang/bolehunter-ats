@@ -48,6 +48,10 @@ COPY --from=build /app/target/bolehunter-ats*.jar app.jar
 # 构建自证：jar 必须存在且非空（test -s），否则构建阶段直接失败而非运行时崩溃循环
 RUN ls -la /app/app.jar && test -s /app/app.jar && echo "app.jar OK ($(du -h /app/app.jar | cut -f1))"
 
+# 迭代38：迁移脚本随镜像发布（/app/sql-bundled）。宿主机挂载的 /app/sql 若未随源码更新，
+# 执行器仍能从镜像内目录发现新迁移，避免"发版成功但表结构没跟上"的静默故障
+COPY sql /app/sql-bundled
+
 EXPOSE 5000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
     CMD curl -fsS http://127.0.0.1:5000/recruit/health || exit 1
