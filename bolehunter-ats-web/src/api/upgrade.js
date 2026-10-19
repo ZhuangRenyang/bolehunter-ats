@@ -8,7 +8,7 @@
  * 依据 AGPL-3.0 发布；详见仓库根目录 LICENSE 文件。本程序不提供任何担保。
  * 以任何网络服务形式提供本程序（含 SaaS 托管）同样必须遵守 AGPL-3.0 开源。
  */
-import { get, post } from './request'
+import defaultAxios, { get, post } from './request'
 
 /**
  * 系统升级（迭代26，仅管理员）
