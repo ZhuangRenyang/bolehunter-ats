@@ -93,6 +93,10 @@ export default {
     gen: '代码生成',
     upgrade: '系统升级',
     log: '日志管理',
+    loginLog: '登录日志',
+    heartbeat: '服务器心跳',
+    fileCenter: '文件中心',
+    changelog: '版本记录',
     confirm: '推荐确认',
   },
   layout: {

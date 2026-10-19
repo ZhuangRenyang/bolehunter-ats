@@ -85,6 +85,10 @@ export default {
     gen: 'Code Generator',
     upgrade: 'System Upgrade',
     log: 'Audit Logs',
+    loginLog: 'Login Log',
+    heartbeat: 'Heartbeat',
+    fileCenter: 'File Center',
+    changelog: 'Changelog',
     confirm: 'Recommendation Confirm',
   },
   layout: {
